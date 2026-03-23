@@ -1,0 +1,23 @@
+import type { Metadata } from 'next'
+import { auth } from '@/lib/auth'
+import { MessagingApp } from '@/components/messaging/MessagingApp'
+
+export const metadata: Metadata = { title: 'Messages' }
+
+export default async function MessagesPage({
+  searchParams,
+}: {
+  searchParams: { convo?: string }
+}) {
+  const session = await auth()
+  return (
+    <div>
+      <div style={{ marginBottom: '24px' }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 400 }}>
+          Messages
+        </h1>
+      </div>
+      <MessagingApp userId={session!.user.id} initialConvoId={searchParams.convo} />
+    </div>
+  )
+}

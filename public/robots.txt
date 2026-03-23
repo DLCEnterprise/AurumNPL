@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+Allow: /signin
+Allow: /signup
+
+Disallow: /dashboard
+Disallow: /listings/new
+Disallow: /messages
+Disallow: /profile
+Disallow: /api/

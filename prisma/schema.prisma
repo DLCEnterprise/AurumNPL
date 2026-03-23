@@ -1,0 +1,133 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  SELLER
+  BUYER
+  ADMIN
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ListingStatus {
+  DRAFT
+  ACTIVE
+  UNDER_REVIEW
+  PENDING
+  SOLD
+  ARCHIVED
+}
+
+enum AssetType {
+  RESIDENTIAL
+  COMMERCIAL
+  CONSUMER
+  MIXED
+}
+
+model User {
+  id             String         @id @default(cuid())
+  email          String         @unique
+  name           String?
+  passwordHash   String?
+  company        String?
+  phone          String?
+  role           UserRole       @default(SELLER)
+  approvalStatus ApprovalStatus @default(PENDING)
+  approvedAt     DateTime?
+  approvedBy     String?
+  profileImage   String?
+  createdAt      DateTime       @default(now())
+  updatedAt      DateTime       @updatedAt
+
+  listings         Listing[]
+  sentMessages     Message[]                 @relation("SentMessages")
+  receivedMessages Message[]                 @relation("ReceivedMessages")
+  conversations    ConversationParticipant[]
+
+  @@index([email])
+  @@index([approvalStatus])
+}
+
+model Listing {
+  id             String        @id @default(cuid())
+  title          String
+  description    String?
+  assetType      AssetType
+  unpaidBalance  Float
+  loanCount      Int
+  location       String
+  region         String?
+  avgDelinquency Int?
+  status         ListingStatus @default(DRAFT)
+  documents      String[]
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  seller   User   @relation(fields: [sellerId], references: [id])
+  sellerId String
+
+  @@index([status])
+  @@index([assetType])
+  @@index([sellerId])
+}
+
+model Conversation {
+  id        String   @id @default(cuid())
+  listingId String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  participants ConversationParticipant[]
+  messages     Message[]
+}
+
+model ConversationParticipant {
+  id             String    @id @default(cuid())
+  userId         String
+  conversationId String
+  lastReadAt     DateTime?
+
+  user         User         @relation(fields: [userId], references: [id])
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+
+  @@unique([userId, conversationId])
+}
+
+model Message {
+  id             String    @id @default(cuid())
+  content        String
+  senderId       String
+  receiverId     String?
+  conversationId String
+  readAt         DateTime?
+  createdAt      DateTime  @default(now())
+
+  sender       User         @relation("SentMessages", fields: [senderId], references: [id])
+  receiver     User?        @relation("ReceivedMessages", fields: [receiverId], references: [id])
+  conversation Conversation @relation(fields: [conversationId], references: [id])
+
+  @@index([conversationId])
+  @@index([senderId])
+}
+
+model AdminToken {
+  id        String   @id @default(cuid())
+  token     String   @unique
+  userId    String
+  usedAt    DateTime?
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  @@index([token])
+}

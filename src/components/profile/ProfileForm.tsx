@@ -1,0 +1,181 @@
+'use client'
+
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/ui/Toast'
+import { Spinner } from '@/components/ui/Skeleton'
+
+interface User {
+  id: string
+  name: string | null
+  email: string
+  company: string | null
+  phone: string | null
+  role: string
+  approvalStatus: string
+  createdAt: string
+}
+
+export function ProfileForm({ user }: { user: User }) {
+  const router = useRouter()
+  const toast = useToast()
+
+  // Profile section
+  const [name, setName]       = useState(user.name ?? '')
+  const [company, setCompany] = useState(user.company ?? '')
+  const [phone, setPhone]     = useState(user.phone ?? '')
+  const [profileSaving, setProfileSaving] = useState(false)
+
+  // Password section
+  const [currentPw, setCurrentPw] = useState('')
+  const [newPw, setNewPw]         = useState('')
+  const [confirmPw, setConfirmPw] = useState('')
+  const [pwSaving, setPwSaving]   = useState(false)
+
+  const saveProfile = async (e: React.FormEvent) => {
+    e.preventDefault()
+    setProfileSaving(true)
+
+    const res = await fetch('/api/profile', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name.trim(), company: company.trim(), phone: phone.trim() }),
+    })
+    setProfileSaving(false)
+    const data = await res.json()
+
+    if (res.ok && data.success) {
+      toast.success('Profile updated successfully.')
+      router.refresh()
+    } else {
+      toast.error(data.error ?? 'Failed to update profile.')
+    }
+  }
+
+  const changePassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (newPw !== confirmPw) {
+      toast.error('New passwords do not match.')
+      return
+    }
+    if (!/^(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,}$/.test(newPw)) {
+      toast.error('Password must be 8+ chars with uppercase, number, and special character.')
+      return
+    }
+
+    setPwSaving(true)
+    const res = await fetch('/api/profile', {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ type: 'password', currentPassword: currentPw, newPassword: newPw }),
+    })
+    setPwSaving(false)
+    const data = await res.json()
+
+    if (res.ok && data.success) {
+      toast.success('Password changed successfully.')
+      setCurrentPw(''); setNewPw(''); setConfirmPw('')
+    } else {
+      toast.error(data.error ?? 'Failed to change password.')
+    }
+  }
+
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+      {/* Account status badge */}
+      <div className="glass-card" style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div>
+          <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '4px' }}>Member since</div>
+          <div style={{ fontWeight: 500 }}>
+            {new Date(user.createdAt).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <span style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', padding: '4px 12px', borderRadius: '100px', background: 'rgba(96,165,250,0.1)', color: 'var(--info)' }}>
+            {user.role}
+          </span>
+          <span style={{ fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '0.06em', padding: '4px 12px', borderRadius: '100px', background: 'rgba(52,211,153,0.1)', color: 'var(--success)' }}>
+            {user.approvalStatus}
+          </span>
+        </div>
+      </div>
+
+      {/* Profile info */}
+      <div className="glass-card" style={{ padding: '32px' }}>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 400, marginBottom: '24px' }}>
+          Account Information
+        </h2>
+        <form onSubmit={saveProfile}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div className="form-group">
+              <label htmlFor="name">Full Name</label>
+              <input id="name" type="text" className="form-input" value={name} onChange={(e) => setName(e.target.value)} autoComplete="name" />
+            </div>
+            <div className="form-group">
+              <label htmlFor="company">Company</label>
+              <input id="company" type="text" className="form-input" value={company} onChange={(e) => setCompany(e.target.value)} autoComplete="organization" />
+            </div>
+          </div>
+          <div className="form-group">
+            <label htmlFor="email">Email Address</label>
+            <input id="email" type="email" className="form-input" value={user.email} disabled
+              style={{ opacity: 0.5, cursor: 'not-allowed' }} />
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              Email cannot be changed. Contact support if needed.
+            </span>
+          </div>
+          <div className="form-group" style={{ marginBottom: '24px' }}>
+            <label htmlFor="phone">Phone (optional)</label>
+            <input id="phone" type="tel" className="form-input" value={phone} onChange={(e) => setPhone(e.target.value)} autoComplete="tel" />
+          </div>
+          <button type="submit" className="btn btn--gold" disabled={profileSaving}>
+            {profileSaving && <Spinner size={15} color="#0a0a0a" />}
+            {profileSaving ? 'Saving…' : 'Save Changes'}
+          </button>
+        </form>
+      </div>
+
+      {/* Change password */}
+      <div className="glass-card" style={{ padding: '32px' }}>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 400, marginBottom: '24px' }}>
+          Change Password
+        </h2>
+        <form onSubmit={changePassword}>
+          <div className="form-group">
+            <label htmlFor="currentPw">Current Password</label>
+            <input id="currentPw" type="password" className="form-input" value={currentPw} onChange={(e) => setCurrentPw(e.target.value)} autoComplete="current-password" />
+          </div>
+          <div className="form-group">
+            <label htmlFor="newPw">New Password</label>
+            <input id="newPw" type="password" className="form-input" value={newPw} onChange={(e) => setNewPw(e.target.value)} autoComplete="new-password" placeholder="8+ chars, uppercase, number, special char" />
+          </div>
+          <div className="form-group" style={{ marginBottom: '24px' }}>
+            <label htmlFor="confirmPw">Confirm New Password</label>
+            <input id="confirmPw" type="password" className="form-input" value={confirmPw} onChange={(e) => setConfirmPw(e.target.value)} autoComplete="new-password" />
+          </div>
+          <button type="submit" className="btn btn--gold" disabled={pwSaving || !currentPw || !newPw || !confirmPw}>
+            {pwSaving && <Spinner size={15} color="#0a0a0a" />}
+            {pwSaving ? 'Updating…' : 'Update Password'}
+          </button>
+        </form>
+      </div>
+
+      {/* Danger zone */}
+      <div className="glass-card" style={{ padding: '24px', borderColor: 'rgba(248,113,113,0.15)' }}>
+        <h3 style={{ fontSize: '0.9rem', color: '#f87171', marginBottom: '8px' }}>Danger Zone</h3>
+        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
+          Deactivating your account will remove your listings and revoke access. This cannot be undone.
+        </p>
+        <button
+          className="btn btn--sm"
+          style={{ background: 'rgba(248,113,113,0.1)', color: '#f87171', border: '1px solid rgba(248,113,113,0.2)' }}
+          onClick={() => window.confirm('Are you sure you want to deactivate your account? This cannot be undone.') && alert('Contact support@aurum.finance to deactivate your account.')}
+        >
+          Deactivate Account
+        </button>
+      </div>
+    </div>
+  )
+}

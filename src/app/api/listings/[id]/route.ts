@@ -1,0 +1,101 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { z } from 'zod'
+import { auth } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
+
+type Params = { params: { id: string } }
+
+// ─── GET /api/listings/[id] ───────────────────────────────────────────────────
+
+export async function GET(_req: NextRequest, { params }: Params) {
+  const session = await auth()
+  if (!session || session.user.approvalStatus !== 'APPROVED') {
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const listing = await prisma.listing.findUnique({
+    where: { id: params.id },
+    include: { seller: { select: { id: true, name: true, company: true, email: true } } },
+  })
+
+  if (!listing) {
+    return NextResponse.json({ success: false, error: 'Listing not found.' }, { status: 404 })
+  }
+
+  // Non-owners only see active/review/pending listings
+  if (
+    listing.sellerId !== session.user.id &&
+    session.user.role !== 'ADMIN' &&
+    (listing.status === 'DRAFT' || listing.status === 'ARCHIVED')
+  ) {
+    return NextResponse.json({ success: false, error: 'Listing not found.' }, { status: 404 })
+  }
+
+  return NextResponse.json({ success: true, data: listing })
+}
+
+// ─── PUT /api/listings/[id] ───────────────────────────────────────────────────
+
+const UpdateSchema = z.object({
+  title:          z.string().min(5).optional(),
+  description:    z.string().optional(),
+  assetType:      z.enum(['RESIDENTIAL', 'COMMERCIAL', 'CONSUMER', 'MIXED']).optional(),
+  unpaidBalance:  z.number().positive().optional(),
+  loanCount:      z.number().int().positive().optional(),
+  location:       z.string().min(2).optional(),
+  region:         z.string().optional(),
+  avgDelinquency: z.number().int().min(0).optional(),
+  status:         z.enum(['DRAFT', 'ACTIVE', 'UNDER_REVIEW', 'PENDING', 'SOLD', 'ARCHIVED']).optional(),
+})
+
+export async function PUT(req: NextRequest, { params }: Params) {
+  const session = await auth()
+  if (!session || session.user.approvalStatus !== 'APPROVED') {
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const listing = await prisma.listing.findUnique({ where: { id: params.id } })
+  if (!listing) {
+    return NextResponse.json({ success: false, error: 'Listing not found.' }, { status: 404 })
+  }
+  if (listing.sellerId !== session.user.id && session.user.role !== 'ADMIN') {
+    return NextResponse.json({ success: false, error: 'Forbidden.' }, { status: 403 })
+  }
+
+  const body = await req.json()
+  const parsed = UpdateSchema.safeParse(body)
+  if (!parsed.success) {
+    return NextResponse.json({ success: false, error: 'Validation failed.' }, { status: 422 })
+  }
+
+  const updated = await prisma.listing.update({
+    where: { id: params.id },
+    data: parsed.data,
+  })
+
+  return NextResponse.json({ success: true, data: updated })
+}
+
+// ─── DELETE /api/listings/[id] (soft delete → ARCHIVED) ──────────────────────
+
+export async function DELETE(_req: NextRequest, { params }: Params) {
+  const session = await auth()
+  if (!session || session.user.approvalStatus !== 'APPROVED') {
+    return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+  }
+
+  const listing = await prisma.listing.findUnique({ where: { id: params.id } })
+  if (!listing) {
+    return NextResponse.json({ success: false, error: 'Listing not found.' }, { status: 404 })
+  }
+  if (listing.sellerId !== session.user.id && session.user.role !== 'ADMIN') {
+    return NextResponse.json({ success: false, error: 'Forbidden.' }, { status: 403 })
+  }
+
+  await prisma.listing.update({
+    where: { id: params.id },
+    data: { status: 'ARCHIVED' },
+  })
+
+  return NextResponse.json({ success: true })
+}

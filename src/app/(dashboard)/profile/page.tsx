@@ -1,0 +1,35 @@
+import type { Metadata } from 'next'
+import { auth } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
+import { ProfileForm } from '@/components/profile/ProfileForm'
+
+export const metadata: Metadata = { title: 'Profile' }
+
+export default async function ProfilePage() {
+  const session = await auth()
+  const user = await prisma.user.findUnique({
+    where: { id: session!.user.id },
+    select: { id: true, name: true, email: true, company: true, phone: true, role: true, approvalStatus: true, createdAt: true },
+  })
+
+  if (!user) return null
+
+  return (
+    <div style={{ maxWidth: '600px' }}>
+      <div style={{ marginBottom: '32px' }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 400, marginBottom: '6px' }}>
+          Profile
+        </h1>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.875rem' }}>
+          Manage your account information and credentials.
+        </p>
+      </div>
+      <ProfileForm
+        user={{
+          ...user,
+          createdAt: user.createdAt.toISOString(),
+        }}
+      />
+    </div>
+  )
+}
