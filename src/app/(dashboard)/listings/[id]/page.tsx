@@ -18,12 +18,13 @@ const STATUS_CLASS: Record<ListingStatus, string> = {
   DRAFT: 'pending', SOLD: 'active', ARCHIVED: 'pending',
 }
 
-export default async function ListingDetailPage({ params }: { params: { id: string } }) {
+export default async function ListingDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params
   const session = await auth()
   const userId = session!.user.id
 
   const listing = await prisma.listing.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: { seller: { select: { id: true, name: true, company: true, email: true } } },
   })
 

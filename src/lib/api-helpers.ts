@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import type { Session } from 'next-auth'
 import { auth } from './auth'
 import { rateLimit, rateLimitResponse } from './rate-limit'
 
@@ -10,7 +11,7 @@ export async function guardRoute(
   req: NextRequest,
   options: { requireApproved?: boolean } = {}
 ): Promise<
-  | { ok: true; session: NonNullable<Awaited<ReturnType<typeof auth>>> }
+  | { ok: true; session: Session }
   | { ok: false; response: NextResponse }
 > {
   const session = await auth()

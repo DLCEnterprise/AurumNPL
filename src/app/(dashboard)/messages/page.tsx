@@ -5,10 +5,11 @@ import { MessagingApp } from '@/components/messaging/MessagingApp'
 export const metadata: Metadata = { title: 'Messages' }
 
 export default async function MessagesPage({
-  searchParams,
+  searchParams: searchParamsPromise,
 }: {
-  searchParams: { convo?: string }
+  searchParams: Promise<{ convo?: string }>
 }) {
+  const searchParams = await searchParamsPromise
   const session = await auth()
   return (
     <div>

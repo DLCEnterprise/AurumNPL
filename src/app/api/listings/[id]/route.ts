@@ -3,18 +3,19 @@ import { z } from 'zod'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
-type Params = { params: { id: string } }
+type Params = { params: Promise<{ id: string }> }
 
 // ─── GET /api/listings/[id] ───────────────────────────────────────────────────
 
-export async function GET(_req: NextRequest, { params }: Params) {
+export async function GET(_req: NextRequest, { params: paramsPromise }: Params) {
+  const { id } = await paramsPromise
   const session = await auth()
   if (!session || session.user.approvalStatus !== 'APPROVED') {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
   }
 
   const listing = await prisma.listing.findUnique({
-    where: { id: params.id },
+    where: { id },
     include: { seller: { select: { id: true, name: true, company: true, email: true } } },
   })
 
@@ -48,13 +49,14 @@ const UpdateSchema = z.object({
   status:         z.enum(['DRAFT', 'ACTIVE', 'UNDER_REVIEW', 'PENDING', 'SOLD', 'ARCHIVED']).optional(),
 })
 
-export async function PUT(req: NextRequest, { params }: Params) {
+export async function PUT(req: NextRequest, { params: paramsPromise }: Params) {
+  const { id } = await paramsPromise
   const session = await auth()
   if (!session || session.user.approvalStatus !== 'APPROVED') {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
   }
 
-  const listing = await prisma.listing.findUnique({ where: { id: params.id } })
+  const listing = await prisma.listing.findUnique({ where: { id } })
   if (!listing) {
     return NextResponse.json({ success: false, error: 'Listing not found.' }, { status: 404 })
   }
@@ -69,7 +71,7 @@ export async function PUT(req: NextRequest, { params }: Params) {
   }
 
   const updated = await prisma.listing.update({
-    where: { id: params.id },
+    where: { id },
     data: parsed.data,
   })
 
@@ -78,13 +80,14 @@ export async function PUT(req: NextRequest, { params }: Params) {
 
 // ─── DELETE /api/listings/[id] (soft delete → ARCHIVED) ──────────────────────
 
-export async function DELETE(_req: NextRequest, { params }: Params) {
+export async function DELETE(_req: NextRequest, { params: paramsPromise }: Params) {
+  const { id } = await paramsPromise
   const session = await auth()
   if (!session || session.user.approvalStatus !== 'APPROVED') {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
   }
 
-  const listing = await prisma.listing.findUnique({ where: { id: params.id } })
+  const listing = await prisma.listing.findUnique({ where: { id } })
   if (!listing) {
     return NextResponse.json({ success: false, error: 'Listing not found.' }, { status: 404 })
   }
@@ -93,7 +96,7 @@ export async function DELETE(_req: NextRequest, { params }: Params) {
   }
 
   await prisma.listing.update({
-    where: { id: params.id },
+    where: { id },
     data: { status: 'ARCHIVED' },
   })
 

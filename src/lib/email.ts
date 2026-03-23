@@ -1,6 +1,10 @@
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+let _resend: Resend | null = null
+function getResend() {
+  if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY)
+  return _resend
+}
 const FROM = 'AURUM <noreply@aurum.finance>'
 const BASE_URL = process.env.BASE_URL ?? 'http://localhost:3000'
 
@@ -61,7 +65,7 @@ interface SendEmailOptions {
 }
 
 export async function sendEmail({ to, subject, html }: SendEmailOptions) {
-  await resend.emails.send({ from: FROM, to, subject, html })
+  await getResend().emails.send({ from: FROM, to, subject, html })
 }
 
 // ─── Admin notification ──────────────────────────────────────────────────────

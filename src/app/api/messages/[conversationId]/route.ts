@@ -3,7 +3,7 @@ import { z } from 'zod'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
-type Params = { params: { conversationId: string } }
+type Params = { params: Promise<{ conversationId: string }> }
 
 async function assertParticipant(userId: string, conversationId: string) {
   const p = await prisma.conversationParticipant.findUnique({
@@ -14,14 +14,14 @@ async function assertParticipant(userId: string, conversationId: string) {
 
 // ─── GET /api/messages/[conversationId] ──────────────────────────────────────
 
-export async function GET(req: NextRequest, { params }: Params) {
+export async function GET(req: NextRequest, { params: paramsPromise }: Params) {
+  const { conversationId } = await paramsPromise
   const session = await auth()
   if (!session || session.user.approvalStatus !== 'APPROVED') {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
   }
 
   const userId = session.user.id
-  const { conversationId } = params
 
   const isMember = await assertParticipant(userId, conversationId)
   if (!isMember) {
@@ -61,14 +61,14 @@ const SendSchema = z.object({
   content: z.string().min(1, 'Message cannot be empty.').max(4000),
 })
 
-export async function POST(req: NextRequest, { params }: Params) {
+export async function POST(req: NextRequest, { params: paramsPromise }: Params) {
+  const { conversationId } = await paramsPromise
   const session = await auth()
   if (!session || session.user.approvalStatus !== 'APPROVED') {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
   }
 
   const userId = session.user.id
-  const { conversationId } = params
 
   const isMember = await assertParticipant(userId, conversationId)
   if (!isMember) {

@@ -21,10 +21,11 @@ interface SearchParams {
 }
 
 export default async function ListingsPage({
-  searchParams,
+  searchParams: searchParamsPromise,
 }: {
-  searchParams: SearchParams
+  searchParams: Promise<SearchParams>
 }) {
+  const searchParams = await searchParamsPromise
   const session = await auth()
   const userId = session!.user.id
 
