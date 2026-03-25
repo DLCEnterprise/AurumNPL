@@ -5,7 +5,7 @@ function getResend() {
   if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY)
   return _resend
 }
-const FROM = 'AURUM <noreply@aurum.finance>'
+const FROM = 'AURUM <onboarding@resend.dev>'
 const BASE_URL = process.env.BASE_URL ?? 'http://localhost:3000'
 
 // ─── Shared HTML wrapper ────────────────────────────────────────────────────
@@ -66,6 +66,27 @@ interface SendEmailOptions {
 
 export async function sendEmail({ to, subject, html }: SendEmailOptions) {
   await getResend().emails.send({ from: FROM, to, subject, html })
+}
+
+// ─── Registration confirmation (to applicant) ────────────────────────────────
+
+export async function sendRegistrationConfirmationEmail(to: string, userName: string) {
+  const html = emailWrapper(`
+    <div class="card">
+      <h1>We received your application.</h1>
+      <p>Hi ${userName}, thank you for applying for access to AURUM.</p>
+      <p>Your application is currently under review. Our team will assess your information and notify you once a decision has been made — typically within 1–2 business days.</p>
+      <p>There is nothing further you need to do at this time.</p>
+      <hr class="divider" />
+      <p style="font-size:13px;">Questions? Contact us at <a href="mailto:support@aurum.finance" style="color:#d4a846;">support@aurum.finance</a>.</p>
+    </div>
+  `)
+
+  await sendEmail({
+    to,
+    subject: 'Your AURUM application is under review',
+    html,
+  })
 }
 
 // ─── Admin notification ──────────────────────────────────────────────────────

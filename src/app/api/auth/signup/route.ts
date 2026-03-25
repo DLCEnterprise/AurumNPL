@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { hash } from 'bcryptjs'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
-import { sendAdminNotification } from '@/lib/email'
+import { sendAdminNotification, sendRegistrationConfirmationEmail } from '@/lib/email'
 import { signAdminToken, generateNonce } from '@/lib/utils'
 import { rateLimit, getIp, rateLimitResponse } from '@/lib/rate-limit'
 
@@ -114,6 +114,9 @@ export async function POST(req: NextRequest) {
       approveUrl,
       rejectUrl,
     }).catch((err) => console.error('[signup] admin notification failed:', err))
+
+    sendRegistrationConfirmationEmail(email, name)
+      .catch((err) => console.error('[signup] confirmation email failed:', err))
 
     return NextResponse.json({ success: true }, { status: 201 })
   } catch (err) {
