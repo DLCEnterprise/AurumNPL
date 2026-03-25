@@ -102,6 +102,7 @@ async function upstashLimit(
 const LIMITS: Record<string, { limit: number; windowMs: number }> = {
   signup:  { limit: 5,   windowMs: 60 * 60 * 1000 },       // 5 / hour
   signin:  { limit: 10,  windowMs: 15 * 60 * 1000 },       // 10 / 15 min
+  reset:   { limit: 3,   windowMs: 60 * 60 * 1000 },       // 3 / hour
   api:     { limit: 100, windowMs: 60 * 1000 },             // 100 / min
   admin:   { limit: 20,  windowMs: 60 * 1000 },             // 20 / min
 }

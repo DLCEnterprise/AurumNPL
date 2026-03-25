@@ -3,6 +3,7 @@
 import Link from 'next/link'
 import { signOut } from 'next-auth/react'
 import { getInitials } from '@/lib/utils'
+import { NotificationBell } from '@/components/layout/NotificationBell'
 import type { SessionUser } from '@/types'
 
 interface DashboardNavProps {
@@ -19,6 +20,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
         </Link>
 
         <div className="nav__actions">
+          <NotificationBell />
           <div style={{
             display: 'flex',
             alignItems: 'center',

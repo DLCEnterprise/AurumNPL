@@ -8,6 +8,10 @@ import { ContactSellerButton } from '@/components/listings/ContactSellerButton'
 import { ArchiveListingButton } from '@/components/listings/ArchiveListingButton'
 import { PublishListingButton } from '@/components/listings/PublishListingButton'
 import { AssetDetail } from '@/components/listings/AssetDetail'
+import { ViewTracker } from '@/components/listings/ViewTracker'
+import { ListingAnalyticsCard } from '@/components/listings/ListingAnalyticsCard'
+import { SaveListingButton } from '@/components/listings/SaveListingButton'
+import { BidButton } from '@/components/listings/BidButton'
 import type { AssetType, ListingStatus } from '@prisma/client'
 
 export const metadata: Metadata = { title: 'Listing Detail' }
@@ -37,6 +41,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
   const isOwner = listing.sellerId === userId
   const isAdmin = session!.user.role === 'ADMIN'
+  const isBuyer = session!.user.role === 'BUYER'
 
   if (!isOwner && !isAdmin && (listing.status === 'DRAFT' || listing.status === 'ARCHIVED')) {
     notFound()
@@ -44,6 +49,24 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
   // Serialise asset dates → ISO strings for client components
   const asset = listing.asset ? JSON.parse(JSON.stringify(listing.asset)) : null
+
+  // Saved state + existing bid (for non-owners)
+  const [savedRecord, existingBid, bidCount] = await Promise.all([
+    !isOwner
+      ? prisma.savedListing.findUnique({ where: { userId_listingId: { userId, listingId: id } } })
+      : Promise.resolve(null),
+    !isOwner && isBuyer
+      ? prisma.bid.findFirst({ where: { listingId: id, bidderId: userId, status: 'PENDING' } })
+      : Promise.resolve(null),
+    isOwner || isAdmin
+      ? prisma.bid.count({ where: { listingId: id } })
+      : Promise.resolve(0),
+  ])
+
+  const isSaved = !!savedRecord
+  const serializedBid = existingBid
+    ? { id: existingBid.id, amount: existingBid.amount, noteRate: existingBid.noteRate, status: existingBid.status }
+    : null
 
   return (
     <div style={{ maxWidth: '900px' }}>
@@ -91,14 +114,36 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
             Calculate Yield
           </Link>
         )}
+        {!isOwner && (
+          <SaveListingButton listingId={listing.id} initialSaved={isSaved} />
+        )}
         {isOwner && (
           <>
             {listing.status === 'DRAFT' && <PublishListingButton listingId={listing.id} />}
             <Link href={`/listings/${listing.id}/edit`} className="btn btn--ghost">Edit Listing</Link>
+            <Link href={`/listings/${listing.id}/bids`} className="btn btn--ghost">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              View Bids{bidCount > 0 ? ` (${bidCount})` : ''}
+            </Link>
             <ArchiveListingButton listingId={listing.id} />
           </>
         )}
       </div>
+
+      {/* Bid form for buyers */}
+      {!isOwner && isBuyer && listing.status === 'ACTIVE' && (
+        <div style={{ marginBottom: '28px' }}>
+          <BidButton listingId={listing.id} existingBid={serializedBid} />
+        </div>
+      )}
+
+      {/* View tracking — fires silently on mount for all approved non-sellers */}
+      <ViewTracker listingId={id} />
+
+      {/* Analytics card — visible to listing owner and admins only */}
+      {(isOwner || isAdmin) && <ListingAnalyticsCard listingId={id} />}
 
       {/* If no asset data, show the simple metrics card */}
       {!asset && (

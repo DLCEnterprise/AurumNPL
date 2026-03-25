@@ -186,6 +186,45 @@ export async function sendRejectionEmail(to: string, userName: string) {
   })
 }
 
+// ─── Bid notification (to seller) ────────────────────────────────────────────
+
+interface BidNotificationOptions {
+  to: string
+  buyerCompany: string
+  amount: number
+  listingTitle: string
+  bidsUrl: string
+}
+
+export async function sendBidNotificationEmail(opts: BidNotificationOptions) {
+  const formatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(opts.amount)
+  const html = emailWrapper(`
+    <div class="card">
+      <h1>New bid on your listing.</h1>
+      <p>You have received a new bid on <strong style="color:#f4f4f5;">${opts.listingTitle}</strong>.</p>
+      <div class="meta">
+        <div class="meta-row">
+          <span class="meta-label">Buyer</span>
+          <span class="meta-value">${opts.buyerCompany}</span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Bid Amount</span>
+          <span class="meta-value">${formatted}</span>
+        </div>
+      </div>
+      <a href="${opts.bidsUrl}" class="btn-gold">View Bids →</a>
+      <hr class="divider" />
+      <p style="font-size:13px;">Log in to AURUM to review and respond to this bid.</p>
+    </div>
+  `)
+
+  await sendEmail({
+    to: opts.to,
+    subject: `[AURUM] New bid on "${opts.listingTitle}"`,
+    html,
+  })
+}
+
 // ─── Password reset ────────────────────────────────────────────────────────────
 
 export async function sendPasswordResetEmail(to: string, resetUrl: string) {

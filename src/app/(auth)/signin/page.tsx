@@ -15,11 +15,16 @@ function SignInForm() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const resetParam = params.get('reset')
+
   const [error, setError] = useState<string | null>(
     errorParam === 'rejected'
       ? 'Your application was not approved. Contact support@aurum.finance for details.'
       : null
   )
+  const success = resetParam === 'success'
+    ? 'Your password has been reset. You can now sign in with your new password.'
+    : null
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -76,6 +81,12 @@ function SignInForm() {
         <h1>Welcome back</h1>
         <p className="auth-card__subtitle">Sign in to your institutional account</p>
 
+        {success && (
+          <div className="alert alert--success" role="alert">
+            {success}
+          </div>
+        )}
+
         {error && (
           <div className="alert alert--error" role="alert">
             {error}
@@ -112,7 +123,7 @@ function SignInForm() {
           </div>
 
           <div style={{ textAlign: 'right', marginBottom: '20px' }}>
-            <Link href="#" style={{ fontSize: '0.8rem', color: 'var(--gold-300)' }}>
+            <Link href="/forgot-password" style={{ fontSize: '0.8rem', color: 'var(--gold-300)' }}>
               Forgot password?
             </Link>
           </div>

@@ -35,6 +35,23 @@ enum AssetType {
   MIXED
 }
 
+enum BidStatus {
+  PENDING
+  ACCEPTED
+  REJECTED
+  WITHDRAWN
+  COUNTERED
+}
+
+enum NotificationType {
+  NEW_BID
+  BID_ACCEPTED
+  BID_REJECTED
+  NEW_MESSAGE
+  LISTING_SAVED
+  LISTING_PUBLISHED
+}
+
 model User {
   id             String         @id @default(cuid())
   email          String         @unique
@@ -73,10 +90,14 @@ model User {
   servicerContactPhone  String?
   servicerContactEmail  String?
 
-  listings         Listing[]
-  sentMessages     Message[]                 @relation("SentMessages")
-  receivedMessages Message[]                 @relation("ReceivedMessages")
-  conversations    ConversationParticipant[]
+  listings              Listing[]
+  sentMessages          Message[]                 @relation("SentMessages")
+  receivedMessages      Message[]                 @relation("ReceivedMessages")
+  conversations         ConversationParticipant[]
+  savedListings         SavedListing[]
+  bidsPlaced            Bid[]                     @relation("BidsPlaced")
+  notifications         Notification[]
+  uploadedDocuments     Document[]                @relation("UploadedDocuments")
 
   @@index([email])
   @@index([approvalStatus])
@@ -101,7 +122,11 @@ model Listing {
   seller   User   @relation(fields: [sellerId], references: [id])
   sellerId String
 
-  asset Asset?
+  asset         Asset?
+  savedBy       SavedListing[]
+  bids          Bid[]
+  views         ListingView[]
+  vaultDocuments Document[]
 
   @@index([status])
   @@index([assetType])
@@ -269,6 +294,93 @@ model Message {
 
   @@index([conversationId])
   @@index([senderId])
+}
+
+model PasswordResetToken {
+  id        String    @id @default(cuid())
+  token     String    @unique
+  userId    String
+  usedAt    DateTime?
+  expiresAt DateTime
+  createdAt DateTime  @default(now())
+
+  @@index([token])
+  @@index([userId])
+}
+
+model SavedListing {
+  id        String   @id @default(cuid())
+  userId    String
+  listingId String
+  createdAt DateTime @default(now())
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, listingId])
+  @@index([userId])
+}
+
+model Bid {
+  id        String    @id @default(cuid())
+  listingId String
+  bidderId  String
+  amount    Float
+  noteRate  Float?
+  message   String?
+  status    BidStatus @default(PENDING)
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  bidder  User    @relation("BidsPlaced", fields: [bidderId], references: [id])
+
+  @@index([listingId])
+  @@index([bidderId])
+}
+
+model Notification {
+  id        String           @id @default(cuid())
+  userId    String
+  type      NotificationType
+  title     String
+  body      String?
+  linkUrl   String?
+  readAt    DateTime?
+  createdAt DateTime         @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, readAt])
+  @@index([userId, createdAt])
+}
+
+model ListingView {
+  id          String   @id @default(cuid())
+  listingId   String
+  fingerprint String?
+  createdAt   DateTime @default(now())
+
+  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId, createdAt])
+  @@index([listingId, fingerprint])
+}
+
+model Document {
+  id         String   @id @default(cuid())
+  listingId  String
+  uploaderId String
+  name       String
+  storageKey String
+  mimeType   String
+  sizeBytes  Int
+  createdAt  DateTime @default(now())
+
+  listing  Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  uploader User    @relation("UploadedDocuments", fields: [uploaderId], references: [id])
+
+  @@index([listingId])
 }
 
 model AdminToken {

@@ -3,6 +3,9 @@ import { SignJWT, jwtVerify } from 'jose'
 const ADMIN_SECRET = new TextEncoder().encode(
   process.env.ADMIN_SECRET ?? 'fallback-secret-change-in-production'
 )
+const RESET_SECRET = new TextEncoder().encode(
+  (process.env.ADMIN_SECRET ?? 'fallback-secret-change-in-production') + '-reset'
+)
 
 export type AdminTokenPayload = {
   userId: string
@@ -26,6 +29,27 @@ export async function verifyAdminToken(
   try {
     const { payload } = await jwtVerify(token, ADMIN_SECRET)
     return payload as unknown as AdminTokenPayload
+  } catch {
+    return null
+  }
+}
+
+export type ResetTokenPayload = { userId: string; nonce: string }
+
+/** Sign a short-lived JWT for password reset links. Expires in 1 hour. */
+export async function signResetToken(payload: ResetTokenPayload): Promise<string> {
+  return new SignJWT({ ...payload })
+    .setProtectedHeader({ alg: 'HS256' })
+    .setIssuedAt()
+    .setExpirationTime('1h')
+    .sign(RESET_SECRET)
+}
+
+/** Verify and decode a password reset JWT. Returns null if invalid/expired. */
+export async function verifyResetToken(token: string): Promise<ResetTokenPayload | null> {
+  try {
+    const { payload } = await jwtVerify(token, RESET_SECRET)
+    return payload as unknown as ResetTokenPayload
   } catch {
     return null
   }
