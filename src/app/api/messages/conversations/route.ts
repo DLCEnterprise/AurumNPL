@@ -5,7 +5,7 @@ import { prisma } from '@/lib/prisma'
 
 // ─── GET /api/messages/conversations ─────────────────────────────────────────
 
-export async function GET(_req: NextRequest) {
+export async function GET() {
   const session = await auth()
   if (!session || session.user.approvalStatus !== 'APPROVED') {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })

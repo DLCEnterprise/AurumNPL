@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
@@ -80,7 +81,6 @@ export function StreetViewPanorama({ address, apiKey }: Props) {
   }
 
   if (fallback) {
-    // eslint-disable-next-line @next/next/no-img-element
     return (
       <img
         src={`https://maps.googleapis.com/maps/api/streetview?size=800x450&location=${encodeURIComponent(address)}&key=${apiKey}`}

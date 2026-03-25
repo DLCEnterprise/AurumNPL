@@ -69,8 +69,6 @@ async function upstashLimit(
   const url   = process.env.UPSTASH_REDIS_REST_URL!
   const token = process.env.UPSTASH_REDIS_REST_TOKEN!
   const now   = Date.now()
-  const windowSec = Math.ceil(windowMs / 1000)
-
   // INCR + EXPIRE via pipeline
   const res = await fetch(`${url}/pipeline`, {
     method: 'POST',
