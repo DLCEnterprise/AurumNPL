@@ -54,9 +54,9 @@ export function StreetViewPanorama({ address, apiKey }: Props) {
           initPanorama()
         } else if (!existingScript) {
           const callbackName = '_svReady_' + Date.now()
-          ;(window as Record<string, unknown>)[callbackName] = () => {
+          ;(window as unknown as Record<string, unknown>)[callbackName] = () => {
             initPanorama()
-            delete (window as Record<string, unknown>)[callbackName]
+            delete (window as unknown as Record<string, unknown>)[callbackName]
           }
           const script = document.createElement('script')
           script.id = 'gmaps-script'
