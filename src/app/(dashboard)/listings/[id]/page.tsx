@@ -6,6 +6,8 @@ import { prisma } from '@/lib/prisma'
 import { formatCurrency, timeAgo } from '@/lib/utils'
 import { ContactSellerButton } from '@/components/listings/ContactSellerButton'
 import { ArchiveListingButton } from '@/components/listings/ArchiveListingButton'
+import { PublishListingButton } from '@/components/listings/PublishListingButton'
+import { AssetDetail } from '@/components/listings/AssetDetail'
 import type { AssetType, ListingStatus } from '@prisma/client'
 
 export const metadata: Metadata = { title: 'Listing Detail' }
@@ -25,7 +27,10 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
   const listing = await prisma.listing.findUnique({
     where: { id },
-    include: { seller: { select: { id: true, name: true, company: true, email: true } } },
+    include: {
+      seller: { select: { id: true, name: true, company: true, email: true } },
+      asset: true,
+    },
   })
 
   if (!listing) notFound()
@@ -33,13 +38,15 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   const isOwner = listing.sellerId === userId
   const isAdmin = session!.user.role === 'ADMIN'
 
-  // Hide drafts/archived from non-owners
   if (!isOwner && !isAdmin && (listing.status === 'DRAFT' || listing.status === 'ARCHIVED')) {
     notFound()
   }
 
+  // Serialise asset dates → ISO strings for client components
+  const asset = listing.asset ? JSON.parse(JSON.stringify(listing.asset)) : null
+
   return (
-    <div style={{ maxWidth: '800px' }}>
+    <div style={{ maxWidth: '900px' }}>
       {/* Back link */}
       <Link href="/listings" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '24px' }}>
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -71,44 +78,62 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
         </p>
       </div>
 
-      {/* Key metrics */}
-      <div className="glass-card" style={{ padding: '28px', marginBottom: '20px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px' }}>
-          {[
-            { label: 'Unpaid Balance (UPB)', value: formatCurrency(listing.unpaidBalance) },
-            { label: 'Number of Loans', value: listing.loanCount.toLocaleString() },
-            { label: 'Location', value: listing.location },
-            { label: 'Avg. Delinquency', value: listing.avgDelinquency ? `${listing.avgDelinquency} months` : '—' },
-          ].map(({ label, value }) => (
-            <div key={label}>
-              <div style={{ fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '6px' }}>
-                {label}
-              </div>
-              <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 500, background: 'var(--gold-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-                {value}
-              </div>
-            </div>
-          ))}
-        </div>
+      {/* Actions row */}
+      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '28px' }}>
+        {!isOwner && (
+          <ContactSellerButton sellerId={listing.seller.id} listingId={listing.id} listingTitle={listing.title} />
+        )}
+        {!isOwner && (
+          <Link href={`/tools/yield-calculator?listingId=${listing.id}`} className="btn btn--ghost">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+            Calculate Yield
+          </Link>
+        )}
+        {isOwner && (
+          <>
+            {listing.status === 'DRAFT' && <PublishListingButton listingId={listing.id} />}
+            <Link href={`/listings/${listing.id}/edit`} className="btn btn--ghost">Edit Listing</Link>
+            <ArchiveListingButton listingId={listing.id} />
+          </>
+        )}
       </div>
 
-      {/* Description */}
-      {listing.description && (
-        <div className="glass-card" style={{ padding: '28px', marginBottom: '20px' }}>
-          <h3 style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '12px' }}>
-            Description
-          </h3>
-          <p style={{ color: 'var(--text-secondary)', lineHeight: 1.8, fontSize: '0.95rem' }}>
-            {listing.description}
-          </p>
-        </div>
+      {/* If no asset data, show the simple metrics card */}
+      {!asset && (
+        <>
+          <div className="glass-card" style={{ padding: '28px', marginBottom: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '24px' }}>
+              {[
+                { label: 'Unpaid Balance (UPB)', value: formatCurrency(listing.unpaidBalance) },
+                { label: 'Number of Loans', value: listing.loanCount.toLocaleString() },
+                { label: 'Location', value: listing.location },
+                { label: 'Avg. Delinquency', value: listing.avgDelinquency ? `${listing.avgDelinquency} months` : '—' },
+              ].map(({ label, value }) => (
+                <div key={label}>
+                  <div style={{ fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '6px' }}>{label}</div>
+                  <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.5rem', fontWeight: 500, background: 'var(--gold-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{value}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {listing.description && (
+            <div className="glass-card" style={{ padding: '28px', marginBottom: '20px' }}>
+              <h3 style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '12px' }}>Description</h3>
+              <p style={{ color: 'var(--text-secondary)', lineHeight: 1.8, fontSize: '0.95rem' }}>{listing.description}</p>
+            </div>
+          )}
+        </>
       )}
 
+      {/* Full asset detail (from imported spreadsheet) */}
+      {asset && <AssetDetail asset={asset} />}
+
       {/* Seller info */}
-      <div className="glass-card" style={{ padding: '28px', marginBottom: '24px' }}>
-        <h3 style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '16px' }}>
-          Seller
-        </h3>
+      <div className="glass-card" style={{ padding: '28px', marginTop: asset ? '0' : '0', marginBottom: '8px' }}>
+        <h3 style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '16px' }}>Seller</h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
           <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'rgba(212,168,70,0.12)', border: '1px solid rgba(212,168,70,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', fontWeight: 600, color: 'var(--gold-300)', flexShrink: 0 }}>
             {(listing.seller.company ?? listing.seller.name ?? '?').slice(0, 2).toUpperCase()}
@@ -120,21 +145,6 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
             )}
           </div>
         </div>
-      </div>
-
-      {/* Actions */}
-      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
-        {!isOwner && (
-          <ContactSellerButton sellerId={listing.seller.id} listingId={listing.id} listingTitle={listing.title} />
-        )}
-        {isOwner && (
-          <>
-            <Link href={`/listings/${listing.id}/edit`} className="btn btn--ghost">
-              Edit Listing
-            </Link>
-            <ArchiveListingButton listingId={listing.id} />
-          </>
-        )}
       </div>
     </div>
   )

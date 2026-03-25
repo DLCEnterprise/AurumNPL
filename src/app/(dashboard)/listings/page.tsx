@@ -100,12 +100,20 @@ export default async function ListingsPage({
             {mine ? 'All Listings' : 'My Listings'}
           </Link>
           {(session!.user.role === 'SELLER' || session!.user.role === 'ADMIN') && (
-            <Link href="/listings/new" className="btn btn--gold btn--sm">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M12 5v14M5 12h14" />
-              </svg>
-              New Listing
-            </Link>
+            <>
+              <Link href="/listings/import" className="btn btn--ghost btn--sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                </svg>
+                Import
+              </Link>
+              <Link href="/listings/new" className="btn btn--gold btn--sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M12 5v14M5 12h14" />
+                </svg>
+                New Listing
+              </Link>
+            </>
           )}
         </div>
       </div>
@@ -152,7 +160,7 @@ export default async function ListingsPage({
                 </div>
                 <div className="listing-card__meta-item">
                   <span className="listing-card__meta-label">Location</span>
-                  <span className="listing-card__meta-value">{listing.location}</span>
+                  <span className="listing-card__meta-value">{listing.location}{listing.zip ? ` ${listing.zip}` : ''}</span>
                 </div>
                 {listing.avgDelinquency != null && (
                   <div className="listing-card__meta-item">

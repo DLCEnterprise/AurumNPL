@@ -3,6 +3,15 @@ import { prisma } from '@/lib/prisma'
 import { verifyAdminToken } from '@/lib/utils'
 import { sendWelcomeEmail, sendRejectionEmail } from '@/lib/email'
 
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 const HTML = (title: string, body: string, isError = false) => `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -76,7 +85,7 @@ export async function GET(req: NextRequest) {
     return new NextResponse(
       HTML(
         'Already Processed',
-        `<p>This account (${user.email}) has already been ${user.approvalStatus.toLowerCase()}.</p>`
+        `<p>This account (${escapeHtml(user.email)}) has already been ${user.approvalStatus.toLowerCase()}.</p>`
       ),
       { status: 200, headers: { 'Content-Type': 'text/html' } }
     )
@@ -112,7 +121,7 @@ export async function GET(req: NextRequest) {
     return new NextResponse(
       HTML(
         'User Approved',
-        `<p><strong>${user.name ?? user.email}</strong> has been approved and notified via email. They may now sign in to AURUM.</p>`
+        `<p><strong>${escapeHtml(user.name ?? user.email)}</strong> has been approved and notified via email. They may now sign in to AURUM.</p>`
       ),
       { status: 200, headers: { 'Content-Type': 'text/html' } }
     )
@@ -121,7 +130,7 @@ export async function GET(req: NextRequest) {
     return new NextResponse(
       HTML(
         'Application Rejected',
-        `<p><strong>${user.name ?? user.email}</strong>&apos;s application has been rejected. They have been notified via email.</p>`
+        `<p><strong>${escapeHtml(user.name ?? user.email)}</strong>&apos;s application has been rejected. They have been notified via email.</p>`
       ),
       { status: 200, headers: { 'Content-Type': 'text/html' } }
     )

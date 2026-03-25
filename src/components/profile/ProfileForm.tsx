@@ -14,6 +14,20 @@ interface User {
   role: string
   approvalStatus: string
   createdAt: string
+  // Investor fields
+  entityName?: string | null
+  signerTitle?: string | null
+  yearsExperience?: number | null
+  investorType?: string | null
+  lienPosition?: string | null
+  loanStatusPref?: string | null
+  mainObjective?: string | null
+  // Servicer fields
+  servicerName?: string | null
+  servicerAddress?: string | null
+  servicerContactName?: string | null
+  servicerContactPhone?: string | null
+  servicerContactEmail?: string | null
 }
 
 export function ProfileForm({ user }: { user: User }) {
@@ -25,6 +39,22 @@ export function ProfileForm({ user }: { user: User }) {
   const [company, setCompany] = useState(user.company ?? '')
   const [phone, setPhone]     = useState(user.phone ?? '')
   const [profileSaving, setProfileSaving] = useState(false)
+
+  // Investor fields
+  const [entityName, setEntityName]         = useState(user.entityName ?? '')
+  const [signerTitle, setSignerTitle]       = useState(user.signerTitle ?? '')
+  const [yearsExp, setYearsExp]             = useState(user.yearsExperience?.toString() ?? '')
+  const [investorType, setInvestorType]     = useState(user.investorType ?? '')
+  const [lienPosition, setLienPosition]     = useState(user.lienPosition ?? '')
+  const [loanStatusPref, setLoanStatusPref] = useState(user.loanStatusPref ?? '')
+  const [mainObjective, setMainObjective]   = useState(user.mainObjective ?? '')
+
+  // Servicer fields
+  const [servicerName, setServicerName]           = useState(user.servicerName ?? '')
+  const [servicerAddress, setServicerAddress]     = useState(user.servicerAddress ?? '')
+  const [servicerContactName, setServicerContactName]   = useState(user.servicerContactName ?? '')
+  const [servicerContactPhone, setServicerContactPhone] = useState(user.servicerContactPhone ?? '')
+  const [servicerContactEmail, setServicerContactEmail] = useState(user.servicerContactEmail ?? '')
 
   // Password section
   const [currentPw, setCurrentPw] = useState('')
@@ -39,7 +69,23 @@ export function ProfileForm({ user }: { user: User }) {
     const res = await fetch('/api/profile', {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: name.trim(), company: company.trim(), phone: phone.trim() }),
+      body: JSON.stringify({
+        name: name.trim(),
+        company: company.trim(),
+        phone: phone.trim() || null,
+        entityName: entityName.trim() || null,
+        signerTitle: signerTitle.trim() || null,
+        yearsExperience: yearsExp ? parseInt(yearsExp) : null,
+        investorType: investorType || null,
+        lienPosition: lienPosition || null,
+        loanStatusPref: loanStatusPref || null,
+        mainObjective: mainObjective || null,
+        servicerName: servicerName.trim() || null,
+        servicerAddress: servicerAddress.trim() || null,
+        servicerContactName: servicerContactName.trim() || null,
+        servicerContactPhone: servicerContactPhone.trim() || null,
+        servicerContactEmail: servicerContactEmail.trim() || null,
+      }),
     })
     setProfileSaving(false)
     const data = await res.json()
@@ -136,6 +182,102 @@ export function ProfileForm({ user }: { user: User }) {
           </button>
         </form>
       </div>
+
+      {/* Investor profile (buyers only) */}
+      {(user.role === 'BUYER' || user.role === 'ADMIN') && (
+        <div className="glass-card" style={{ padding: '32px' }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 400, marginBottom: '6px' }}>
+            Investor Profile
+          </h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '24px' }}>
+            This information helps match you with suitable listings.
+          </p>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div className="form-group">
+              <label>Entity Name</label>
+              <input type="text" className="form-input" value={entityName} onChange={(e) => setEntityName(e.target.value)} placeholder="Acme Capital LLC" />
+            </div>
+            <div className="form-group">
+              <label>Signer&apos;s Title</label>
+              <input type="text" className="form-input" value={signerTitle} onChange={(e) => setSignerTitle(e.target.value)} placeholder="Managing Director" />
+            </div>
+            <div className="form-group">
+              <label>Years of Experience</label>
+              <input type="number" min="0" className="form-input" value={yearsExp} onChange={(e) => setYearsExp(e.target.value)} placeholder="10" />
+            </div>
+            <div className="form-group">
+              <label>Investor Type</label>
+              <select className="form-input" value={investorType} onChange={(e) => setInvestorType(e.target.value)}>
+                <option value="">Select…</option>
+                <option>Private Investor</option>
+                <option>Fund Manager</option>
+                <option>Partner</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Lien Position</label>
+              <select className="form-input" value={lienPosition} onChange={(e) => setLienPosition(e.target.value)}>
+                <option value="">Select…</option>
+                <option>First Mortgage</option>
+                <option>Second/HELOC</option>
+                <option>Both</option>
+              </select>
+            </div>
+            <div className="form-group">
+              <label>Loan Status Preference</label>
+              <select className="form-input" value={loanStatusPref} onChange={(e) => setLoanStatusPref(e.target.value)}>
+                <option value="">Select…</option>
+                <option>Performing</option>
+                <option>Non-Performing</option>
+                <option>Both</option>
+              </select>
+            </div>
+          </div>
+          <div className="form-group" style={{ marginBottom: '0' }}>
+            <label>Main Objective</label>
+            <select className="form-input" value={mainObjective} onChange={(e) => setMainObjective(e.target.value)}>
+              <option value="">Select…</option>
+              <option>Cash Flow</option>
+              <option>Quick Payoff / Short Pay</option>
+              <option>Obtain Real Estate</option>
+            </select>
+          </div>
+        </div>
+      )}
+
+      {/* Loan servicer info (buyers only) */}
+      {(user.role === 'BUYER' || user.role === 'ADMIN') && (
+        <div className="glass-card" style={{ padding: '32px' }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 400, marginBottom: '6px' }}>
+            Loan Servicer
+          </h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '24px' }}>
+            Servicer boarding information to facilitate loan transfers post-purchase.
+          </p>
+          <div className="form-group">
+            <label>Servicer Name</label>
+            <input type="text" className="form-input" value={servicerName} onChange={(e) => setServicerName(e.target.value)} placeholder="First National Servicing" />
+          </div>
+          <div className="form-group">
+            <label>Servicer Address</label>
+            <input type="text" className="form-input" value={servicerAddress} onChange={(e) => setServicerAddress(e.target.value)} placeholder="123 Main St, Dallas, TX 75001" />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+            <div className="form-group">
+              <label>Boarding Dept Contact Name</label>
+              <input type="text" className="form-input" value={servicerContactName} onChange={(e) => setServicerContactName(e.target.value)} placeholder="John Smith" />
+            </div>
+            <div className="form-group">
+              <label>Contact Phone</label>
+              <input type="tel" className="form-input" value={servicerContactPhone} onChange={(e) => setServicerContactPhone(e.target.value)} placeholder="+1 (555) 000-0000" />
+            </div>
+          </div>
+          <div className="form-group" style={{ marginBottom: '0' }}>
+            <label>Contact Email</label>
+            <input type="email" className="form-input" value={servicerContactEmail} onChange={(e) => setServicerContactEmail(e.target.value)} placeholder="boarding@servicer.com" />
+          </div>
+        </div>
+      )}
 
       {/* Change password */}
       <div className="glass-card" style={{ padding: '32px' }}>

@@ -9,7 +9,14 @@ export default async function ProfilePage() {
   const session = await auth()
   const user = await prisma.user.findUnique({
     where: { id: session!.user.id },
-    select: { id: true, name: true, email: true, company: true, phone: true, role: true, approvalStatus: true, createdAt: true },
+    select: {
+      id: true, name: true, email: true, company: true, phone: true,
+      role: true, approvalStatus: true, createdAt: true,
+      entityName: true, signerTitle: true, yearsExperience: true,
+      investorType: true, lienPosition: true, loanStatusPref: true, mainObjective: true,
+      servicerName: true, servicerAddress: true,
+      servicerContactName: true, servicerContactPhone: true, servicerContactEmail: true,
+    },
   })
 
   if (!user) return null

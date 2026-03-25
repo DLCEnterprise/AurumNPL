@@ -44,6 +44,7 @@ const UpdateSchema = z.object({
   unpaidBalance:  z.number().positive().optional(),
   loanCount:      z.number().int().positive().optional(),
   location:       z.string().min(2).optional(),
+  zip:            z.string().optional(),
   region:         z.string().optional(),
   avgDelinquency: z.number().int().min(0).optional(),
   status:         z.enum(['DRAFT', 'ACTIVE', 'UNDER_REVIEW', 'PENDING', 'SOLD', 'ARCHIVED']).optional(),

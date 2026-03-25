@@ -18,6 +18,14 @@ const SignUpSchema = z.object({
   company: z.string().min(2, 'Company name must be at least 2 characters.'),
   phone: z.string().optional(),
   role: z.enum(['SELLER', 'BUYER']),
+  // Optional investor fields (BUYER only)
+  entityName:     z.string().optional(),
+  signerTitle:    z.string().optional(),
+  yearsExperience: z.number().int().min(0).optional(),
+  investorType:   z.string().optional(),
+  lienPosition:   z.string().optional(),
+  loanStatusPref: z.string().optional(),
+  mainObjective:  z.string().optional(),
 })
 
 export async function POST(req: NextRequest) {
@@ -42,7 +50,9 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { name, email, password, company, phone, role } = parsed.data
+    const { name, email, password, company, phone, role,
+            entityName, signerTitle, yearsExperience, investorType,
+            lienPosition, loanStatusPref, mainObjective } = parsed.data
 
     // Check for existing user
     const existing = await prisma.user.findUnique({ where: { email } })
@@ -64,6 +74,15 @@ export async function POST(req: NextRequest) {
         phone: phone ?? null,
         role,
         approvalStatus: 'PENDING',
+        ...(role === 'BUYER' && {
+          entityName:      entityName ?? null,
+          signerTitle:     signerTitle ?? null,
+          yearsExperience: yearsExperience ?? null,
+          investorType:    investorType ?? null,
+          lienPosition:    lienPosition ?? null,
+          loanStatusPref:  loanStatusPref ?? null,
+          mainObjective:   mainObjective ?? null,
+        }),
       },
     })
 
@@ -85,7 +104,8 @@ export async function POST(req: NextRequest) {
       ],
     })
 
-    await sendAdminNotification({
+    // Non-blocking — signup succeeds even if email isn't configured
+    sendAdminNotification({
       userName: name,
       userEmail: email,
       userCompany: company,
@@ -93,7 +113,7 @@ export async function POST(req: NextRequest) {
       signupAt: new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }),
       approveUrl,
       rejectUrl,
-    })
+    }).catch((err) => console.error('[signup] admin notification failed:', err))
 
     return NextResponse.json({ success: true }, { status: 201 })
   } catch (err) {

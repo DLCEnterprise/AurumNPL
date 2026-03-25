@@ -16,8 +16,20 @@ export async function GET(req: NextRequest) {
   const page    = Math.max(1, parseInt(searchParams.get('page') ?? '1'))
   const limit   = Math.min(50, parseInt(searchParams.get('limit') ?? '12'))
   const mine    = searchParams.get('mine') === 'true'
-  const assetType = searchParams.get('assetType') as AssetType | null
-  const status    = searchParams.get('status') as ListingStatus | null
+
+  const VALID_ASSET_TYPES: AssetType[] = ['RESIDENTIAL', 'COMMERCIAL', 'CONSUMER', 'MIXED']
+  const VALID_STATUSES: ListingStatus[] = ['DRAFT', 'ACTIVE', 'UNDER_REVIEW', 'PENDING', 'SOLD', 'ARCHIVED']
+
+  const assetTypeParam = searchParams.get('assetType')
+  const assetType: AssetType | null = VALID_ASSET_TYPES.includes(assetTypeParam as AssetType)
+    ? (assetTypeParam as AssetType)
+    : null
+
+  const statusParam = searchParams.get('status')
+  const status: ListingStatus | null = VALID_STATUSES.includes(statusParam as ListingStatus)
+    ? (statusParam as ListingStatus)
+    : null
+
   const region    = searchParams.get('region')
   const upbMin    = searchParams.get('upbMin') ? parseFloat(searchParams.get('upbMin')!) : undefined
   const upbMax    = searchParams.get('upbMax') ? parseFloat(searchParams.get('upbMax')!) : undefined

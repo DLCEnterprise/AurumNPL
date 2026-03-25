@@ -25,43 +25,51 @@ export async function GET(_req: NextRequest) {
             orderBy: { createdAt: 'desc' },
             take: 1,
           },
+          _count: {
+            select: {
+              messages: true,
+            },
+          },
         },
       },
     },
     orderBy: { conversation: { updatedAt: 'desc' } },
   })
 
-  const conversations = await Promise.all(
-    participations.map(async (p) => {
-      const convo = p.conversation
-      const otherParticipant = convo.participants.find((cp) => cp.userId !== userId)?.user ?? null
-      const lastMessage = convo.messages[0] ?? null
+  // Fetch all unread counts in a single grouped query instead of N queries
+  const conversationIds = participations.map((p) => p.conversation.id)
+  const unreadGroups = await prisma.message.groupBy({
+    by: ['conversationId'],
+    where: {
+      conversationId: { in: conversationIds },
+      senderId: { not: userId },
+      readAt: null,
+    },
+    _count: { id: true },
+  })
+  const unreadMap = new Map(unreadGroups.map((g) => [g.conversationId, g._count.id]))
 
-      const unreadCount = await prisma.message.count({
-        where: {
-          conversationId: convo.id,
-          senderId: { not: userId },
-          readAt: null,
-        },
-      })
+  const conversations = participations.map((p) => {
+    const convo = p.conversation
+    const otherParticipant = convo.participants.find((cp) => cp.userId !== userId)?.user ?? null
+    const lastMessage = convo.messages[0] ?? null
 
-      return {
-        id: convo.id,
-        listingId: convo.listingId,
-        createdAt: convo.createdAt.toISOString(),
-        updatedAt: convo.updatedAt.toISOString(),
-        otherParticipant,
-        lastMessage: lastMessage
-          ? {
-              ...lastMessage,
-              createdAt: lastMessage.createdAt.toISOString(),
-              readAt: lastMessage.readAt?.toISOString() ?? null,
-            }
-          : null,
-        unreadCount,
-      }
-    })
-  )
+    return {
+      id: convo.id,
+      listingId: convo.listingId,
+      createdAt: convo.createdAt.toISOString(),
+      updatedAt: convo.updatedAt.toISOString(),
+      otherParticipant,
+      lastMessage: lastMessage
+        ? {
+            ...lastMessage,
+            createdAt: lastMessage.createdAt.toISOString(),
+            readAt: lastMessage.readAt?.toISOString() ?? null,
+          }
+        : null,
+      unreadCount: unreadMap.get(convo.id) ?? 0,
+    }
+  })
 
   return NextResponse.json({ success: true, data: conversations })
 }
@@ -93,15 +101,18 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: 'Cannot message yourself.' }, { status: 400 })
   }
 
-  // Check if a conversation between these two users already exists for this listing
+  // Check if a conversation between these two users already exists for this listing.
+  // Using two `some` conditions correctly requires both participants to be present,
+  // then the length check below ensures no extra participants exist.
   const existing = await prisma.conversation.findFirst({
     where: {
       listingId: listingId ?? null,
-      participants: {
-        every: { userId: { in: [senderId, recipientId] } },
-      },
+      AND: [
+        { participants: { some: { userId: senderId } } },
+        { participants: { some: { userId: recipientId } } },
+      ],
     },
-    include: { participants: true },
+    include: { participants: { select: { userId: true } } },
   })
 
   if (existing && existing.participants.length === 2) {

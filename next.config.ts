@@ -20,11 +20,11 @@ const origin = (() => {
  */
 const csp = [
   `default-src 'self'`,
-  `script-src 'self' ${isDev ? "'unsafe-eval' 'unsafe-inline'" : "'unsafe-inline'"}`,
-  `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com`,
+  `script-src 'self' ${isDev ? "'unsafe-eval' 'unsafe-inline'" : "'unsafe-inline'"} https://maps.googleapis.com https://maps.gstatic.com`,
+  `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://maps.googleapis.com https://maps.gstatic.com`,
   `font-src 'self' https://fonts.gstatic.com`,
-  `img-src 'self' data: blob:`,
-  `connect-src 'self'`,
+  `img-src 'self' data: blob: https://maps.googleapis.com https://maps.gstatic.com https://*.googleapis.com https://*.ggpht.com`,
+  `connect-src 'self' https://maps.googleapis.com https://maps.gstatic.com`,
   `frame-ancestors 'none'`,
   `base-uri 'self'`,
   `form-action 'self'`,

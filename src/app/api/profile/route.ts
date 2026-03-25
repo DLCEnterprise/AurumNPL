@@ -8,6 +8,20 @@ const UpdateProfileSchema = z.object({
   name:    z.string().min(2).optional(),
   company: z.string().min(2).optional(),
   phone:   z.string().optional(),
+  // Investor fields
+  entityName:           z.string().optional().nullable(),
+  signerTitle:          z.string().optional().nullable(),
+  yearsExperience:      z.number().int().min(0).optional().nullable(),
+  investorType:         z.string().optional().nullable(),
+  lienPosition:         z.string().optional().nullable(),
+  loanStatusPref:       z.string().optional().nullable(),
+  mainObjective:        z.string().optional().nullable(),
+  // Servicer fields
+  servicerName:         z.string().optional().nullable(),
+  servicerAddress:      z.string().optional().nullable(),
+  servicerContactName:  z.string().optional().nullable(),
+  servicerContactPhone: z.string().optional().nullable(),
+  servicerContactEmail: z.string().email().optional().nullable(),
 })
 
 const ChangePasswordSchema = z.object({

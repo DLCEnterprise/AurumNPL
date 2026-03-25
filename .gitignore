@@ -14,8 +14,8 @@ dist/
 .env.*.local
 .env.production
 
-# Prisma
-prisma/migrations/
+# Client data — never commit real spreadsheets or uploads
+assets/
 
 # Misc
 .DS_Store

@@ -50,6 +50,29 @@ model User {
   createdAt      DateTime       @default(now())
   updatedAt      DateTime       @updatedAt
 
+  // Investor / buyer profile fields
+  lastName              String?
+  entityName            String?
+  signerTitle           String?
+  addressStreet         String?
+  addressCity           String?
+  addressState          String?
+  addressZip            String?
+  directPhone           String?
+  officePhone           String?
+  yearsExperience       Int?
+  investorType          String?   // Private Investor, Fund Manager, Partner
+  lienPosition          String?   // First Mortgage, Second/HELOC, Both
+  loanStatusPref        String?   // Performing, Non-Performing, Both
+  mainObjective         String?   // Cash Flow, Quick Payoff/Short Pay, Obtain Real Estate
+
+  // Loan servicer info
+  servicerName          String?
+  servicerAddress       String?
+  servicerContactName   String?
+  servicerContactPhone  String?
+  servicerContactEmail  String?
+
   listings         Listing[]
   sentMessages     Message[]                 @relation("SentMessages")
   receivedMessages Message[]                 @relation("ReceivedMessages")
@@ -67,6 +90,7 @@ model Listing {
   unpaidBalance  Float
   loanCount      Int
   location       String
+  zip            String?
   region         String?
   avgDelinquency Int?
   status         ListingStatus @default(DRAFT)
@@ -77,9 +101,135 @@ model Listing {
   seller   User   @relation(fields: [sellerId], references: [id])
   sellerId String
 
+  asset Asset?
+
   @@index([status])
   @@index([assetType])
   @@index([sellerId])
+}
+
+model Asset {
+  id        String   @id @default(cuid())
+  listingId String   @unique
+  listing   Listing  @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  // ── LTV Metrics ───────────────────────────────────────────
+  ltv         Float?
+  cltv        Float?
+  payoffCltv  Float?
+
+  // ── Property Data ─────────────────────────────────────────
+  fairMarketValue    Float?
+  occupancyType      String?
+  homePurchaseDate   DateTime?
+  homePurchasePrice  Float?
+  propertyStreet     String?
+  propertyCity       String?
+  propertyState      String?
+  propertyZip        String?
+  streetViewUrl      String?
+
+  // ── Bankruptcy — Current ──────────────────────────────────
+  isInBankruptcy       Boolean?
+  bankruptcyChapter    String?
+  bkFilingDate         DateTime?
+  ch13PocFilingDate    DateTime?
+  bkConfirmationDate   DateTime?
+  bkDismissalDate      DateTime?
+  ch13DischargedDate   DateTime?
+
+  // ── Bankruptcy — Previous History ─────────────────────────
+  ch7PetitionDate       DateTime?
+  ch7CaseNumber         String?
+  ch7DateFiled          DateTime?
+  ch7DismissalDate      DateTime?
+  ch7DischargeDate      DateTime?
+  prevCh13PetitionDate  DateTime?
+  prevCh13CaseNumber    String?
+  prevCh13DateFiled     DateTime?
+  prevCh13DismissalDate DateTime?
+  prevCh13DischargeDate DateTime?
+
+  // ── First Mortgage — Current Loan Data ───────────────────
+  firstMtg_loanStatus        String?
+  firstMtg_originationDate   DateTime?
+  firstMtg_maturityDate      DateTime?
+  firstMtg_loanTermMonths    Int?
+  firstMtg_firstPaymentDate  DateTime?
+  firstMtg_interestPaidToDate DateTime?
+  firstMtg_totalMonthsPaid   Int?
+  firstMtg_originalAmount    Float?
+  firstMtg_currentBalance    Float?
+  firstMtg_nextDueDate       DateTime?
+  firstMtg_monthsRemaining   Int?
+  firstMtg_interestRate      Float?
+  firstMtg_monthlyPI         Float?
+  firstMtg_monthlyEscrow     Float?
+
+  // ── First Mortgage — Modification Terms ──────────────────
+  firstMtg_isModified           Boolean?
+  firstMtg_hasBalloon           Boolean?
+  firstMtg_balloonDate          DateTime?
+  firstMtg_modDate              DateTime?
+  firstMtg_modMaturityDate      DateTime?
+  firstMtg_modTermMonths        Int?
+  firstMtg_modFirstPayDate      DateTime?
+  firstMtg_modInterestPaidTo    DateTime?
+  firstMtg_modMonthsPaid        Int?
+  firstMtg_modPaymentsRemaining Int?
+  firstMtg_modLoanAmount        Float?
+  firstMtg_modCurrentBalance    Float?
+  firstMtg_modDeferredBalance   Float?
+  firstMtg_modInterestRate      Float?
+  firstMtg_modMonthlyPI         Float?
+  firstMtg_modMonthlyEscrow     Float?
+
+  // ── First Mortgage — Foreclosure Status ──────────────────
+  firstMtg_foreclosureDefaultDate DateTime?
+  firstMtg_foreclosureDefaultAmt  Float?
+  firstMtg_foreclosureSaleDate    DateTime?
+
+  // ── Second Mortgage — Current Loan Data ──────────────────
+  secondMtg_loanStatus         String?
+  secondMtg_originationDate    DateTime?
+  secondMtg_maturityDate       DateTime?
+  secondMtg_loanTermMonths     Int?
+  secondMtg_firstPaymentDate   DateTime?
+  secondMtg_interestPaidToDate DateTime?
+  secondMtg_totalMonthsPaid    Int?
+  secondMtg_originalAmount     Float?
+  secondMtg_currentBalance     Float?
+  secondMtg_nextDueDate        DateTime?
+  secondMtg_monthsRemaining    Int?
+  secondMtg_interestRate       Float?
+  secondMtg_monthlyPI          Float?
+  secondMtg_monthlyEscrow      Float?
+
+  // ── Second Mortgage — Modification Terms ─────────────────
+  secondMtg_isModified           Boolean?
+  secondMtg_hasBalloon           Boolean?
+  secondMtg_balloonDate          DateTime?
+  secondMtg_modDate              DateTime?
+  secondMtg_modMaturityDate      DateTime?
+  secondMtg_modTermMonths        Int?
+  secondMtg_modFirstPayDate      DateTime?
+  secondMtg_modInterestPaidTo    DateTime?
+  secondMtg_modMonthsPaid        Int?
+  secondMtg_modPaymentsRemaining Int?
+  secondMtg_modLoanAmount        Float?
+  secondMtg_modCurrentBalance    Float?
+  secondMtg_modDeferredBalance   Float?
+  secondMtg_modInterestRate      Float?
+  secondMtg_modMonthlyPI         Float?
+  secondMtg_modMonthlyEscrow     Float?
+
+  // ── Second Mortgage — Foreclosure Status ─────────────────
+  secondMtg_foreclosureDefaultDate DateTime?
+  secondMtg_foreclosureDefaultAmt  Float?
+  secondMtg_foreclosureSaleDate    DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Conversation {
@@ -122,12 +272,12 @@ model Message {
 }
 
 model AdminToken {
-  id        String   @id @default(cuid())
-  token     String   @unique
+  id        String    @id @default(cuid())
+  token     String    @unique
   userId    String
   usedAt    DateTime?
   expiresAt DateTime
-  createdAt DateTime @default(now())
+  createdAt DateTime  @default(now())
 
   @@index([token])
 }
