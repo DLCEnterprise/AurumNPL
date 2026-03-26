@@ -2,6 +2,8 @@ import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { DashboardNav } from '@/components/layout/DashboardNav'
+import { SellerTour } from '@/components/ui/SellerTour'
+import { BuyerTour } from '@/components/ui/BuyerTour'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
@@ -44,6 +46,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
               </svg>
               Watchlist
             </Link>
+            <Link href="/pipeline" className="sidebar__link">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="11" rx="1"/><rect x="17" y="3" width="5" height="15" rx="1"/>
+              </svg>
+              Pipeline
+            </Link>
           </div>
           <div className="sidebar__section" style={{ marginTop: '16px' }}>
             <p className="sidebar__label">Account</p>
@@ -81,6 +89,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
         </aside>
         <main className="dashboard-main">{children}</main>
       </div>
+      {session.user.role === 'SELLER' && <SellerTour />}
+      {session.user.role === 'BUYER' && <BuyerTour />}
     </div>
   )
 }

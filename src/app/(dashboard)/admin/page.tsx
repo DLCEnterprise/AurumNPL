@@ -5,6 +5,8 @@ import { requireAdmin } from '@/lib/admin-guard'
 import { redirect } from 'next/navigation'
 import { formatCurrency, timeAgo } from '@/lib/utils'
 import { AdminUserActions } from '@/components/admin/AdminUserActions'
+import { EmptyState } from '@/components/ui/EmptyState'
+import { ExportButton } from '@/components/ui/ExportButton'
 
 export const metadata: Metadata = { title: 'Admin Overview' }
 
@@ -86,13 +88,16 @@ export default async function AdminOverviewPage() {
   return (
     <div>
       {/* Header */}
-      <div style={{ marginBottom: '28px' }}>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 400, marginBottom: '4px' }}>
-          Admin Overview
-        </h1>
-        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
-          Platform health at a glance
-        </p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '28px' }}>
+        <div>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 400, marginBottom: '4px' }}>
+            Admin Overview
+          </h1>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
+            Platform health at a glance
+          </p>
+        </div>
+        <ExportButton type="analytics" label="Export Users CSV" />
       </div>
 
       {/* Stat cards */}
@@ -157,9 +162,17 @@ export default async function AdminOverviewPage() {
         </div>
 
         {pendingUsers.length === 0 ? (
-          <div className="glass-card" style={{ padding: '40px', textAlign: 'center' }}>
-            <p style={{ color: 'var(--text-muted)' }}>No pending applications.</p>
-          </div>
+          <EmptyState
+            icon={
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
+                <path d="M22 11.08V12a10 10 0 11-5.93-9.14" />
+                <polyline points="22 4 12 14.01 9 11.01" />
+              </svg>
+            }
+            title="All caught up"
+            description="No pending user approvals."
+            padding="40px 24px"
+          />
         ) : (
           <div className="glass-card" style={{ padding: 0, overflow: 'hidden' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>

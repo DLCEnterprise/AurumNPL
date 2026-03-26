@@ -5,6 +5,7 @@ import { requireAdmin } from '@/lib/admin-guard'
 import { redirect } from 'next/navigation'
 import { timeAgo } from '@/lib/utils'
 import { AdminUserActions } from '@/components/admin/AdminUserActions'
+import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import type { ApprovalStatus } from '@prisma/client'
 
 export const metadata: Metadata = { title: 'Admin — Users' }
@@ -107,6 +108,7 @@ export default async function AdminUsersPage({
 
   return (
     <div>
+      <Breadcrumbs items={[{ label: 'Admin', href: '/admin' }, { label: 'Users' }]} />
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 400, marginBottom: '4px' }}>
@@ -154,7 +156,7 @@ export default async function AdminUsersPage({
         </div>
       ) : (
         <div className="glass-card" style={{ padding: 0, overflow: 'hidden', marginBottom: '24px' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+          <table className="table-responsive" style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border-light)' }}>
                 {['Name', 'Email', 'Company', 'Role', 'Status', 'Joined', 'Actions'].map((h) => (
@@ -183,16 +185,16 @@ export default async function AdminUsersPage({
                     key={user.id}
                     style={{ borderBottom: i < users.length - 1 ? '1px solid var(--border-light)' : undefined }}
                   >
-                    <td style={{ padding: '12px 16px', fontSize: '0.85rem', fontWeight: 500 }}>
+                    <td data-label="Name" style={{ padding: '12px 16px', fontSize: '0.85rem', fontWeight: 500 }}>
                       {user.name ?? '—'}
                     </td>
-                    <td style={{ padding: '12px 16px', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                    <td data-label="Email" style={{ padding: '12px 16px', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
                       {user.email}
                     </td>
-                    <td style={{ padding: '12px 16px', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
+                    <td data-label="Company" style={{ padding: '12px 16px', fontSize: '0.82rem', color: 'var(--text-muted)' }}>
                       {user.company ?? '—'}
                     </td>
-                    <td style={{ padding: '12px 16px' }}>
+                    <td data-label="Role" style={{ padding: '12px 16px' }}>
                       <span
                         className={`listing-card__type listing-card__type--${user.role === 'SELLER' ? 'residential' : user.role === 'BUYER' ? 'commercial' : 'mixed'}`}
                         style={{ fontSize: '0.7rem' }}
@@ -200,7 +202,7 @@ export default async function AdminUsersPage({
                         {user.role}
                       </span>
                     </td>
-                    <td style={{ padding: '12px 16px' }}>
+                    <td data-label="Status" style={{ padding: '12px 16px' }}>
                       <span style={{
                         display: 'inline-block',
                         padding: '2px 10px',
@@ -214,10 +216,10 @@ export default async function AdminUsersPage({
                         {statusStyle.label}
                       </span>
                     </td>
-                    <td style={{ padding: '12px 16px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
+                    <td data-label="Joined" style={{ padding: '12px 16px', fontSize: '0.78rem', color: 'var(--text-muted)' }}>
                       {timeAgo(user.createdAt)}
                     </td>
-                    <td style={{ padding: '12px 16px' }}>
+                    <td data-label="Actions" style={{ padding: '12px 16px' }}>
                       <AdminUserActions userId={user.id} currentStatus={user.approvalStatus} />
                     </td>
                   </tr>

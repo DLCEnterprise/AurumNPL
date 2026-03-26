@@ -225,6 +225,49 @@ export async function sendBidNotificationEmail(opts: BidNotificationOptions) {
   })
 }
 
+// ─── Bid accepted (to buyer) ──────────────────────────────────────────────────
+
+interface BidAcceptedEmailOptions {
+  to: string
+  buyerName: string
+  listingTitle: string
+  amount: number
+  dropboxLink?: string | null
+  listingUrl: string
+}
+
+export async function sendBidAcceptedEmail(opts: BidAcceptedEmailOptions): Promise<void> {
+  const formatted = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(opts.amount)
+  const html = emailWrapper(`
+    <div class="card">
+      <h1>Your Bid Has Been Accepted.</h1>
+      <p>Congratulations, ${opts.buyerName}! Your bid on <strong style="color:#f4f4f5;">${opts.listingTitle}</strong> has been accepted by the seller.</p>
+      <div class="meta">
+        <div class="meta-row">
+          <span class="meta-label">Listing</span>
+          <span class="meta-value">${opts.listingTitle}</span>
+        </div>
+        <div class="meta-row">
+          <span class="meta-label">Accepted Bid</span>
+          <span class="meta-value">${formatted}</span>
+        </div>
+      </div>
+      ${opts.dropboxLink
+        ? `<a href="${opts.dropboxLink}" class="btn-gold">Access Collateral Documents →</a>`
+        : `<p>The seller will provide collateral documents separately.</p>`
+      }
+      <hr class="divider" />
+      <a href="${opts.listingUrl}" class="btn-ghost">View Listing →</a>
+    </div>
+  `)
+
+  await sendEmail({
+    to: opts.to,
+    subject: 'Your Bid Has Been Accepted — AURUM',
+    html,
+  })
+}
+
 // ─── Password reset ────────────────────────────────────────────────────────────
 
 export async function sendPasswordResetEmail(to: string, resetUrl: string) {

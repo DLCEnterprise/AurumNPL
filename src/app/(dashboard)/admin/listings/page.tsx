@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/admin-guard'
 import { redirect } from 'next/navigation'
 import { formatCurrency, timeAgo } from '@/lib/utils'
+import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import type { ListingStatus } from '@prisma/client'
 
 export const metadata: Metadata = { title: 'Admin — Listings' }
@@ -79,6 +80,7 @@ export default async function AdminListingsPage({
 
   return (
     <div>
+      <Breadcrumbs items={[{ label: 'Admin', href: '/admin' }, { label: 'Listings' }]} />
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 400, marginBottom: '4px' }}>

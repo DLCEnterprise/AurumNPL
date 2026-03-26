@@ -12,7 +12,10 @@ import { ViewTracker } from '@/components/listings/ViewTracker'
 import { ListingAnalyticsCard } from '@/components/listings/ListingAnalyticsCard'
 import { SaveListingButton } from '@/components/listings/SaveListingButton'
 import { BidButton } from '@/components/listings/BidButton'
+import { AddToPipelineButton } from '@/components/listings/AddToPipelineButton'
 import type { AssetType, ListingStatus } from '@prisma/client'
+import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
+import { NdaGate } from '@/components/listings/NdaGate'
 
 export const metadata: Metadata = { title: 'Listing Detail' }
 
@@ -22,6 +25,21 @@ const TYPE_CLASS: Record<AssetType, string> = {
 const STATUS_CLASS: Record<ListingStatus, string> = {
   ACTIVE: 'active', UNDER_REVIEW: 'review', PENDING: 'pending',
   DRAFT: 'pending', SOLD: 'active', ARCHIVED: 'pending',
+}
+
+const BID_STATUS_COLOR: Record<string, string> = {
+  PENDING:   'rgba(212,168,70,0.8)',
+  ACCEPTED:  '#34d399',
+  REJECTED:  '#f87171',
+  WITHDRAWN: 'var(--text-muted)',
+  COUNTERED: '#fb923c',
+}
+const BID_STATUS_LABEL: Record<string, string> = {
+  PENDING:   'Pending',
+  ACCEPTED:  'Accepted',
+  REJECTED:  'Declined',
+  WITHDRAWN: 'Withdrawn',
+  COUNTERED: 'Countered',
 }
 
 export default async function ListingDetailPage({ params }: { params: Promise<{ id: string }> }) {
@@ -51,32 +69,48 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   const asset = listing.asset ? JSON.parse(JSON.stringify(listing.asset)) : null
 
   // Saved state + existing bid (for non-owners)
-  const [savedRecord, existingBid, bidCount] = await Promise.all([
+  const [savedRecord, existingBidRaw, bidCount, acceptedBid] = await Promise.all([
     !isOwner
       ? prisma.savedListing.findUnique({ where: { userId_listingId: { userId, listingId: id } } })
       : Promise.resolve(null),
     !isOwner && isBuyer
-      ? prisma.bid.findFirst({ where: { listingId: id, bidderId: userId, status: 'PENDING' } })
+      ? prisma.bid.findFirst({
+          where: { listingId: id, bidderId: userId },
+          orderBy: { createdAt: 'desc' },
+        })
       : Promise.resolve(null),
     isOwner || isAdmin
       ? prisma.bid.count({ where: { listingId: id } })
       : Promise.resolve(0),
+    !isOwner && !isAdmin
+      ? prisma.bid.findFirst({ where: { listingId: id, bidderId: userId, status: 'ACCEPTED' } })
+      : Promise.resolve(null),
   ])
 
+  const bidHistory = (isOwner || isAdmin) ? await prisma.bid.findMany({
+    where: { listingId: id },
+    include: { bidder: { select: { name: true, company: true } } },
+    orderBy: { createdAt: 'desc' },
+    take: 10,
+  }) : []
+
+  const canSeeDropbox = isOwner || isAdmin || !!acceptedBid
+
   const isSaved = !!savedRecord
-  const serializedBid = existingBid
-    ? { id: existingBid.id, amount: existingBid.amount, noteRate: existingBid.noteRate, status: existingBid.status }
+  const serializedBid = existingBidRaw
+    ? {
+        id:            existingBidRaw.id,
+        amount:        existingBidRaw.amount,
+        noteRate:      existingBidRaw.noteRate,
+        status:        existingBidRaw.status,
+        counterAmount: existingBidRaw.counterAmount,
+        counterNote:   existingBidRaw.counterNote,
+      }
     : null
 
   return (
     <div style={{ maxWidth: '900px' }}>
-      {/* Back link */}
-      <Link href="/listings" style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '24px' }}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M19 12H5M12 5l-7 7 7 7" />
-        </svg>
-        Back to Listings
-      </Link>
+      <Breadcrumbs items={[{ label: 'Listings', href: '/listings' }, { label: listing.title }]} />
 
       {/* Header */}
       <div style={{ marginBottom: '28px' }}>
@@ -117,6 +151,9 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
         {!isOwner && (
           <SaveListingButton listingId={listing.id} initialSaved={isSaved} />
         )}
+        {!isOwner && isBuyer && (
+          <AddToPipelineButton listingId={listing.id} />
+        )}
         {isOwner && (
           <>
             {listing.status === 'DRAFT' && <PublishListingButton listingId={listing.id} />}
@@ -139,11 +176,101 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
         </div>
       )}
 
+      {/* Collateral Documents */}
+      {listing.dropboxLink && (canSeeDropbox ? (
+        <div className="glass-card" style={{ padding: '20px 24px', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            <div>
+              <h3 style={{ fontSize: '0.8rem', letterSpacing: '0.1em', color: 'var(--text-muted)', textTransform: 'uppercase', marginBottom: '4px' }}>Collateral Documents</h3>
+              <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Access the shared document folder for this listing.</p>
+            </div>
+            <a href={listing.dropboxLink} target="_blank" rel="noopener noreferrer" className="btn btn--gold btn--sm">
+              Open in Dropbox →
+            </a>
+          </div>
+        </div>
+      ) : isBuyer ? (
+        <div style={{ marginBottom: '20px' }}>
+          <NdaGate listingId={id} dropboxLink={listing.dropboxLink} />
+        </div>
+      ) : null)}
+
       {/* View tracking — fires silently on mount for all approved non-sellers */}
       <ViewTracker listingId={id} />
 
       {/* Analytics card — visible to listing owner and admins only */}
       {(isOwner || isAdmin) && <ListingAnalyticsCard listingId={id} />}
+
+      {/* Bid Activity timeline — visible to owner and admins */}
+      {(isOwner || isAdmin) && bidHistory.length > 0 && (
+        <div className="glass-card" style={{ padding: '24px', marginBottom: '20px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+            <h3 style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', margin: 0 }}>
+              Bid Activity
+            </h3>
+            {bidCount > 10 && (
+              <Link
+                href={`/listings/${id}/bids`}
+                style={{ fontSize: '0.8rem', color: 'var(--gold-400)', textDecoration: 'none' }}
+              >
+                View All →
+              </Link>
+            )}
+          </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0' }}>
+            {bidHistory.map((bid, index) => (
+              <div
+                key={bid.id}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '12px',
+                  padding: '10px 0',
+                  borderBottom: index < bidHistory.length - 1 ? '1px solid rgba(255,255,255,0.04)' : 'none',
+                }}
+              >
+                {/* Timeline dot */}
+                <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: BID_STATUS_COLOR[bid.status] ?? 'var(--text-muted)', flexShrink: 0 }} />
+
+                {/* Bidder */}
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <span style={{ fontSize: '0.85rem', fontWeight: 500 }}>
+                    {bid.bidder.company ?? bid.bidder.name ?? 'Unknown'}
+                  </span>
+                  {bid.bidder.company && bid.bidder.name && (
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginLeft: '6px' }}>
+                      {bid.bidder.name}
+                    </span>
+                  )}
+                </div>
+
+                {/* Amount */}
+                <div style={{ fontSize: '0.88rem', fontFamily: 'var(--font-display)', fontWeight: 500, color: 'var(--text-primary)', flexShrink: 0 }}>
+                  {formatCurrency(bid.amount)}
+                </div>
+
+                {/* Status badge */}
+                <span style={{
+                  fontSize: '0.68rem',
+                  padding: '2px 8px',
+                  borderRadius: '100px',
+                  background: 'rgba(255,255,255,0.04)',
+                  border: '1px solid rgba(255,255,255,0.06)',
+                  color: BID_STATUS_COLOR[bid.status] ?? 'var(--text-muted)',
+                  flexShrink: 0,
+                }}>
+                  {BID_STATUS_LABEL[bid.status] ?? bid.status}
+                </span>
+
+                {/* Time */}
+                <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', flexShrink: 0 }}>
+                  {timeAgo(bid.createdAt)}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* If no asset data, show the simple metrics card */}
       {!asset && (
@@ -155,6 +282,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                 { label: 'Number of Loans', value: listing.loanCount.toLocaleString() },
                 { label: 'Location', value: listing.location },
                 { label: 'Avg. Delinquency', value: listing.avgDelinquency ? `${listing.avgDelinquency} months` : '—' },
+                { label: 'Lien Position', value: listing.lienPosition === 'SENIOR' ? 'Senior (1st Mortgage)' : listing.lienPosition === 'JUNIOR' ? 'Junior (2nd Mortgage)' : '—' },
               ].map(({ label, value }) => (
                 <div key={label}>
                   <div style={{ fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '6px' }}>{label}</div>

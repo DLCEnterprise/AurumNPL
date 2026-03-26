@@ -85,6 +85,8 @@ export async function POST(req: NextRequest, { params: paramsPromise }: Params) 
     return NextResponse.json({ success: false, error: 'Validation failed.', fieldErrors: parsed.error.flatten().fieldErrors }, { status: 422 })
   }
 
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+
   const bid = await prisma.bid.create({
     data: {
       listingId,
@@ -92,6 +94,7 @@ export async function POST(req: NextRequest, { params: paramsPromise }: Params) 
       amount:   parsed.data.amount,
       noteRate: parsed.data.noteRate,
       message:  parsed.data.message,
+      expiresAt,
     },
     include: { bidder: { select: { id: true, name: true, company: true, email: true } } },
   })

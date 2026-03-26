@@ -1,9 +1,57 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ui/Toast'
 import { Spinner } from '@/components/ui/Skeleton'
+
+// ─── Toggle switch ─────────────────────────────────────────────────────────────
+function Toggle({ checked, onChange }: { checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <button
+      type="button"
+      role="switch"
+      aria-checked={checked}
+      onClick={() => onChange(!checked)}
+      style={{
+        width: '40px', height: '22px', borderRadius: '11px', border: 'none', cursor: 'pointer',
+        background: checked ? 'var(--gold-300, #d4a846)' : 'rgba(255,255,255,0.1)',
+        position: 'relative', transition: 'background 0.2s', flexShrink: 0,
+      }}
+    >
+      <span style={{
+        position: 'absolute', top: '3px',
+        left: checked ? '21px' : '3px',
+        width: '16px', height: '16px', borderRadius: '50%',
+        background: '#fff', transition: 'left 0.2s',
+      }} />
+    </button>
+  )
+}
+
+interface NotificationPrefs {
+  newBidInApp:      boolean
+  newBidEmail:      boolean
+  bidAcceptedInApp: boolean
+  bidAcceptedEmail: boolean
+  bidRejectedInApp: boolean
+  bidRejectedEmail: boolean
+  newMessageInApp:  boolean
+  newMessageEmail:  boolean
+  digestFrequency:  string
+}
+
+const DEFAULT_PREFS: NotificationPrefs = {
+  newBidInApp:      true,
+  newBidEmail:      true,
+  bidAcceptedInApp: true,
+  bidAcceptedEmail: true,
+  bidRejectedInApp: true,
+  bidRejectedEmail: false,
+  newMessageInApp:  true,
+  newMessageEmail:  false,
+  digestFrequency:  'instant',
+}
 
 interface User {
   id: string
@@ -61,6 +109,58 @@ export function ProfileForm({ user }: { user: User }) {
   const [newPw, setNewPw]         = useState('')
   const [confirmPw, setConfirmPw] = useState('')
   const [pwSaving, setPwSaving]   = useState(false)
+
+  // Notification preferences
+  const [prefs, setPrefs]           = useState<NotificationPrefs>(DEFAULT_PREFS)
+  const [prefsLoading, setPrefsLoading] = useState(true)
+  const [prefsSaving, setPrefsSaving]   = useState(false)
+
+  useEffect(() => {
+    fetch('/api/notifications/preferences')
+      .then((r) => r.json())
+      .then((d) => {
+        if (d.success && d.data) {
+          setPrefs({
+            newBidInApp:      d.data.newBidInApp,
+            newBidEmail:      d.data.newBidEmail,
+            bidAcceptedInApp: d.data.bidAcceptedInApp,
+            bidAcceptedEmail: d.data.bidAcceptedEmail,
+            bidRejectedInApp: d.data.bidRejectedInApp,
+            bidRejectedEmail: d.data.bidRejectedEmail,
+            newMessageInApp:  d.data.newMessageInApp,
+            newMessageEmail:  d.data.newMessageEmail,
+            digestFrequency:  d.data.digestFrequency,
+          })
+        }
+      })
+      .catch(() => { /* keep defaults */ })
+      .finally(() => setPrefsLoading(false))
+  }, [])
+
+  const setPref = <K extends keyof NotificationPrefs>(key: K, value: NotificationPrefs[K]) => {
+    setPrefs((prev) => ({ ...prev, [key]: value }))
+  }
+
+  const savePrefs = async () => {
+    setPrefsSaving(true)
+    try {
+      const res = await fetch('/api/notifications/preferences', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(prefs),
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        toast.success('Notification preferences saved.')
+      } else {
+        toast.error(data.error ?? 'Failed to save preferences.')
+      }
+    } catch {
+      toast.error('Failed to save preferences.')
+    } finally {
+      setPrefsSaving(false)
+    }
+  }
 
   const saveProfile = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -302,6 +402,101 @@ export function ProfileForm({ user }: { user: User }) {
             {pwSaving ? 'Updating…' : 'Update Password'}
           </button>
         </form>
+      </div>
+
+      {/* Notification preferences */}
+      <div className="glass-card" style={{ padding: '32px' }}>
+        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 400, marginBottom: '6px' }}>
+          Notification Preferences
+        </h2>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '8px' }}>
+          Choose how and when you receive notifications.
+        </p>
+
+        {prefsLoading ? (
+          <div style={{ padding: '24px 0', display: 'flex', justifyContent: 'center' }}>
+            <Spinner size={20} />
+          </div>
+        ) : (
+          <>
+            {/* New Bid */}
+            <div style={{ fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '8px', marginTop: '24px' }}>
+              New Bid on Your Listings
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+              <span style={{ fontSize: '0.875rem' }}>In-App</span>
+              <Toggle checked={prefs.newBidInApp} onChange={(v) => setPref('newBidInApp', v)} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+              <span style={{ fontSize: '0.875rem' }}>Email</span>
+              <Toggle checked={prefs.newBidEmail} onChange={(v) => setPref('newBidEmail', v)} />
+            </div>
+
+            {/* Bid Status Updates */}
+            <div style={{ fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '8px', marginTop: '24px' }}>
+              Bid Status Updates
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+              <span style={{ fontSize: '0.875rem' }}>Accepted — In-App</span>
+              <Toggle checked={prefs.bidAcceptedInApp} onChange={(v) => setPref('bidAcceptedInApp', v)} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+              <span style={{ fontSize: '0.875rem' }}>Accepted — Email</span>
+              <Toggle checked={prefs.bidAcceptedEmail} onChange={(v) => setPref('bidAcceptedEmail', v)} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+              <span style={{ fontSize: '0.875rem' }}>Rejected — In-App</span>
+              <Toggle checked={prefs.bidRejectedInApp} onChange={(v) => setPref('bidRejectedInApp', v)} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+              <span style={{ fontSize: '0.875rem' }}>Rejected — Email</span>
+              <Toggle checked={prefs.bidRejectedEmail} onChange={(v) => setPref('bidRejectedEmail', v)} />
+            </div>
+
+            {/* New Messages */}
+            <div style={{ fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '8px', marginTop: '24px' }}>
+              New Messages
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+              <span style={{ fontSize: '0.875rem' }}>In-App</span>
+              <Toggle checked={prefs.newMessageInApp} onChange={(v) => setPref('newMessageInApp', v)} />
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+              <span style={{ fontSize: '0.875rem' }}>Email</span>
+              <Toggle checked={prefs.newMessageEmail} onChange={(v) => setPref('newMessageEmail', v)} />
+            </div>
+
+            {/* Digest Frequency */}
+            <div style={{ fontSize: '0.75rem', letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '8px', marginTop: '24px' }}>
+              Digest Frequency
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '10px 0', borderBottom: '1px solid rgba(255,255,255,0.04)' }}>
+              <span style={{ fontSize: '0.875rem' }}>Email delivery cadence</span>
+              <select
+                className="form-input"
+                value={prefs.digestFrequency}
+                onChange={(e) => setPref('digestFrequency', e.target.value)}
+                style={{ width: 'auto', minWidth: '160px' }}
+              >
+                <option value="instant">Instant</option>
+                <option value="daily">Daily Digest</option>
+                <option value="weekly">Weekly Digest</option>
+              </select>
+            </div>
+
+            <div style={{ marginTop: '24px' }}>
+              <button
+                type="button"
+                className="btn btn--gold"
+                onClick={savePrefs}
+                disabled={prefsSaving}
+              >
+                {prefsSaving && <Spinner size={15} color="#0a0a0a" />}
+                {prefsSaving ? 'Saving…' : 'Save Preferences'}
+              </button>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Danger zone */}

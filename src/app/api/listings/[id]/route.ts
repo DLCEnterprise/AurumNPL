@@ -32,6 +32,18 @@ export async function GET(_req: NextRequest, { params: paramsPromise }: Params) 
     return NextResponse.json({ success: false, error: 'Listing not found.' }, { status: 404 })
   }
 
+  // Strip dropboxLink unless: seller, admin, or buyer with accepted bid
+  const isSeller = listing.sellerId === session.user.id
+  const isAdmin  = session.user.role === 'ADMIN'
+  if (!isSeller && !isAdmin) {
+    const acceptedBid = await prisma.bid.findFirst({
+      where: { listingId: id, bidderId: session.user.id, status: 'ACCEPTED' },
+    })
+    if (!acceptedBid) {
+      (listing as Record<string, unknown>).dropboxLink = null
+    }
+  }
+
   return NextResponse.json({ success: true, data: listing })
 }
 
@@ -48,6 +60,8 @@ const UpdateSchema = z.object({
   region:         z.string().optional(),
   avgDelinquency: z.number().int().min(0).optional(),
   status:         z.enum(['DRAFT', 'ACTIVE', 'UNDER_REVIEW', 'PENDING', 'SOLD', 'ARCHIVED']).optional(),
+  dropboxLink:    z.string().url().optional(),
+  lienPosition:   z.enum(['SENIOR', 'JUNIOR']).optional(),
 })
 
 export async function PUT(req: NextRequest, { params: paramsPromise }: Params) {

@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { ProfileForm } from '@/components/profile/ProfileForm'
+import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 
 export const metadata: Metadata = { title: 'Profile' }
 
@@ -23,6 +24,7 @@ export default async function ProfilePage() {
 
   return (
     <div style={{ maxWidth: '600px' }}>
+      <Breadcrumbs items={[{ label: 'Dashboard', href: '/dashboard' }, { label: 'Profile' }]} />
       <div style={{ marginBottom: '32px' }}>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 400, marginBottom: '6px' }}>
           Profile

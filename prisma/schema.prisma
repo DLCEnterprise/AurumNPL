@@ -50,6 +50,26 @@ enum NotificationType {
   NEW_MESSAGE
   LISTING_SAVED
   LISTING_PUBLISHED
+  COUNTER_OFFER
+}
+
+enum LienPosition {
+  SENIOR
+  JUNIOR
+}
+
+enum NdaStatus {
+  NONE
+  PENDING
+  SIGNED
+}
+
+enum DealStage {
+  REVIEWING
+  BIDDING
+  UNDER_LOI
+  CLOSING
+  CLOSED
 }
 
 model User {
@@ -98,6 +118,14 @@ model User {
   bidsPlaced            Bid[]                     @relation("BidsPlaced")
   notifications         Notification[]
   uploadedDocuments     Document[]                @relation("UploadedDocuments")
+  ndasSigned            NdaAgreement[]            @relation("NdasSigned")
+  documentDownloads     DocumentDownload[]        @relation("DocumentDownloads")
+  auditLogs             AuditLog[]                @relation("AuditLogs")
+  savedSearches         SavedSearch[]             @relation("SavedSearches")
+  dealPipelines         DealPipeline[]            @relation("DealPipelines")
+  notificationPrefs     NotificationPreference?   @relation("NotificationPrefs")
+  twoFactorSecret       TwoFactorSecret?          @relation("TwoFactor")
+  passwordResets        PasswordResetToken[]      @relation("PasswordResets")
 
   @@index([email])
   @@index([approvalStatus])
@@ -116,17 +144,23 @@ model Listing {
   avgDelinquency Int?
   status         ListingStatus @default(DRAFT)
   documents      String[]
+  dropboxLink    String?
+  lienPosition   LienPosition?
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
 
   seller   User   @relation(fields: [sellerId], references: [id])
   sellerId String
 
-  asset         Asset?
-  savedBy       SavedListing[]
-  bids          Bid[]
-  views         ListingView[]
-  vaultDocuments Document[]
+  asset             Asset?
+  savedBy           SavedListing[]
+  bids              Bid[]
+  views             ListingView[]
+  vaultDocuments    Document[]
+  ndaAgreements     NdaAgreement[]
+  dueDiligenceItems DueDiligenceChecklist[]
+  auditLogs         AuditLog[]
+  dealPipelines     DealPipeline[]
 
   @@index([status])
   @@index([assetType])
@@ -304,6 +338,8 @@ model PasswordResetToken {
   expiresAt DateTime
   createdAt DateTime  @default(now())
 
+  user      User      @relation("PasswordResets", fields: [userId], references: [id], onDelete: Cascade)
+
   @@index([token])
   @@index([userId])
 }
@@ -322,15 +358,18 @@ model SavedListing {
 }
 
 model Bid {
-  id        String    @id @default(cuid())
-  listingId String
-  bidderId  String
-  amount    Float
-  noteRate  Float?
-  message   String?
-  status    BidStatus @default(PENDING)
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
+  id            String    @id @default(cuid())
+  listingId     String
+  bidderId      String
+  amount        Float
+  noteRate      Float?
+  message       String?
+  status        BidStatus @default(PENDING)
+  expiresAt     DateTime?
+  counterAmount Float?
+  counterNote   String?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
   bidder  User    @relation("BidsPlaced", fields: [bidderId], references: [id])
@@ -368,17 +407,19 @@ model ListingView {
 }
 
 model Document {
-  id         String   @id @default(cuid())
-  listingId  String
-  uploaderId String
-  name       String
-  storageKey String
-  mimeType   String
-  sizeBytes  Int
-  createdAt  DateTime @default(now())
+  id            String   @id @default(cuid())
+  listingId     String
+  uploaderId    String
+  name          String
+  storageKey    String
+  mimeType      String
+  sizeBytes     Int
+  downloadCount Int      @default(0)
+  createdAt     DateTime @default(now())
 
-  listing  Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  uploader User    @relation("UploadedDocuments", fields: [uploaderId], references: [id])
+  listing   Listing            @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  uploader  User               @relation("UploadedDocuments", fields: [uploaderId], references: [id])
+  downloads DocumentDownload[]
 
   @@index([listingId])
 }
@@ -392,4 +433,122 @@ model AdminToken {
   createdAt DateTime  @default(now())
 
   @@index([token])
+}
+
+model NdaAgreement {
+  id          String    @id @default(cuid())
+  listingId   String
+  buyerId     String
+  signedAt    DateTime  @default(now())
+  ipAddress   String?
+  userAgent   String?
+
+  listing     Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  buyer       User      @relation("NdasSigned", fields: [buyerId], references: [id])
+
+  @@unique([listingId, buyerId])
+  @@index([listingId])
+  @@index([buyerId])
+}
+
+model DocumentDownload {
+  id          String   @id @default(cuid())
+  documentId  String
+  userId      String
+  createdAt   DateTime @default(now())
+
+  document    Document @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  user        User     @relation("DocumentDownloads", fields: [userId], references: [id])
+
+  @@index([documentId])
+  @@index([userId])
+}
+
+model DueDiligenceChecklist {
+  id          String    @id @default(cuid())
+  listingId   String
+  label       String
+  completed   Boolean   @default(false)
+  completedBy String?
+  completedAt DateTime?
+  sortOrder   Int       @default(0)
+  createdAt   DateTime  @default(now())
+
+  listing     Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@index([listingId])
+}
+
+model AuditLog {
+  id          String   @id @default(cuid())
+  listingId   String?
+  userId      String?
+  action      String
+  details     String?
+  ipAddress   String?
+  createdAt   DateTime @default(now())
+
+  listing     Listing? @relation(fields: [listingId], references: [id], onDelete: SetNull)
+  user        User?    @relation("AuditLogs", fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([listingId, createdAt])
+  @@index([userId, createdAt])
+  @@index([action])
+}
+
+model SavedSearch {
+  id           String    @id @default(cuid())
+  userId       String
+  name         String
+  filters      Json
+  alertEnabled Boolean   @default(true)
+  lastAlertAt  DateTime?
+  createdAt    DateTime  @default(now())
+
+  user         User      @relation("SavedSearches", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model DealPipeline {
+  id          String    @id @default(cuid())
+  userId      String
+  listingId   String
+  stage       DealStage @default(REVIEWING)
+  notes       String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  user        User      @relation("DealPipelines", fields: [userId], references: [id], onDelete: Cascade)
+  listing     Listing   @relation(fields: [listingId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, listingId])
+  @@index([userId, stage])
+}
+
+model NotificationPreference {
+  id               String  @id @default(cuid())
+  userId           String  @unique
+  newBidInApp      Boolean @default(true)
+  newBidEmail      Boolean @default(true)
+  bidAcceptedInApp Boolean @default(true)
+  bidAcceptedEmail Boolean @default(true)
+  bidRejectedInApp Boolean @default(true)
+  bidRejectedEmail Boolean @default(false)
+  newMessageInApp  Boolean @default(true)
+  newMessageEmail  Boolean @default(false)
+  digestFrequency  String  @default("instant")
+
+  user             User    @relation("NotificationPrefs", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TwoFactorSecret {
+  id          String   @id @default(cuid())
+  userId      String   @unique
+  secret      String
+  verified    Boolean  @default(false)
+  backupCodes String[]
+  createdAt   DateTime @default(now())
+
+  user        User     @relation("TwoFactor", fields: [userId], references: [id], onDelete: Cascade)
 }

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import Link from 'next/link'
 import { getInitials, timeAgo } from '@/lib/utils'
 import type { SerializedConversation, SerializedMessage } from '@/types'
 
@@ -11,12 +12,15 @@ interface Props {
 
 export function MessagingApp({ userId, initialConvoId }: Props) {
   const [conversations, setConversations] = useState<SerializedConversation[]>([])
+  const [loaded, setLoaded] = useState(false)
   const [activeId, setActiveId] = useState<string | null>(initialConvoId ?? null)
   const [messages, setMessages] = useState<SerializedMessage[]>([])
   const [input, setInput] = useState('')
   const [sending, setSending] = useState(false)
   const [search, setSearch] = useState('')
+  const [isConnected, setIsConnected] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
+  const esRef = useRef<EventSource | null>(null)
 
   // ── Fetch conversation list ────────────────────────────────────────────
   const fetchConversations = useCallback(async () => {
@@ -25,6 +29,7 @@ export function MessagingApp({ userId, initialConvoId }: Props) {
     const data = await res.json()
     if (data.success) {
       setConversations(data.data)
+      setLoaded(true)
       // Auto-select first conversation if none active
       if (!activeId && data.data.length > 0 && !initialConvoId) {
         setActiveId(data.data[0].id)
@@ -55,14 +60,44 @@ export function MessagingApp({ userId, initialConvoId }: Props) {
     fetchMessages()
   }, [activeId]) // eslint-disable-line react-hooks/exhaustive-deps
 
-  // ── Polling every 5 seconds ────────────────────────────────────────────
+  // ── SSE connection with polling fallback ───────────────────────────────
   useEffect(() => {
-    const interval = setInterval(() => {
+    let pollInterval: ReturnType<typeof setInterval> | null = null
+
+    const startPolling = () => {
+      if (pollInterval) return
+      pollInterval = setInterval(() => {
+        fetchConversations()
+        if (activeId) fetchMessages()
+      }, 5000)
+    }
+
+    const es = new EventSource('/api/messages/stream')
+    esRef.current = es
+
+    es.addEventListener('open', () => {
+      setIsConnected(true)
+    })
+
+    es.addEventListener('message', () => {
+      // New message arrived — refresh conversations
       fetchConversations()
-      if (activeId) fetchMessages()
-    }, 5000)
-    return () => clearInterval(interval)
-  }, [activeId, fetchConversations, fetchMessages])
+    })
+
+    es.onerror = () => {
+      setIsConnected(false)
+      // SSE failed — fall back to polling
+      es.close()
+      startPolling()
+    }
+
+    return () => {
+      es.close()
+      esRef.current = null
+      setIsConnected(false)
+      if (pollInterval) clearInterval(pollInterval)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   // ── Auto-scroll to bottom on new messages ─────────────────────────────
   useEffect(() => {
@@ -134,12 +169,48 @@ export function MessagingApp({ userId, initialConvoId }: Props) {
     []
   )
 
+  if (loaded && conversations.length === 0) {
+    return (
+      <div className="glass-card" style={{ padding: '60px 40px', textAlign: 'center' }}>
+        <div style={{ color: 'var(--text-muted)', marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
+          <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
+            <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
+          </svg>
+        </div>
+        <h3 style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', fontWeight: 400, marginBottom: '8px' }}>
+          No conversations yet
+        </h3>
+        <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem', marginBottom: '20px' }}>
+          Start a conversation from any listing page.
+        </p>
+        <Link href="/listings" className="btn btn--gold btn--sm">
+          Browse Listings
+        </Link>
+      </div>
+    )
+  }
+
   return (
     <div className="messaging__app glass-card" style={{ height: '600px' }}>
       {/* ── Sidebar ── */}
       <div className="messaging__sidebar">
         <div className="messaging__sidebar-header">
-          <h4>Conversations</h4>
+          <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            Conversations
+            {isConnected && (
+              <span
+                title="Live updates connected"
+                style={{
+                  display: 'inline-block',
+                  width: '8px',
+                  height: '8px',
+                  borderRadius: '50%',
+                  background: '#22c55e',
+                  flexShrink: 0,
+                }}
+              />
+            )}
+          </h4>
           <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
             {conversations.length}
           </span>

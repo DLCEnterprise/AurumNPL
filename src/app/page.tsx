@@ -2,7 +2,9 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { LandingNav } from '@/components/layout/LandingNav'
 import { MessagingPreview } from '@/components/messaging/MessagingPreview'
-import { ScrollReveal } from '@/components/ui/ScrollReveal'
+import { StatsBar } from '@/components/landing/StatsBar'
+
+export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
   title: 'AURUM — Where Distressed Assets Find New Value',
@@ -47,20 +49,7 @@ export default function HomePage() {
             </Link>
           </div>
           <div className="hero__stats animate-in" style={{ animationDelay: '.6s' }}>
-            <div className="hero__stat">
-              <span className="hero__stat-value">$2.4B</span>
-              <span className="hero__stat-label">Assets Listed</span>
-            </div>
-            <div className="hero__stat-divider" />
-            <div className="hero__stat">
-              <span className="hero__stat-value">340+</span>
-              <span className="hero__stat-label">Active Sellers</span>
-            </div>
-            <div className="hero__stat-divider" />
-            <div className="hero__stat">
-              <span className="hero__stat-value">98.7%</span>
-              <span className="hero__stat-label">Success Rate</span>
-            </div>
+            <StatsBar />
           </div>
         </div>
         <div className="hero__scroll-indicator">
@@ -69,41 +58,103 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ═══════════════ TRUSTED BY ═══════════════ */}
+      <section style={{ padding: '0', position: 'relative', zIndex: 1 }}>
+        <div
+          style={{
+            borderTop: '1px solid rgba(255,255,255,0.06)',
+            borderBottom: '1px solid rgba(255,255,255,0.06)',
+            padding: '1.5rem 2rem',
+          }}
+        >
+            <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
+              <span
+                style={{
+                  fontSize: '0.65rem',
+                  letterSpacing: '0.15em',
+                  color: 'rgba(212,168,70,0.55)',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                }}
+              >
+                Trusted By Leading Institutions
+              </span>
+            </div>
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexWrap: 'wrap',
+                gap: '0',
+              }}
+            >
+              {TRUSTED_COMPANIES.map((company, i) => (
+                <div key={company} style={{ display: 'flex', alignItems: 'center' }}>
+                  <span
+                    style={{
+                      fontSize: '0.7rem',
+                      letterSpacing: '0.2em',
+                      color: 'rgba(255,255,255,0.2)',
+                      fontWeight: 600,
+                      padding: '0 1.5rem',
+                      whiteSpace: 'nowrap',
+                    }}
+                  >
+                    {company}
+                  </span>
+                  {i < TRUSTED_COMPANIES.length - 1 && (
+                    <span
+                      style={{
+                        display: 'inline-block',
+                        width: '1px',
+                        height: '1rem',
+                        background: 'rgba(255,255,255,0.06)',
+                        flexShrink: 0,
+                      }}
+                    />
+                  )}
+                </div>
+              ))}
+            </div>
+        </div>
+      </section>
+
       {/* ═══════════════ ABOUT ═══════════════ */}
       <section className="about" id="about">
         <div className="container">
           <div className="section-header">
-            <span className="section-tag">The Platform</span>
-            <h2 className="section-title">
-              A marketplace built for the<br />
-              <span className="text-gold">complexity of distressed debt</span>
-            </h2>
-          </div>
+              <span className="section-tag">The Platform</span>
+              <h2 className="section-title">
+                A marketplace built for the<br />
+                <span className="text-gold">complexity of distressed debt</span>
+              </h2>
+            </div>
           <div className="about__grid">
-            <ScrollReveal className="about__card glass-card">
+            <div className="about__card glass-card">
               <div className="about__card-number">01</div>
               <h3>List</h3>
               <p>
                 Upload your non‑performing loan portfolios with detailed data — asset type,
                 UPB, geography, and status — in a structured, institutional format.
               </p>
-            </ScrollReveal>
-            <ScrollReveal className="about__card glass-card" delay={0.1}>
+            </div>
+            <div className="about__card glass-card">
               <div className="about__card-number">02</div>
               <h3>Connect</h3>
               <p>
                 Receive expressions of interest from vetted, qualified buyers. Communicate
                 directly through our encrypted messaging system.
               </p>
-            </ScrollReveal>
-            <ScrollReveal className="about__card glass-card" delay={0.2}>
+            </div>
+            <div className="about__card glass-card">
               <div className="about__card-number">03</div>
               <h3>Transact</h3>
               <p>
                 Negotiate terms, share due diligence materials, and close deals — all within
                 a single, secure, auditable environment.
               </p>
-            </ScrollReveal>
+            </div>
           </div>
         </div>
       </section>
@@ -112,14 +163,14 @@ export default function HomePage() {
       <section className="features" id="features">
         <div className="container">
           <div className="section-header">
-            <span className="section-tag">Capabilities</span>
-            <h2 className="section-title">
-              Every tool you need,<br />
-              <span className="text-gold">nothing you don&apos;t</span>
-            </h2>
-          </div>
+              <span className="section-tag">Capabilities</span>
+              <h2 className="section-title">
+                Every tool you need,<br />
+                <span className="text-gold">nothing you don&apos;t</span>
+              </h2>
+            </div>
           <div className="features__grid">
-            <ScrollReveal className="feature-card">
+            <div className="feature-card">
               <div className="feature-card__icon">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <rect x="2" y="3" width="20" height="14" rx="2" />
@@ -132,8 +183,8 @@ export default function HomePage() {
                 geography, UPB range, and loan status.
               </p>
               <div className="feature-card__line" />
-            </ScrollReveal>
-            <ScrollReveal className="feature-card" delay={0.08}>
+            </div>
+            <div className="feature-card">
               <div className="feature-card__icon">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
@@ -145,8 +196,8 @@ export default function HomePage() {
                 and maintain a full audit trail.
               </p>
               <div className="feature-card__line" />
-            </ScrollReveal>
-            <ScrollReveal className="feature-card" delay={0.16}>
+            </div>
+            <div className="feature-card">
               <div className="feature-card__icon">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path d="M12 20V10M18 20V4M6 20v-4" />
@@ -158,8 +209,8 @@ export default function HomePage() {
                 Track every listing from post to close.
               </p>
               <div className="feature-card__line" />
-            </ScrollReveal>
-            <ScrollReveal className="feature-card" delay={0.24}>
+            </div>
+            <div className="feature-card">
               <div className="feature-card__icon">
                 <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
                   <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
@@ -171,8 +222,166 @@ export default function HomePage() {
                 and complete transaction logging.
               </p>
               <div className="feature-card__line" />
-            </ScrollReveal>
+            </div>
           </div>
+        </div>
+      </section>
+
+      {/* ═══════════════ TESTIMONIALS ═══════════════ */}
+      <section style={{ padding: '6rem 0', position: 'relative' }}>
+        <div className="container">
+          <div className="section-header">
+              <span className="section-tag">Members</span>
+              <h2
+                className="section-title"
+                style={{ fontFamily: 'var(--font-display)', textAlign: 'center' }}
+              >
+                What Our Members Say
+              </h2>
+              <div
+                style={{
+                  width: '60px',
+                  height: '2px',
+                  background: 'linear-gradient(90deg, #d4a846, #f5d98a)',
+                  margin: '1rem auto 0',
+                  borderRadius: '2px',
+                }}
+              />
+            </div>
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+              gap: '1.5rem',
+              marginTop: '3rem',
+            }}
+          >
+            {TESTIMONIALS.map((t) => (
+              <div key={t.name}
+                  className="glass-card"
+                  style={{ padding: '2rem', display: 'flex', flexDirection: 'column', gap: '1.25rem' }}
+                >
+                  <span
+                    style={{
+                      fontSize: '2rem',
+                      lineHeight: 1,
+                      color: 'var(--gold-300, #d4a846)',
+                    }}
+                  >
+                    ❝
+                  </span>
+                  <p
+                    style={{
+                      fontStyle: 'italic',
+                      fontSize: '0.95rem',
+                      lineHeight: 1.8,
+                      color: 'var(--text-secondary, rgba(255,255,255,0.6))',
+                      margin: 0,
+                    }}
+                  >
+                    {t.quote}
+                  </p>
+                  <div
+                    style={{
+                      height: '1px',
+                      background: 'rgba(255,255,255,0.08)',
+                    }}
+                  />
+                  <div>
+                    <p
+                      style={{
+                        margin: '0 0 0.15rem',
+                        fontFamily: 'var(--font-display)',
+                        fontSize: '1rem',
+                        color: 'rgba(255,255,255,0.9)',
+                      }}
+                    >
+                      {t.name}
+                    </p>
+                    <p
+                      style={{
+                        margin: 0,
+                        fontSize: '0.8rem',
+                        color: 'var(--text-secondary, rgba(255,255,255,0.45))',
+                      }}
+                    >
+                      {t.title} — {t.company}
+                    </p>
+                  </div>
+                </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ═══════════════ VIDEO / DEMO PLACEHOLDER ═══════════════ */}
+      <section style={{ padding: '4rem 0 6rem' }}>
+        <div className="container">
+          <div className="section-header" style={{ marginBottom: '2.5rem' }}>
+              <span className="section-tag">Demo</span>
+              <h2 className="section-title">
+                See AURUM <span className="text-gold">in Action</span>
+              </h2>
+            </div>
+            <a
+              href="#"
+              className="glass-card"
+              style={{
+                display: 'block',
+                position: 'relative',
+                aspectRatio: '16 / 9',
+                borderRadius: '1rem',
+                overflow: 'hidden',
+                cursor: 'pointer',
+                textDecoration: 'none',
+              }}
+            >
+              <div
+                style={{
+                  position: 'absolute',
+                  inset: 0,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  gap: '1.25rem',
+                  background: 'rgba(9,9,11,0.6)',
+                }}
+              >
+                {/* Play button circle */}
+                <div
+                  style={{
+                    width: '60px',
+                    height: '60px',
+                    borderRadius: '50%',
+                    border: '2px solid #d4a846',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  {/* Triangle */}
+                  <svg
+                    width="20"
+                    height="20"
+                    viewBox="0 0 24 24"
+                    fill="#d4a846"
+                    style={{ marginLeft: '3px' }}
+                  >
+                    <polygon points="5,3 19,12 5,21" />
+                  </svg>
+                </div>
+                <span
+                  style={{
+                    fontSize: '0.85rem',
+                    color: 'rgba(255,255,255,0.45)',
+                    letterSpacing: '0.05em',
+                  }}
+                >
+                  Platform walkthrough coming soon
+                </span>
+              </div>
+            </a>
         </div>
       </section>
 
@@ -180,14 +389,14 @@ export default function HomePage() {
       <section className="listings" id="listings">
         <div className="container">
           <div className="section-header">
-            <span className="section-tag">Marketplace</span>
-            <h2 className="section-title">
-              Active <span className="text-gold">Listings</span>
-            </h2>
-          </div>
+              <span className="section-tag">Marketplace</span>
+              <h2 className="section-title">
+                Active <span className="text-gold">Listings</span>
+              </h2>
+            </div>
 
           {/* Filter bar (static preview) */}
-          <ScrollReveal className="filter-bar glass-card">
+          <div className="filter-bar glass-card">
             <div className="filter-bar__group">
               <label>Asset Type</label>
               <select defaultValue="">
@@ -230,14 +439,13 @@ export default function HomePage() {
             <Link href="/signup" className="btn btn--gold">
               Search Listings
             </Link>
-          </ScrollReveal>
+          </div>
 
           <div className="listings__grid">
-            {SAMPLE_LISTINGS.map((listing, i) => (
-              <ScrollReveal
+            {SAMPLE_LISTINGS.map((listing) => (
+              <div
                 key={listing.id}
                 className="listing-card glass-card"
-                delay={i * 0.08}
               >
                 <div className="listing-card__header">
                   <span className={`listing-card__type listing-card__type--${listing.typeClass}`}>
@@ -272,7 +480,7 @@ export default function HomePage() {
                     View Details
                   </Link>
                 </div>
-              </ScrollReveal>
+              </div>
             ))}
           </div>
         </div>
@@ -282,12 +490,12 @@ export default function HomePage() {
       <section className="messaging" id="messages">
         <div className="container">
           <div className="section-header">
-            <span className="section-tag">Direct Messaging</span>
-            <h2 className="section-title">
-              Secure, <span className="text-gold">institutional‑grade</span> communication
-            </h2>
-          </div>
-          <MessagingPreview />
+              <span className="section-tag">Direct Messaging</span>
+              <h2 className="section-title">
+                Secure, <span className="text-gold">institutional‑grade</span> communication
+              </h2>
+            </div>
+            <MessagingPreview />
         </div>
       </section>
 
@@ -298,8 +506,7 @@ export default function HomePage() {
           <div className="hero__orb hero__orb--2" />
         </div>
         <div className="container cta__inner">
-          <ScrollReveal>
-            <span className="section-tag">Start Today</span>
+          <span className="section-tag">Start Today</span>
             <h2 className="cta__title">
               Ready to unlock the value<br />in your distressed portfolio?
             </h2>
@@ -317,7 +524,6 @@ export default function HomePage() {
                 Schedule a Demo
               </Link>
             </div>
-          </ScrollReveal>
         </div>
       </section>
 
@@ -363,6 +569,41 @@ export default function HomePage() {
     </>
   )
 }
+
+// ─── Static data ─────────────────────────────────────────────────────────────
+
+const TRUSTED_COMPANIES = [
+  'ATLAS CAPITAL',
+  'MERIDIAN FUND',
+  'SUMMIT NPL',
+  'KEYSTONE PARTNERS',
+  'APEX SERVICING',
+  'NORTHSTAR ADVISORS',
+]
+
+const TESTIMONIALS = [
+  {
+    quote:
+      'AURUM has transformed how we source and evaluate NPL portfolios. The level of deal transparency is unmatched in the market.',
+    name: 'Michael R.',
+    title: 'Managing Director',
+    company: 'Atlas Capital Partners',
+  },
+  {
+    quote:
+      'The due diligence tools and secure data room have cut our underwriting time in half. This is the future of distressed debt trading.',
+    name: 'Sarah L.',
+    title: 'Portfolio Manager',
+    company: 'Meridian Fund',
+  },
+  {
+    quote:
+      'Finally, a platform built specifically for NPL professionals. The yield calculator alone has saved us countless hours.',
+    name: 'James K.',
+    title: 'Principal',
+    company: 'Summit NPL Advisors',
+  },
+]
 
 // ─── Sample listing data ─────────────────────────────────────────────────────
 

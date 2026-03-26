@@ -1,9 +1,83 @@
 import type { Metadata } from 'next'
+import { Suspense, lazy } from 'react'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
+import { ActionItems } from '@/components/dashboard/ActionItems'
+
+const DashboardCharts = lazy(() =>
+  import('@/components/dashboard/DashboardCharts').then(m => ({ default: m.DashboardCharts }))
+)
+const RecentActivity = lazy(() =>
+  import('@/components/dashboard/RecentActivity').then(m => ({ default: m.RecentActivity }))
+)
 
 export const metadata: Metadata = { title: 'Dashboard' }
+
+function ChartsSkeleton() {
+  return (
+    <div
+      style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(2, 1fr)',
+        gap: '16px',
+        marginBottom: '24px',
+      }}
+    >
+      {[0, 1].map(i => (
+        <div
+          key={i}
+          className="glass-card"
+          style={{ padding: '20px', height: '260px' }}
+        >
+          <div
+            style={{
+              height: '12px',
+              width: '160px',
+              background: 'rgba(255,255,255,0.06)',
+              borderRadius: '4px',
+              marginBottom: '16px',
+            }}
+          />
+          <div
+            style={{
+              height: '200px',
+              background: 'rgba(255,255,255,0.04)',
+              borderRadius: '8px',
+            }}
+          />
+        </div>
+      ))}
+    </div>
+  )
+}
+
+function ActivitySkeleton() {
+  return (
+    <div className="glass-card" style={{ padding: '20px 24px' }}>
+      <div
+        style={{
+          height: '12px',
+          width: '120px',
+          background: 'rgba(255,255,255,0.06)',
+          borderRadius: '4px',
+          marginBottom: '16px',
+        }}
+      />
+      {[0, 1, 2, 3].map(i => (
+        <div
+          key={i}
+          style={{
+            height: '40px',
+            background: 'rgba(255,255,255,0.04)',
+            borderRadius: '6px',
+            marginBottom: '8px',
+          }}
+        />
+      ))}
+    </div>
+  )
+}
 
 export default async function DashboardPage() {
   const session = await auth()
@@ -38,6 +112,9 @@ export default async function DashboardPage() {
         )}
       </div>
 
+      {/* Action Items (server component — no Suspense needed for zero state) */}
+      <ActionItems />
+
       {/* Stats row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '40px' }}>
         {[
@@ -53,6 +130,11 @@ export default async function DashboardPage() {
           </div>
         ))}
       </div>
+
+      {/* Dashboard Charts */}
+      <Suspense fallback={<ChartsSkeleton />}>
+        <DashboardCharts />
+      </Suspense>
 
       {/* Quick actions */}
       <div style={{ marginBottom: '40px' }}>
@@ -86,7 +168,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Role badge */}
-      <div className="glass-card" style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="glass-card" style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
         <div>
           <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '4px' }}>
             Account Type
@@ -103,6 +185,11 @@ export default async function DashboardPage() {
           Approved
         </span>
       </div>
+
+      {/* Recent Activity */}
+      <Suspense fallback={<ActivitySkeleton />}>
+        <RecentActivity />
+      </Suspense>
     </>
   )
 }

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Spinner } from '@/components/ui/Skeleton'
+import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 
 interface ListingData {
   id: string
@@ -16,6 +17,8 @@ interface ListingData {
   region: string | null
   avgDelinquency: number | null
   status: string
+  dropboxLink: string | null
+  lienPosition: string | null
 }
 
 export default function EditListingPage() {
@@ -43,6 +46,8 @@ export default function EditListingPage() {
             region: l.region ?? '',
             avgDelinquency: l.avgDelinquency ?? '',
             status: l.status,
+            dropboxLink: l.dropboxLink ?? '',
+            lienPosition: l.lienPosition ?? '',
           })
         }
         setLoading(false)
@@ -96,10 +101,13 @@ export default function EditListingPage() {
 
   return (
     <div style={{ maxWidth: '640px' }}>
-      <Link href={`/listings/${id}`} style={{ fontSize: '0.85rem', color: 'var(--text-muted)', display: 'inline-flex', alignItems: 'center', gap: '6px', marginBottom: '24px' }}>
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-        Back to Listing
-      </Link>
+      <Breadcrumbs
+        items={[
+          { label: 'Listings', href: '/listings' },
+          { label: form.title ?? 'Edit', href: `/listings/${id}` },
+          { label: 'Edit' },
+        ]}
+      />
 
       <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 400, marginBottom: '28px' }}>
         Edit Listing
@@ -128,6 +136,17 @@ export default function EditListingPage() {
 
         <div style={{ marginBottom: '20px' }}>
           <label style={{ display: 'block', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '6px' }}>
+            Lien Position
+          </label>
+          <select value={form.lienPosition ?? ''} onChange={e => set('lienPosition', e.target.value)} className="input" style={{ width: '100%' }}>
+            <option value="">Select lien position…</option>
+            <option value="SENIOR">Senior (1st Mortgage)</option>
+            <option value="JUNIOR">Junior (2nd Mortgage)</option>
+          </select>
+        </div>
+
+        <div style={{ marginBottom: '20px' }}>
+          <label style={{ display: 'block', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '6px' }}>
             Status
           </label>
           <select value={form.status ?? ''} onChange={e => set('status', e.target.value)} className="input" style={{ width: '100%' }}>
@@ -140,7 +159,7 @@ export default function EditListingPage() {
           </select>
         </div>
 
-        <div style={{ marginBottom: '28px' }}>
+        <div style={{ marginBottom: '20px' }}>
           <label style={{ display: 'block', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '6px' }}>
             Description
           </label>
@@ -150,6 +169,20 @@ export default function EditListingPage() {
             className="input"
             rows={4}
             style={{ width: '100%', resize: 'vertical' }}
+          />
+        </div>
+
+        <div style={{ marginBottom: '28px' }}>
+          <label style={{ display: 'block', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '6px' }}>
+            Dropbox Documents Link
+          </label>
+          <input
+            type="url"
+            value={String(form.dropboxLink ?? '')}
+            onChange={e => set('dropboxLink', e.target.value)}
+            className="input"
+            placeholder="https://www.dropbox.com/…"
+            style={{ width: '100%' }}
           />
         </div>
 

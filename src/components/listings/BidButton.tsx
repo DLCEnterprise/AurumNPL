@@ -10,6 +10,8 @@ interface ExistingBid {
   amount: number
   noteRate: number | null
   status: string
+  counterAmount?: number | null
+  counterNote?: string | null
 }
 
 interface Props {
@@ -29,14 +31,18 @@ const STATUS_COLOR: Record<string, string> = {
   ACCEPTED:  '#34d399',
   REJECTED:  '#f87171',
   WITHDRAWN: 'var(--text-muted)',
-  COUNTERED: '#60a5fa',
+  COUNTERED: '#fb923c',
+}
+
+function formatCurrencyLocal(n: number) {
+  return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
 }
 
 export function BidButton({ listingId, existingBid }: Props) {
   const router = useRouter()
   const toast  = useToast()
   const [open,     setOpen]     = useState(false)
-  const [loading,  setLoading]  = useState(false)
+  const [loading,  setLoading]  = useState<boolean | 'accept-counter' | 'decline-counter'>(false)
   const [amount,   setAmount]   = useState('')
   const [noteRate, setNoteRate] = useState('')
   const [message,  setMessage]  = useState('')
@@ -68,7 +74,85 @@ export function BidButton({ listingId, existingBid }: Props) {
     router.refresh()
   }
 
-  // Show existing bid status
+  const respondToCounter = async (action: 'accept-counter' | 'decline-counter') => {
+    if (!existingBid) return
+    setLoading(action)
+    const body =
+      action === 'accept-counter'
+        ? { status: 'ACCEPTED', amount: existingBid.counterAmount }
+        : { status: 'REJECTED' }
+
+    const res = await fetch(`/api/listings/${listingId}/bids/${existingBid.id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    })
+    setLoading(false)
+
+    const data = await res.json()
+    if (!res.ok || !data.success) {
+      toast.error(data.error ?? 'Action failed.')
+      return
+    }
+
+    toast.success(action === 'accept-counter' ? 'Counter offer accepted.' : 'Counter offer declined.')
+    router.refresh()
+  }
+
+  // Counter offer panel for buyer
+  if (existingBid && existingBid.status === 'COUNTERED' && !open) {
+    return (
+      <div className="glass-card" style={{ padding: '18px 20px', maxWidth: '500px' }}>
+        <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#fb923c', marginBottom: '10px' }}>
+          Counter Offer Received
+        </div>
+        <div style={{ display: 'flex', gap: '20px', alignItems: 'flex-start', flexWrap: 'wrap', marginBottom: '14px' }}>
+          <div>
+            <div style={{ fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-muted)', marginBottom: '3px' }}>Your Bid</div>
+            <div style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: 500, background: 'var(--gold-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              {formatCurrencyLocal(existingBid.amount)}
+            </div>
+          </div>
+          {existingBid.counterAmount != null && (
+            <div>
+              <div style={{ fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-muted)', marginBottom: '3px' }}>Counter Amount</div>
+              <div style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: 500, color: '#fb923c' }}>
+                {formatCurrencyLocal(existingBid.counterAmount)}
+              </div>
+            </div>
+          )}
+        </div>
+        {existingBid.counterNote && (
+          <div style={{ marginBottom: '14px', padding: '10px 12px', background: 'rgba(251,146,60,0.06)', border: '1px solid rgba(251,146,60,0.15)', borderRadius: '8px' }}>
+            <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.7, margin: 0 }}>
+              {existingBid.counterNote}
+            </p>
+          </div>
+        )}
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <button
+            className="btn btn--gold btn--sm"
+            disabled={loading !== false}
+            onClick={() => respondToCounter('accept-counter')}
+          >
+            {loading === 'accept-counter' && <Spinner size={13} color="#0a0a0a" />}
+            Accept Counter
+          </button>
+          <button
+            className="btn btn--ghost btn--sm"
+            disabled={loading !== false}
+            onClick={() => respondToCounter('decline-counter')}
+            style={{ color: '#f87171', borderColor: 'rgba(248,113,113,0.2)' }}
+          >
+            {loading === 'decline-counter' && <Spinner size={13} />}
+            Decline Counter
+          </button>
+        </div>
+      </div>
+    )
+  }
+
+  // Show existing bid status (non-COUNTERED)
   if (existingBid && !open) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
@@ -77,7 +161,7 @@ export function BidButton({ listingId, existingBid }: Props) {
             Your Bid
           </div>
           <div style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: 500, background: 'var(--gold-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(existingBid.amount)}
+            {formatCurrencyLocal(existingBid.amount)}
           </div>
           <span style={{ fontSize: '0.75rem', color: STATUS_COLOR[existingBid.status] ?? 'var(--text-muted)' }}>
             {STATUS_LABEL[existingBid.status] ?? existingBid.status}
@@ -152,9 +236,9 @@ export function BidButton({ listingId, existingBid }: Props) {
       </div>
 
       <div style={{ display: 'flex', gap: '10px' }}>
-        <button className="btn btn--gold" disabled={loading || !amount} onClick={submit}>
-          {loading && <Spinner size={15} color="#0a0a0a" />}
-          {loading ? 'Submitting…' : 'Submit Bid'}
+        <button className="btn btn--gold" disabled={loading !== false || !amount} onClick={submit}>
+          {loading === true && <Spinner size={15} color="#0a0a0a" />}
+          {loading === true ? 'Submitting…' : 'Submit Bid'}
         </button>
         <button className="btn btn--ghost" onClick={() => setOpen(false)}>Cancel</button>
       </div>

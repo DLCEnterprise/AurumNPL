@@ -3,6 +3,7 @@ import Link from 'next/link'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { formatCurrency, timeAgo } from '@/lib/utils'
+import { EmptyState } from '@/components/ui/EmptyState'
 import type { AssetType, ListingStatus } from '@prisma/client'
 
 export const metadata: Metadata = { title: 'Watchlist' }
@@ -42,13 +43,17 @@ export default async function WatchlistPage() {
       </div>
 
       {saved.length === 0 ? (
-        <div className="glass-card" style={{ padding: '60px', textAlign: 'center' }}>
-          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ margin: '0 auto 16px', display: 'block', color: 'var(--text-muted)' }}>
-            <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
-          </svg>
-          <p style={{ color: 'var(--text-muted)', marginBottom: '16px' }}>No saved listings yet.</p>
-          <Link href="/listings" className="btn btn--ghost btn--sm">Browse Listings</Link>
-        </div>
+        <EmptyState
+          icon={
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.2">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
+            </svg>
+          }
+          title="Your watchlist is empty"
+          description="Save listings to revisit them later."
+          actionLabel="Browse Listings"
+          actionHref="/listings"
+        />
       ) : (
         <div className="listings__grid">
           {saved.map(({ listing }) => (

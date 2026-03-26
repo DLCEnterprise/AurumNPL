@@ -12,7 +12,9 @@ interface FormData {
   title: string
   description: string
   assetType: string
+  dropboxLink: string
   // Step 2
+  lienPosition: string
   unpaidBalance: string
   loanCount: string
   avgDelinquency: string
@@ -35,7 +37,8 @@ export function CreateListingForm() {
   const toast = useToast()
   const [step, setStep] = useState<Step>(1)
   const [form, setForm] = useState<FormData>({
-    title: '', description: '', assetType: 'RESIDENTIAL',
+    title: '', description: '', assetType: 'RESIDENTIAL', dropboxLink: '',
+    lienPosition: '',
     unpaidBalance: '', loanCount: '', avgDelinquency: '',
     location: '', region: '',
     status: 'ACTIVE',
@@ -57,6 +60,7 @@ export function CreateListingForm() {
       if (!form.assetType) e.assetType = 'Asset type is required.'
     }
     if (step === 2) {
+      if (!form.lienPosition) e.lienPosition = 'Lien position is required.'
       if (!form.unpaidBalance || isNaN(parseFloat(form.unpaidBalance)) || parseFloat(form.unpaidBalance) <= 0)
         e.unpaidBalance = 'Enter a valid UPB amount.'
       if (!form.loanCount || isNaN(parseInt(form.loanCount)) || parseInt(form.loanCount) <= 0)
@@ -90,6 +94,8 @@ export function CreateListingForm() {
         location:       form.location.trim(),
         region:         form.region.trim() || undefined,
         status,
+        ...(form.dropboxLink ? { dropboxLink: form.dropboxLink } : {}),
+        ...(form.lienPosition ? { lienPosition: form.lienPosition } : {}),
       }),
     })
 
@@ -172,6 +178,15 @@ export function CreateListingForm() {
                 value={form.description} onChange={set('description')}
                 style={{ resize: 'vertical' }} />
             </div>
+            <div className="form-group">
+              <label htmlFor="dropboxLink">Dropbox Documents Link</label>
+              <input id="dropboxLink" type="url" className="form-input"
+                placeholder="https://www.dropbox.com/…"
+                value={form.dropboxLink} onChange={set('dropboxLink')} />
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '4px' }}>
+                Only shared with buyers whose bids you accept.
+              </span>
+            </div>
           </div>
         )}
 
@@ -181,6 +196,16 @@ export function CreateListingForm() {
             <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', fontWeight: 400, marginBottom: '24px' }}>
               Financial Details
             </h2>
+            <div className="form-group">
+              <label htmlFor="lienPosition">Lien Position *</label>
+              <select id="lienPosition" className={`form-input${errors.lienPosition ? ' form-input--error' : ''}`}
+                value={form.lienPosition} onChange={set('lienPosition')}>
+                <option value="">Select lien position…</option>
+                <option value="SENIOR">Senior (1st Mortgage)</option>
+                <option value="JUNIOR">Junior (2nd Mortgage)</option>
+              </select>
+              {errors.lienPosition && <span className="form-error">{errors.lienPosition}</span>}
+            </div>
             <div className="form-group">
               <label htmlFor="unpaidBalance">Unpaid Principal Balance (UPB) *</label>
               <input id="unpaidBalance" type="number" min="1" step="1000" className={`form-input${errors.unpaidBalance ? ' form-input--error' : ''}`}
@@ -248,12 +273,14 @@ export function CreateListingForm() {
               {[
                 { label: 'Title', value: form.title },
                 { label: 'Asset Type', value: form.assetType },
+                { label: 'Lien Position', value: form.lienPosition === 'SENIOR' ? 'Senior (1st Mortgage)' : form.lienPosition === 'JUNIOR' ? 'Junior (2nd Mortgage)' : '—' },
                 { label: 'UPB', value: upbFormatted },
                 { label: 'Loan Count', value: form.loanCount },
                 { label: 'Avg. Delinquency', value: form.avgDelinquency ? `${form.avgDelinquency} months` : '—' },
                 { label: 'Location', value: form.location },
                 { label: 'Region', value: form.region || '—' },
                 ...(form.description ? [{ label: 'Description', value: form.description }] : []),
+                ...(form.dropboxLink ? [{ label: 'Dropbox Link', value: 'Provided' }] : []),
               ].map(({ label, value }) => (
                 <div key={label} style={{ display: 'flex', gap: '16px', padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
                   <span style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', minWidth: '140px' }}>
