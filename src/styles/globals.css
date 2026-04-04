@@ -1467,3 +1467,206 @@ img { max-width: 100%; display: block; }
     grid-template-columns: 1fr 1fr !important;
   }
 }
+
+/* ═══════════════════════════════════════════════════════════
+   LIGHT MODE THEME
+   White background · Black text · Blue accent
+   ═══════════════════════════════════════════════════════════ */
+
+[data-theme="light"] {
+  /* Backgrounds */
+  --bg-deep:       #ffffff;
+  --bg-surface:    #f8f9fa;
+  --bg-elevated:   #f1f3f5;
+  --bg-card:       rgba(0,0,0,0.025);
+  --border:        rgba(0,0,0,0.10);
+  --border-light:  rgba(0,0,0,0.16);
+
+  /* Blue accent replaces gold */
+  --gold-100:      #dbeafe;
+  --gold-200:      #bfdbfe;
+  --gold-300:      #60a5fa;
+  --gold-400:      #2563eb;
+  --gold-500:      #1d4ed8;
+  --gold-glow:     rgba(37,99,235,0.10);
+  --gold-gradient: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 50%, #1d4ed8 100%);
+
+  /* Text */
+  --text-primary:   #0a0a0b;
+  --text-secondary: #374151;
+  --text-muted:     #6b7280;
+
+  /* Semantic */
+  --success: #059669;
+  --warning: #d97706;
+  --info:    #2563eb;
+}
+
+/* ── Body ────────────────────────────────────────────────── */
+[data-theme="light"] body {
+  background: var(--bg-deep);
+  color: var(--text-primary);
+}
+
+/* ── Navigation ──────────────────────────────────────────── */
+[data-theme="light"] .nav {
+  background: rgba(255,255,255,0.80);
+  border-bottom-color: rgba(0,0,0,0.08);
+}
+[data-theme="light"] .nav.scrolled {
+  background: rgba(255,255,255,0.96);
+}
+[data-theme="light"] .nav__hamburger span {
+  background: var(--text-secondary);
+}
+
+/* ── Mobile menu ─────────────────────────────────────────── */
+[data-theme="light"] .mobile-menu {
+  background: rgba(255,255,255,0.98);
+}
+[data-theme="light"] .mobile-menu__link {
+  border-bottom-color: rgba(0,0,0,0.08);
+}
+
+/* ── Mobile bottom nav ───────────────────────────────────── */
+[data-theme="light"] .mobile-bottom-nav {
+  background: rgba(255,255,255,0.96);
+  border-top: 1px solid rgba(0,0,0,0.08);
+}
+
+/* ── Glass card ──────────────────────────────────────────── */
+[data-theme="light"] .glass-card {
+  background: rgba(0,0,0,0.02);
+  border-color: rgba(0,0,0,0.10);
+}
+
+/* ── Buttons ─────────────────────────────────────────────── */
+[data-theme="light"] .btn--gold {
+  color: #ffffff;
+  box-shadow: 0 0 20px rgba(37,99,235,0.15);
+}
+[data-theme="light"] .btn--gold:hover {
+  box-shadow: 0 0 30px rgba(37,99,235,0.3);
+}
+[data-theme="light"] .btn--ghost:hover {
+  border-color: rgba(0,0,0,0.20);
+  background: rgba(0,0,0,0.04);
+  color: var(--text-primary);
+}
+[data-theme="light"] .btn--glass {
+  background: rgba(0,0,0,0.04);
+  border-color: rgba(0,0,0,0.12);
+  color: var(--text-primary);
+}
+[data-theme="light"] .btn--glass:hover {
+  background: rgba(0,0,0,0.08);
+  border-color: rgba(0,0,0,0.18);
+}
+
+/* ── Hero ────────────────────────────────────────────────── */
+[data-theme="light"] .hero__grid-overlay {
+  background-image:
+    linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+}
+[data-theme="light"] .hero__orb--1 {
+  background: radial-gradient(circle, rgba(37,99,235,0.10) 0%, transparent 70%);
+  opacity: 0.7;
+}
+[data-theme="light"] .hero__orb--2 {
+  background: radial-gradient(circle, rgba(37,99,235,0.06) 0%, transparent 70%);
+}
+[data-theme="light"] .hero__orb--3 {
+  background: radial-gradient(circle, rgba(37,99,235,0.04) 0%, transparent 70%);
+}
+[data-theme="light"] .hero__badge {
+  background: rgba(37,99,235,0.08);
+  border-color: rgba(37,99,235,0.20);
+}
+
+/* ── Section tags ────────────────────────────────────────── */
+[data-theme="light"] .section-tag {
+  border-color: rgba(37,99,235,0.25);
+}
+
+/* ── Feature cards ───────────────────────────────────────── */
+[data-theme="light"] .feature-card__icon {
+  background: rgba(37,99,235,0.08);
+  border-color: rgba(37,99,235,0.15);
+}
+
+/* ── Listing cards ───────────────────────────────────────── */
+[data-theme="light"] .listing-card__type--residential {
+  background: rgba(37,99,235,0.10);
+  color: #1d4ed8;
+}
+
+/* ── Filter selects ──────────────────────────────────────── */
+[data-theme="light"] .filter-bar__group select:focus {
+  border-color: rgba(37,99,235,0.40);
+}
+
+/* ── Messaging ───────────────────────────────────────────── */
+[data-theme="light"] .messaging__compose-btn:hover {
+  background: rgba(37,99,235,0.08);
+}
+[data-theme="light"] .messaging__conversation:hover {
+  background: rgba(0,0,0,0.03);
+}
+[data-theme="light"] .messaging__conversation.active {
+  background: rgba(37,99,235,0.06);
+}
+[data-theme="light"] .messaging__avatar {
+  background: rgba(37,99,235,0.12);
+  border-color: rgba(37,99,235,0.20);
+}
+[data-theme="light"] .messaging__chat-actions button:hover {
+  background: rgba(0,0,0,0.05);
+}
+[data-theme="light"] .messaging__msg--sent .messaging__msg-bubble {
+  background: rgba(37,99,235,0.10);
+  border-color: rgba(37,99,235,0.18);
+  color: #1d4ed8;
+}
+[data-theme="light"] .messaging__input:focus {
+  border-color: rgba(37,99,235,0.35);
+}
+[data-theme="light"] .messaging__send-btn {
+  color: #ffffff;
+}
+
+/* ── CTA background ──────────────────────────────────────── */
+[data-theme="light"] .cta__bg {
+  background: radial-gradient(ellipse at center, rgba(37,99,235,0.05) 0%, transparent 65%);
+}
+
+/* ── Forms ───────────────────────────────────────────────── */
+[data-theme="light"] .form-input:focus {
+  border-color: rgba(37,99,235,0.40);
+  box-shadow: 0 0 0 3px rgba(37,99,235,0.06);
+}
+[data-theme="light"] .role-option input:checked + label {
+  border-color: rgba(37,99,235,0.50);
+  background: rgba(37,99,235,0.06);
+  color: #2563eb;
+}
+
+/* ── Sidebar ─────────────────────────────────────────────── */
+[data-theme="light"] .sidebar__link:hover {
+  background: rgba(0,0,0,0.04);
+}
+[data-theme="light"] .sidebar__link.active {
+  background: rgba(37,99,235,0.08);
+}
+
+/* ── Responsive table cards ──────────────────────────────── */
+@media (max-width: 640px) {
+  [data-theme="light"] .table-responsive tr {
+    background: rgba(0,0,0,0.02);
+    border: 1px solid rgba(0,0,0,0.08);
+  }
+  [data-theme="light"] .table-responsive td {
+    border-bottom: 1px solid rgba(0,0,0,0.05);
+  }
+}
+

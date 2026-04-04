@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { ThemeToggle } from '@/components/ui/ThemeToggle'
 
 export function LandingNav() {
   const [scrolled, setScrolled] = useState(false)
@@ -55,6 +56,7 @@ export function LandingNav() {
           </ul>
 
           <div className="nav__actions">
+            <ThemeToggle />
             <Link href="/signin" className="btn btn--ghost">Sign In</Link>
             <Link href="/signup" className="btn btn--gold">Get Started</Link>
           </div>

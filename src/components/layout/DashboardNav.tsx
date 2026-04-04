@@ -5,6 +5,7 @@ import { signOut } from 'next-auth/react'
 import { getInitials } from '@/lib/utils'
 import { NotificationBell } from '@/components/layout/NotificationBell'
 import { MobileNav } from '@/components/layout/MobileNav'
+import { ThemeToggle } from '@/components/ui/ThemeToggle'
 import type { SessionUser } from '@/types'
 
 interface DashboardNavProps {
@@ -22,6 +23,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
 
         <div className="nav__actions">
           <MobileNav />
+          <ThemeToggle />
           <NotificationBell />
           <div style={{
             display: 'flex',
