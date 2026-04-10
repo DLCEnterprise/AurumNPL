@@ -12,7 +12,7 @@ export default async function ProfilePage() {
     where: { id: session!.user.id },
     select: {
       id: true, name: true, email: true, company: true, phone: true,
-      role: true, approvalStatus: true, createdAt: true,
+      role: true, approvalStatus: true, createdAt: true, pendingRoleRequest: true,
       entityName: true, signerTitle: true, yearsExperience: true,
       investorType: true, lienPosition: true, loanStatusPref: true, mainObjective: true,
       servicerName: true, servicerAddress: true,

@@ -62,6 +62,7 @@ interface User {
   role: string
   approvalStatus: string
   createdAt: string
+  pendingRoleRequest?: string | null
   // Investor fields
   entityName?: string | null
   signerTitle?: string | null
@@ -112,6 +113,10 @@ export function ProfileForm({ user }: { user: User }) {
   const [servicerContactName, setServicerContactName]   = useState(user.servicerContactName ?? '')
   const [servicerContactPhone, setServicerContactPhone] = useState(user.servicerContactPhone ?? '')
   const [servicerContactEmail, setServicerContactEmail] = useState(user.servicerContactEmail ?? '')
+
+  // Role request
+  const [pendingRoleRequest, setPendingRoleRequest] = useState(user.pendingRoleRequest ?? null)
+  const [roleRequestLoading, setRoleRequestLoading] = useState(false)
 
   // Password section
   const [currentPw, setCurrentPw] = useState('')
@@ -168,6 +173,46 @@ export function ProfileForm({ user }: { user: User }) {
       toast.error('Failed to save preferences.')
     } finally {
       setPrefsSaving(false)
+    }
+  }
+
+  const requestRole = async (role: 'BUYER' | 'SELLER') => {
+    setRoleRequestLoading(true)
+    try {
+      const res = await fetch('/api/profile/request-role', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestedRole: role }),
+      })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setPendingRoleRequest(role)
+        toast.success('Request submitted. Our team will review and notify you.')
+      } else {
+        toast.error(data.error ?? 'Failed to submit request.')
+      }
+    } catch {
+      toast.error('Failed to submit request.')
+    } finally {
+      setRoleRequestLoading(false)
+    }
+  }
+
+  const cancelRoleRequest = async () => {
+    setRoleRequestLoading(true)
+    try {
+      const res = await fetch('/api/profile/request-role', { method: 'DELETE' })
+      const data = await res.json()
+      if (res.ok && data.success) {
+        setPendingRoleRequest(null)
+        toast.success('Request cancelled.')
+      } else {
+        toast.error(data.error ?? 'Failed to cancel request.')
+      }
+    } catch {
+      toast.error('Failed to cancel request.')
+    } finally {
+      setRoleRequestLoading(false)
     }
   }
 
@@ -257,6 +302,50 @@ export function ProfileForm({ user }: { user: User }) {
           </span>
         </div>
       </div>
+
+      {/* Request Additional Access — shown to non-admin buyers/sellers only */}
+      {user.role !== 'ADMIN' && (
+        <div className="glass-card" style={{ padding: '24px 28px' }}>
+          <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 400, marginBottom: '6px' }}>
+            Additional Access
+          </h2>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem', marginBottom: '20px' }}>
+            {user.role === 'SELLER'
+              ? 'Apply for Buyer access to bid on listings in addition to selling.'
+              : 'Apply for Seller access to list your own NPL portfolios.'}
+          </p>
+
+          {pendingRoleRequest ? (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+              <span style={{
+                fontSize: '0.75rem', fontWeight: 600, padding: '4px 12px',
+                borderRadius: '100px', background: 'rgba(212,168,70,0.1)',
+                color: 'var(--gold-300)', border: '1px solid rgba(212,168,70,0.3)',
+              }}>
+                {pendingRoleRequest === 'BUYER' ? 'Buyer' : 'Seller'} Access — Pending Review
+              </span>
+              <button
+                type="button"
+                className="btn btn--ghost btn--sm"
+                onClick={cancelRoleRequest}
+                disabled={roleRequestLoading}
+                style={{ fontSize: '0.78rem' }}
+              >
+                {roleRequestLoading ? 'Cancelling…' : 'Cancel Request'}
+              </button>
+            </div>
+          ) : (
+            <button
+              type="button"
+              className="btn btn--gold btn--sm"
+              onClick={() => requestRole(user.role === 'SELLER' ? 'BUYER' : 'SELLER')}
+              disabled={roleRequestLoading}
+            >
+              {roleRequestLoading ? 'Submitting…' : `Request ${user.role === 'SELLER' ? 'Buyer' : 'Seller'} Access`}
+            </button>
+          )}
+        </div>
+      )}
 
       {/* Profile info */}
       <div className="glass-card" style={{ padding: '32px' }}>

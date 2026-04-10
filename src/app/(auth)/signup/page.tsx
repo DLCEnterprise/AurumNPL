@@ -12,7 +12,7 @@ interface FormState {
   confirmPassword: string
   company: string
   phone: string
-  role: 'SELLER' | 'BUYER'
+  role: 'SELLER' | 'BUYER' | 'BOTH'
   terms: boolean
   // Buyer / investor fields
   entityName: string
@@ -96,16 +96,21 @@ export default function SignUpPage() {
     if (Object.keys(errors).length > 0) { setFieldErrors(errors); return }
     setLoading(true)
 
+    // "Both" → primary role SELLER, request BUYER access pending admin review
+    const primaryRole = form.role === 'BOTH' ? 'SELLER' : form.role
+    const pendingRoleRequest = form.role === 'BOTH' ? 'BUYER' : undefined
+
     const body: Record<string, unknown> = {
       name: form.name.trim(),
       email: form.email.trim().toLowerCase(),
       password: form.password,
       company: form.company.trim(),
       phone: form.phone.trim() || undefined,
-      role: form.role,
+      role: primaryRole,
+      pendingRoleRequest,
     }
 
-    if (form.role === 'BUYER') {
+    if (form.role === 'BUYER' || form.role === 'BOTH') {
       if (form.entityName.trim()) body.entityName = form.entityName.trim()
       if (form.signerTitle.trim()) body.signerTitle = form.signerTitle.trim()
       if (form.yearsExperience) body.yearsExperience = parseInt(form.yearsExperience)
@@ -172,7 +177,18 @@ export default function SignUpPage() {
                   onChange={() => setForm((p) => ({ ...p, role: 'BUYER' }))} />
                 <label htmlFor="role-buyer">Buyer<span>Acquire distressed debt</span></label>
               </div>
+              <div className="role-option">
+                <input type="radio" id="role-both" name="role" value="BOTH"
+                  checked={form.role === 'BOTH'}
+                  onChange={() => setForm((p) => ({ ...p, role: 'BOTH' }))} />
+                <label htmlFor="role-both">Both<span>Buy &amp; sell NPL notes</span></label>
+              </div>
             </div>
+            {form.role === 'BOTH' && (
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '8px' }}>
+                You&apos;ll be registered as a Seller. Buyer access will be reviewed and granted by our team.
+              </p>
+            )}
           </div>
 
           {/* Core fields */}
@@ -242,7 +258,7 @@ export default function SignUpPage() {
           </div>
 
           {/* Buyer / Investor additional fields */}
-          {form.role === 'BUYER' && (
+          {(form.role === 'BUYER' || form.role === 'BOTH') && (
             <div style={{ marginTop: '4px', marginBottom: '4px' }}>
               <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0 20px' }} />
               <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--text-muted)', marginBottom: '16px' }}>

@@ -16,7 +16,10 @@ export async function GET(_req: NextRequest, { params: paramsPromise }: Params) 
 
   const listing = await prisma.listing.findUnique({
     where: { id },
-    include: { seller: { select: { id: true, name: true, company: true, email: true } } },
+    include: {
+      seller: { select: { id: true, name: true, company: true, email: true } },
+      asset: true,
+    },
   })
 
   if (!listing) {
@@ -49,19 +52,18 @@ export async function GET(_req: NextRequest, { params: paramsPromise }: Params) 
 
 // ─── PUT /api/listings/[id] ───────────────────────────────────────────────────
 
-const UpdateSchema = z.object({
-  title:          z.string().min(5).optional(),
-  description:    z.string().optional(),
+const UpdateListingSchema = z.object({
+  title:          z.string().min(1).optional(),
+  description:    z.string().optional().nullable(),
   assetType:      z.enum(['RESIDENTIAL', 'COMMERCIAL', 'CONSUMER', 'MIXED']).optional(),
-  unpaidBalance:  z.number().positive().optional(),
-  loanCount:      z.number().int().positive().optional(),
-  location:       z.string().min(2).optional(),
-  zip:            z.string().optional(),
-  region:         z.string().optional(),
-  avgDelinquency: z.number().int().min(0).optional(),
+  unpaidBalance:  z.number().optional(),
+  loanCount:      z.number().int().optional(),
+  location:       z.string().optional(),
+  zip:            z.string().optional().nullable(),
+  avgDelinquency: z.number().int().min(0).optional().nullable(),
   status:         z.enum(['DRAFT', 'ACTIVE', 'UNDER_REVIEW', 'PENDING', 'SOLD', 'ARCHIVED']).optional(),
-  dropboxLink:    z.string().url().optional(),
-  lienPosition:   z.enum(['SENIOR', 'JUNIOR']).optional(),
+  dropboxLink:    z.string().optional().nullable(),
+  lienPosition:   z.enum(['SENIOR', 'JUNIOR']).optional().nullable(),
 })
 
 export async function PUT(req: NextRequest, { params: paramsPromise }: Params) {
@@ -71,7 +73,7 @@ export async function PUT(req: NextRequest, { params: paramsPromise }: Params) {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
   }
 
-  const listing = await prisma.listing.findUnique({ where: { id } })
+  const listing = await prisma.listing.findUnique({ where: { id }, include: { asset: true } })
   if (!listing) {
     return NextResponse.json({ success: false, error: 'Listing not found.' }, { status: 404 })
   }
@@ -80,14 +82,77 @@ export async function PUT(req: NextRequest, { params: paramsPromise }: Params) {
   }
 
   const body = await req.json()
-  const parsed = UpdateSchema.safeParse(body)
-  if (!parsed.success) {
-    return NextResponse.json({ success: false, error: 'Validation failed.' }, { status: 422 })
+
+  // Separate listing-level fields from asset fields
+  const {
+    title, description, assetType, unpaidBalance, loanCount, location, zip,
+    avgDelinquency, status, dropboxLink, lienPosition,
+    ...rawAssetFields
+  } = body
+
+  const listingFields: Record<string, unknown> = {}
+  if (title !== undefined)         listingFields.title = title
+  if (description !== undefined)   listingFields.description = description
+  if (assetType !== undefined)     listingFields.assetType = assetType
+  if (unpaidBalance !== undefined) listingFields.unpaidBalance = Number(unpaidBalance)
+  if (loanCount !== undefined)     listingFields.loanCount = Number(loanCount)
+  if (location !== undefined)      listingFields.location = location
+  if (zip !== undefined)           listingFields.zip = zip
+  if (avgDelinquency !== undefined) listingFields.avgDelinquency = avgDelinquency !== null ? Number(avgDelinquency) : null
+  if (status !== undefined)        listingFields.status = status
+  if (dropboxLink !== undefined)   listingFields.dropboxLink = dropboxLink
+  if (lienPosition !== undefined)  listingFields.lienPosition = lienPosition
+
+  // Validate listing fields
+  const listingValidation = UpdateListingSchema.safeParse(listingFields)
+  if (!listingValidation.success) {
+    return NextResponse.json({ success: false, error: 'Validation failed.', details: listingValidation.error.flatten() }, { status: 422 })
   }
 
-  const updated = await prisma.listing.update({
+  // Build clean asset update (strip undefined, coerce types)
+  const assetUpdate: Record<string, unknown> = {}
+  const numFields = new Set([
+    'fairMarketValue', 'homePurchasePrice', 'ltv', 'cltv', 'payoffCltv',
+    'firstMtg_originalAmount', 'firstMtg_currentBalance', 'firstMtg_interestRate',
+    'firstMtg_monthlyPI', 'firstMtg_monthlyEscrow', 'firstMtg_loanTermMonths',
+    'firstMtg_totalMonthsPaid', 'firstMtg_monthsRemaining',
+    'firstMtg_modLoanAmount', 'firstMtg_modCurrentBalance', 'firstMtg_modDeferredBalance',
+    'firstMtg_modInterestRate', 'firstMtg_modMonthlyPI', 'firstMtg_modMonthlyEscrow',
+    'firstMtg_modTermMonths', 'firstMtg_modMonthsPaid', 'firstMtg_modPaymentsRemaining',
+    'firstMtg_foreclosureDefaultAmt',
+    'secondMtg_originalAmount', 'secondMtg_currentBalance', 'secondMtg_interestRate',
+    'secondMtg_monthlyPI', 'secondMtg_monthlyEscrow', 'secondMtg_loanTermMonths',
+    'secondMtg_totalMonthsPaid', 'secondMtg_monthsRemaining',
+  ])
+
+  for (const [k, v] of Object.entries(rawAssetFields)) {
+    if (v === undefined) continue
+    if (v === null || v === '') {
+      assetUpdate[k] = null
+    } else if (numFields.has(k)) {
+      const n = parseFloat(String(v).replace(/[$,%\s]/g, ''))
+      assetUpdate[k] = isNaN(n) ? null : n
+    } else {
+      assetUpdate[k] = v
+    }
+  }
+
+  await prisma.$transaction(async (tx) => {
+    if (Object.keys(listingFields).length > 0) {
+      await tx.listing.update({ where: { id }, data: listingFields })
+    }
+    if (Object.keys(assetUpdate).length > 0) {
+      if (listing.asset) {
+        await tx.asset.update({ where: { listingId: id }, data: assetUpdate })
+      } else {
+        await tx.asset.create({ data: { listingId: id, ...assetUpdate } })
+      }
+    }
+  })
+
+  const updated = await prisma.listing.findUnique({
     where: { id },
-    data: parsed.data,
+    include: { asset: true },
   })
 
   return NextResponse.json({ success: true, data: updated })

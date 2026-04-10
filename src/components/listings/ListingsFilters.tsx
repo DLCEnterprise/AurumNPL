@@ -13,7 +13,7 @@ interface SavedSearch {
 interface Props {
   initialAssetType?: AssetType
   initialStatus?: ListingStatus
-  initialRegion?: string
+  initialState?: string
   initialUpbMin?: number
   initialUpbMax?: number
   initialQ?: string
@@ -23,6 +23,34 @@ interface Props {
   initialLienPosition?: LienPosition
   mine?: boolean
 }
+
+const US_STATES = [
+  { label: 'Alabama', value: 'AL' }, { label: 'Alaska', value: 'AK' },
+  { label: 'Arizona', value: 'AZ' }, { label: 'Arkansas', value: 'AR' },
+  { label: 'California', value: 'CA' }, { label: 'Colorado', value: 'CO' },
+  { label: 'Connecticut', value: 'CT' }, { label: 'Delaware', value: 'DE' },
+  { label: 'Florida', value: 'FL' }, { label: 'Georgia', value: 'GA' },
+  { label: 'Hawaii', value: 'HI' }, { label: 'Idaho', value: 'ID' },
+  { label: 'Illinois', value: 'IL' }, { label: 'Indiana', value: 'IN' },
+  { label: 'Iowa', value: 'IA' }, { label: 'Kansas', value: 'KS' },
+  { label: 'Kentucky', value: 'KY' }, { label: 'Louisiana', value: 'LA' },
+  { label: 'Maine', value: 'ME' }, { label: 'Maryland', value: 'MD' },
+  { label: 'Massachusetts', value: 'MA' }, { label: 'Michigan', value: 'MI' },
+  { label: 'Minnesota', value: 'MN' }, { label: 'Mississippi', value: 'MS' },
+  { label: 'Missouri', value: 'MO' }, { label: 'Montana', value: 'MT' },
+  { label: 'Nebraska', value: 'NE' }, { label: 'Nevada', value: 'NV' },
+  { label: 'New Hampshire', value: 'NH' }, { label: 'New Jersey', value: 'NJ' },
+  { label: 'New Mexico', value: 'NM' }, { label: 'New York', value: 'NY' },
+  { label: 'North Carolina', value: 'NC' }, { label: 'North Dakota', value: 'ND' },
+  { label: 'Ohio', value: 'OH' }, { label: 'Oklahoma', value: 'OK' },
+  { label: 'Oregon', value: 'OR' }, { label: 'Pennsylvania', value: 'PA' },
+  { label: 'Rhode Island', value: 'RI' }, { label: 'South Carolina', value: 'SC' },
+  { label: 'South Dakota', value: 'SD' }, { label: 'Tennessee', value: 'TN' },
+  { label: 'Texas', value: 'TX' }, { label: 'Utah', value: 'UT' },
+  { label: 'Vermont', value: 'VT' }, { label: 'Virginia', value: 'VA' },
+  { label: 'Washington', value: 'WA' }, { label: 'West Virginia', value: 'WV' },
+  { label: 'Wisconsin', value: 'WI' }, { label: 'Wyoming', value: 'WY' },
+]
 
 const UPB_RANGES = [
   { label: 'Any', min: undefined, max: undefined },
@@ -35,7 +63,7 @@ const UPB_RANGES = [
 export function ListingsFilters({
   initialAssetType,
   initialStatus,
-  initialRegion,
+  initialState,
   initialUpbMin,
   initialUpbMax,
   initialQ = '',
@@ -76,7 +104,7 @@ export function ListingsFilters({
       const current: Record<string, string | undefined> = {
         assetType:      initialAssetType,
         status:         initialStatus,
-        region:         initialRegion,
+        state:          initialState,
         upbMin:         initialUpbMin?.toString(),
         upbMax:         initialUpbMax?.toString(),
         q:              searchText || undefined,
@@ -95,7 +123,7 @@ export function ListingsFilters({
     },
     [
       router, pathname, mine,
-      initialAssetType, initialStatus, initialRegion, initialUpbMin, initialUpbMax,
+      initialAssetType, initialStatus, initialState, initialUpbMin, initialUpbMax,
       initialSortBy, searchText, delinquencyMin, delinquencyMax, lienPosition,
     ]
   )
@@ -108,7 +136,7 @@ export function ListingsFilters({
       if (mine) params.set('mine', 'true')
       if (initialAssetType) params.set('assetType', initialAssetType)
       if (initialStatus) params.set('status', initialStatus)
-      if (initialRegion) params.set('region', initialRegion)
+      if (initialState) params.set('state', initialState)
       if (initialUpbMin !== undefined) params.set('upbMin', String(initialUpbMin))
       if (initialUpbMax !== undefined) params.set('upbMax', String(initialUpbMax))
       if (initialSortBy && initialSortBy !== 'newest') params.set('sortBy', initialSortBy)
@@ -170,7 +198,7 @@ export function ListingsFilters({
       if (searchText) filters.q = searchText
       if (initialAssetType) filters.assetType = initialAssetType
       if (initialStatus) filters.status = initialStatus
-      if (initialRegion) filters.region = initialRegion
+      if (initialState) filters.state = initialState
       if (initialUpbMin !== undefined) filters.upbMin = String(initialUpbMin)
       if (initialUpbMax !== undefined) filters.upbMax = String(initialUpbMax)
       if (initialSortBy && initialSortBy !== 'newest') filters.sortBy = initialSortBy
@@ -261,18 +289,15 @@ export function ListingsFilters({
         </div>
 
         <div className="filter-bar__group">
-          <label>Region</label>
+          <label>State</label>
           <select
-            value={initialRegion ?? ''}
-            onChange={(e) => push({ region: e.target.value || undefined })}
+            value={initialState ?? ''}
+            onChange={(e) => push({ state: e.target.value || undefined })}
           >
-            <option value="">All Regions</option>
-            <option value="Northeast">Northeast</option>
-            <option value="Southeast">Southeast</option>
-            <option value="Midwest">Midwest</option>
-            <option value="West">West</option>
-            <option value="Southwest">Southwest</option>
-            <option value="Nationwide">Nationwide</option>
+            <option value="">All States</option>
+            {US_STATES.map((s) => (
+              <option key={s.value} value={s.value}>{s.label}</option>
+            ))}
           </select>
         </div>
 

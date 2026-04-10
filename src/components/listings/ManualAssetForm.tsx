@@ -53,15 +53,21 @@ function Field({
   onChange: (name: string, value: string) => void
   placeholder?: string
   required?: boolean
-  options?: string[]
+  options?: { label: string; value: string }[] | string[]
 }) {
+  const normalizedOptions = options
+    ? (options as (string | { label: string; value: string })[]).map((o) =>
+        typeof o === 'string' ? { label: o, value: o } : o
+      )
+    : null
+
   return (
     <div className="form-group" style={{ marginBottom: 0 }}>
       <label style={{ fontSize: '0.72rem' }}>{label}{required && ' *'}</label>
-      {options ? (
+      {normalizedOptions ? (
         <select className="form-input" value={value} onChange={(e) => onChange(name, e.target.value)}>
           <option value="">Select…</option>
-          {options.map((o) => <option key={o} value={o}>{o}</option>)}
+          {normalizedOptions.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
         </select>
       ) : (
         <input
@@ -77,27 +83,57 @@ function Field({
   )
 }
 
-// ── Main component ─────────────────────────────────────────────────────────────
+// ── Constants ──────────────────────────────────────────────────────────────────
 
 const LOAN_STATUSES = ['Current', 'Past-Due', 'Default', 'Foreclosure', 'Bankruptcy', 'Modified']
 const OCCUPANCY_TYPES = ['Owner Occupied', 'Non-Owner Occupied']
 const BK_CHAPTERS = ['7', '11', '13']
+
+const US_STATES = [
+  { label: 'Alabama', value: 'AL' }, { label: 'Alaska', value: 'AK' },
+  { label: 'Arizona', value: 'AZ' }, { label: 'Arkansas', value: 'AR' },
+  { label: 'California', value: 'CA' }, { label: 'Colorado', value: 'CO' },
+  { label: 'Connecticut', value: 'CT' }, { label: 'Delaware', value: 'DE' },
+  { label: 'Florida', value: 'FL' }, { label: 'Georgia', value: 'GA' },
+  { label: 'Hawaii', value: 'HI' }, { label: 'Idaho', value: 'ID' },
+  { label: 'Illinois', value: 'IL' }, { label: 'Indiana', value: 'IN' },
+  { label: 'Iowa', value: 'IA' }, { label: 'Kansas', value: 'KS' },
+  { label: 'Kentucky', value: 'KY' }, { label: 'Louisiana', value: 'LA' },
+  { label: 'Maine', value: 'ME' }, { label: 'Maryland', value: 'MD' },
+  { label: 'Massachusetts', value: 'MA' }, { label: 'Michigan', value: 'MI' },
+  { label: 'Minnesota', value: 'MN' }, { label: 'Mississippi', value: 'MS' },
+  { label: 'Missouri', value: 'MO' }, { label: 'Montana', value: 'MT' },
+  { label: 'Nebraska', value: 'NE' }, { label: 'Nevada', value: 'NV' },
+  { label: 'New Hampshire', value: 'NH' }, { label: 'New Jersey', value: 'NJ' },
+  { label: 'New Mexico', value: 'NM' }, { label: 'New York', value: 'NY' },
+  { label: 'North Carolina', value: 'NC' }, { label: 'North Dakota', value: 'ND' },
+  { label: 'Ohio', value: 'OH' }, { label: 'Oklahoma', value: 'OK' },
+  { label: 'Oregon', value: 'OR' }, { label: 'Pennsylvania', value: 'PA' },
+  { label: 'Rhode Island', value: 'RI' }, { label: 'South Carolina', value: 'SC' },
+  { label: 'South Dakota', value: 'SD' }, { label: 'Tennessee', value: 'TN' },
+  { label: 'Texas', value: 'TX' }, { label: 'Utah', value: 'UT' },
+  { label: 'Vermont', value: 'VT' }, { label: 'Virginia', value: 'VA' },
+  { label: 'Washington', value: 'WA' }, { label: 'West Virginia', value: 'WV' },
+  { label: 'Wisconsin', value: 'WI' }, { label: 'Wyoming', value: 'WY' },
+]
+
+// ── Main component ─────────────────────────────────────────────────────────────
 
 export function ManualAssetForm() {
   const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Use a flat string map for all field values — easier to handle large forms
   const [fields, setFields] = useState<Record<string, string>>({
     // Listing
     title: '',
     assetType: 'RESIDENTIAL',
+    lienPosition: '',
     // Property
     propertyStreet: '', propertyCity: '', propertyState: '', propertyZip: '',
     fairMarketValue: '', occupancyType: '', homePurchaseDate: '', homePurchasePrice: '',
     ltv: '', cltv: '', payoffCltv: '',
-    // First mortgage
+    // Subject / First mortgage (used as subject when lien=FIRST, or as first-position context when lien=SECOND)
     firstMtg_loanStatus: '', firstMtg_originalAmount: '', firstMtg_currentBalance: '',
     firstMtg_interestRate: '', firstMtg_monthlyPI: '', firstMtg_monthlyEscrow: '',
     firstMtg_originationDate: '', firstMtg_maturityDate: '', firstMtg_firstPaymentDate: '',
@@ -113,7 +149,6 @@ export function ManualAssetForm() {
     // Foreclosure
     firstMtg_foreclosureDefaultDate: '', firstMtg_foreclosureDefaultAmt: '', firstMtg_foreclosureSaleDate: '',
     // Second mortgage
-    hasSecond: '',
     secondMtg_loanStatus: '', secondMtg_originalAmount: '', secondMtg_currentBalance: '',
     secondMtg_interestRate: '', secondMtg_monthlyPI: '', secondMtg_monthlyEscrow: '',
     secondMtg_originationDate: '', secondMtg_maturityDate: '', secondMtg_nextDueDate: '',
@@ -129,12 +164,16 @@ export function ManualAssetForm() {
     e.preventDefault()
     setError(null)
 
-    if (!fields.propertyState && !fields.propertyCity) {
-      setError('Please enter at least a city and state for the property.')
+    if (!fields.propertyStreet) { setError('Street address is required.'); return }
+    if (!fields.propertyCity)   { setError('City is required.'); return }
+    if (!fields.propertyState)  { setError('State is required.'); return }
+    if (!fields.propertyZip)    { setError('Zip code is required.'); return }
+    if (!fields.firstMtg_currentBalance && fields.lienPosition !== 'JUNIOR') {
+      setError('Subject loan UPB is required.')
       return
     }
-    if (!fields.firstMtg_currentBalance) {
-      setError('First Mortgage Current Balance is required.')
+    if (!fields.secondMtg_currentBalance && fields.lienPosition === 'JUNIOR') {
+      setError('Subject loan UPB is required.')
       return
     }
 
@@ -144,12 +183,12 @@ export function ManualAssetForm() {
     const parseInt2 = (v: string) => v ? parseInt(v) || null : null
     const parseBool = (v: string) => v === 'Yes' ? true : v === 'No' ? false : null
     const parseDate = (v: string) => v || null
+    const pct = (v: string) => { const n = parseNum(v); return n ? (n > 1 ? n / 100 : n) : null }
 
     const body = {
-      // Listing fields
       title: fields.title || [fields.propertyStreet, fields.propertyCity, fields.propertyState].filter(Boolean).join(', ') || 'Manual Entry',
       assetType: fields.assetType || 'RESIDENTIAL',
-      // Asset fields
+      lienPosition: fields.lienPosition || null,
       propertyStreet: fields.propertyStreet || null,
       propertyCity: fields.propertyCity || null,
       propertyState: fields.propertyState || null,
@@ -158,13 +197,13 @@ export function ManualAssetForm() {
       occupancyType: fields.occupancyType || null,
       homePurchaseDate: parseDate(fields.homePurchaseDate),
       homePurchasePrice: parseNum(fields.homePurchasePrice),
-      ltv: parseNum(fields.ltv) ? (parseNum(fields.ltv)! > 1 ? parseNum(fields.ltv)! / 100 : parseNum(fields.ltv)) : null,
-      cltv: parseNum(fields.cltv) ? (parseNum(fields.cltv)! > 1 ? parseNum(fields.cltv)! / 100 : parseNum(fields.cltv)) : null,
-      payoffCltv: parseNum(fields.payoffCltv) ? (parseNum(fields.payoffCltv)! > 1 ? parseNum(fields.payoffCltv)! / 100 : parseNum(fields.payoffCltv)) : null,
+      ltv: pct(fields.ltv),
+      cltv: pct(fields.cltv),
+      payoffCltv: pct(fields.payoffCltv),
       firstMtg_loanStatus: fields.firstMtg_loanStatus || null,
       firstMtg_originalAmount: parseNum(fields.firstMtg_originalAmount),
       firstMtg_currentBalance: parseNum(fields.firstMtg_currentBalance),
-      firstMtg_interestRate: parseNum(fields.firstMtg_interestRate) ? (parseNum(fields.firstMtg_interestRate)! > 1 ? parseNum(fields.firstMtg_interestRate)! / 100 : parseNum(fields.firstMtg_interestRate)) : null,
+      firstMtg_interestRate: pct(fields.firstMtg_interestRate),
       firstMtg_monthlyPI: parseNum(fields.firstMtg_monthlyPI),
       firstMtg_monthlyEscrow: parseNum(fields.firstMtg_monthlyEscrow),
       firstMtg_originationDate: parseDate(fields.firstMtg_originationDate),
@@ -184,7 +223,7 @@ export function ManualAssetForm() {
       firstMtg_modLoanAmount: parseNum(fields.firstMtg_modLoanAmount),
       firstMtg_modCurrentBalance: parseNum(fields.firstMtg_modCurrentBalance),
       firstMtg_modDeferredBalance: parseNum(fields.firstMtg_modDeferredBalance),
-      firstMtg_modInterestRate: parseNum(fields.firstMtg_modInterestRate) ? (parseNum(fields.firstMtg_modInterestRate)! > 1 ? parseNum(fields.firstMtg_modInterestRate)! / 100 : parseNum(fields.firstMtg_modInterestRate)) : null,
+      firstMtg_modInterestRate: pct(fields.firstMtg_modInterestRate),
       firstMtg_modMonthlyPI: parseNum(fields.firstMtg_modMonthlyPI),
       firstMtg_modMonthlyEscrow: parseNum(fields.firstMtg_modMonthlyEscrow),
       firstMtg_modTermMonths: parseInt2(fields.firstMtg_modTermMonths),
@@ -194,20 +233,18 @@ export function ManualAssetForm() {
       firstMtg_foreclosureDefaultDate: parseDate(fields.firstMtg_foreclosureDefaultDate),
       firstMtg_foreclosureDefaultAmt: parseNum(fields.firstMtg_foreclosureDefaultAmt),
       firstMtg_foreclosureSaleDate: parseDate(fields.firstMtg_foreclosureSaleDate),
-      ...(fields.hasSecond === 'Yes' ? {
-        secondMtg_loanStatus: fields.secondMtg_loanStatus || null,
-        secondMtg_originalAmount: parseNum(fields.secondMtg_originalAmount),
-        secondMtg_currentBalance: parseNum(fields.secondMtg_currentBalance),
-        secondMtg_interestRate: parseNum(fields.secondMtg_interestRate) ? (parseNum(fields.secondMtg_interestRate)! > 1 ? parseNum(fields.secondMtg_interestRate)! / 100 : parseNum(fields.secondMtg_interestRate)) : null,
-        secondMtg_monthlyPI: parseNum(fields.secondMtg_monthlyPI),
-        secondMtg_monthlyEscrow: parseNum(fields.secondMtg_monthlyEscrow),
-        secondMtg_originationDate: parseDate(fields.secondMtg_originationDate),
-        secondMtg_maturityDate: parseDate(fields.secondMtg_maturityDate),
-        secondMtg_nextDueDate: parseDate(fields.secondMtg_nextDueDate),
-        secondMtg_loanTermMonths: parseInt2(fields.secondMtg_loanTermMonths),
-        secondMtg_totalMonthsPaid: parseInt2(fields.secondMtg_totalMonthsPaid),
-        secondMtg_monthsRemaining: parseInt2(fields.secondMtg_monthsRemaining),
-      } : {}),
+      secondMtg_loanStatus: fields.secondMtg_loanStatus || null,
+      secondMtg_originalAmount: parseNum(fields.secondMtg_originalAmount),
+      secondMtg_currentBalance: parseNum(fields.secondMtg_currentBalance),
+      secondMtg_interestRate: pct(fields.secondMtg_interestRate),
+      secondMtg_monthlyPI: parseNum(fields.secondMtg_monthlyPI),
+      secondMtg_monthlyEscrow: parseNum(fields.secondMtg_monthlyEscrow),
+      secondMtg_originationDate: parseDate(fields.secondMtg_originationDate),
+      secondMtg_maturityDate: parseDate(fields.secondMtg_maturityDate),
+      secondMtg_nextDueDate: parseDate(fields.secondMtg_nextDueDate),
+      secondMtg_loanTermMonths: parseInt2(fields.secondMtg_loanTermMonths),
+      secondMtg_totalMonthsPaid: parseInt2(fields.secondMtg_totalMonthsPaid),
+      secondMtg_monthsRemaining: parseInt2(fields.secondMtg_monthsRemaining),
       isInBankruptcy: parseBool(fields.isInBankruptcy),
       bankruptcyChapter: fields.bankruptcyChapter || null,
       bkFilingDate: parseDate(fields.bkFilingDate),
@@ -234,29 +271,63 @@ export function ManualAssetForm() {
   }
 
   const isModified = fields.firstMtg_isModified === 'Yes'
-  const hasSecond = fields.hasSecond === 'Yes'
   const isInBankruptcy = fields.isInBankruptcy === 'Yes'
+  const lienPos = fields.lienPosition // '' | 'SENIOR' | 'JUNIOR'
+
+  // Section label logic based on lien position
+  const subjectFirstLabel = lienPos === 'JUNIOR'
+    ? 'First Mortgage on Subject Property (Senior Lien)'
+    : lienPos === 'SENIOR'
+    ? 'Subject Loan — First Mortgage'
+    : 'First Mortgage — Current Loan'
+
+  const subjectSecondLabel = lienPos === 'SENIOR'
+    ? 'Second Mortgage on Subject Property (Junior Lien)'
+    : lienPos === 'JUNIOR'
+    ? 'Subject Loan — Second Mortgage'
+    : 'Second Mortgage'
+
+  const subjectFirstHint = lienPos === 'JUNIOR'
+    ? 'Enter the senior lien details so buyers understand the full lien stack.'
+    : null
+
+  const subjectSecondHint = lienPos === 'SENIOR'
+    ? 'Enter the junior lien details so buyers understand the full lien stack.'
+    : null
 
   return (
     <form onSubmit={handleSubmit} noValidate>
       {error && <div className="alert alert--error" style={{ marginBottom: '20px' }}>{error}</div>}
 
-      {/* Listing title + type */}
+      {/* Listing title + type + lien position */}
       <Section title="Listing Details" defaultOpen>
         <Row>
           <Field label="Listing Title" name="title" value={fields.title} onChange={set} placeholder="Auto-generated from address if blank" />
           <Field label="Asset Type" name="assetType" value={fields.assetType} onChange={set}
             options={['RESIDENTIAL', 'COMMERCIAL', 'CONSUMER', 'MIXED']} />
         </Row>
+        <Row>
+          <Field
+            label="Lien Position *"
+            name="lienPosition"
+            value={fields.lienPosition}
+            onChange={set}
+            options={[
+              { label: 'First Lien (Senior)', value: 'SENIOR' },
+              { label: 'Second Lien (Junior)', value: 'JUNIOR' },
+            ]}
+            required
+          />
+        </Row>
       </Section>
 
       {/* Property */}
       <Section title="Property Details" defaultOpen>
         <Row>
-          <Field label="Street Address" name="propertyStreet" value={fields.propertyStreet} onChange={set} placeholder="123 Main St" />
-          <Field label="City" name="propertyCity" value={fields.propertyCity} onChange={set} placeholder="Miami" />
-          <Field label="State" name="propertyState" value={fields.propertyState} onChange={set} placeholder="FL" />
-          <Field label="Zip" name="propertyZip" value={fields.propertyZip} onChange={set} placeholder="33101" />
+          <Field label="Street Address" name="propertyStreet" value={fields.propertyStreet} onChange={set} placeholder="123 Main St" required />
+          <Field label="City" name="propertyCity" value={fields.propertyCity} onChange={set} placeholder="Miami" required />
+          <Field label="State" name="propertyState" value={fields.propertyState} onChange={set} options={US_STATES} required />
+          <Field label="Zip" name="propertyZip" value={fields.propertyZip} onChange={set} placeholder="33101" required />
         </Row>
         <Row>
           <Field label="Fair Market Value ($)" name="fairMarketValue" value={fields.fairMarketValue} onChange={set} placeholder="250000" />
@@ -271,12 +342,24 @@ export function ManualAssetForm() {
         </Row>
       </Section>
 
-      {/* First Mortgage */}
-      <Section title="First Mortgage — Current Loan" defaultOpen>
+      {/* First Mortgage section — always shown, label adapts */}
+      <Section title={subjectFirstLabel} defaultOpen>
+        {subjectFirstHint && (
+          <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '16px', marginTop: '-4px' }}>
+            {subjectFirstHint}
+          </p>
+        )}
         <Row>
           <Field label="Loan Status" name="firstMtg_loanStatus" value={fields.firstMtg_loanStatus} onChange={set} options={LOAN_STATUSES} />
           <Field label="Original Loan Amount ($)" name="firstMtg_originalAmount" value={fields.firstMtg_originalAmount} onChange={set} placeholder="200000" />
-          <Field label="Current Balance ($) *" name="firstMtg_currentBalance" value={fields.firstMtg_currentBalance} onChange={set} placeholder="185000" required />
+          <Field
+            label={lienPos === 'JUNIOR' ? 'UPB (Unpaid Principal Balance) ($)' : 'UPB (Unpaid Principal Balance) ($) *'}
+            name="firstMtg_currentBalance"
+            value={fields.firstMtg_currentBalance}
+            onChange={set}
+            placeholder="185000"
+            required={lienPos !== 'JUNIOR'}
+          />
         </Row>
         <Row>
           <Field label="Interest Rate (%)" name="firstMtg_interestRate" value={fields.firstMtg_interestRate} onChange={set} placeholder="6.5" />
@@ -295,13 +378,16 @@ export function ManualAssetForm() {
           <Field label="Months Remaining" name="firstMtg_monthsRemaining" type="number" value={fields.firstMtg_monthsRemaining} onChange={set} placeholder="312" />
           <Field label="Interest Paid To Date" name="firstMtg_interestPaidToDate" type="date" value={fields.firstMtg_interestPaidToDate} onChange={set} />
         </Row>
-        <Row>
-          <Field label="Has Been Modified?" name="firstMtg_isModified" value={fields.firstMtg_isModified} onChange={set} options={['Yes', 'No']} />
-        </Row>
+        {/* Modification toggle — only on the subject first lien */}
+        {lienPos !== 'JUNIOR' && (
+          <Row>
+            <Field label="Has Been Modified?" name="firstMtg_isModified" value={fields.firstMtg_isModified} onChange={set} options={['Yes', 'No']} />
+          </Row>
+        )}
       </Section>
 
-      {/* Modification */}
-      {isModified && (
+      {/* Modification — only when lien=SENIOR (or unselected) and modified */}
+      {lienPos !== 'JUNIOR' && isModified && (
         <Section title="First Mortgage — Modification Terms" defaultOpen>
           <Row>
             <Field label="Modification Date" name="firstMtg_modDate" type="date" value={fields.firstMtg_modDate} onChange={set} />
@@ -333,8 +419,8 @@ export function ManualAssetForm() {
         </Section>
       )}
 
-      {/* Foreclosure */}
-      <Section title="First Mortgage — Foreclosure Status">
+      {/* Foreclosure — always shown for first lien context */}
+      <Section title={lienPos === 'JUNIOR' ? 'First Mortgage — Foreclosure Status' : 'First Mortgage — Foreclosure Status'}>
         <Row>
           <Field label="Notice of Default Date" name="firstMtg_foreclosureDefaultDate" type="date" value={fields.firstMtg_foreclosureDefaultDate} onChange={set} />
           <Field label="Default Amount ($)" name="firstMtg_foreclosureDefaultAmt" value={fields.firstMtg_foreclosureDefaultAmt} onChange={set} placeholder="0" />
@@ -342,35 +428,40 @@ export function ManualAssetForm() {
         </Row>
       </Section>
 
-      {/* Second Mortgage */}
-      <Section title="Second Mortgage">
-        <Row>
-          <Field label="Is there a second mortgage?" name="hasSecond" value={fields.hasSecond} onChange={set} options={['Yes', 'No']} />
-        </Row>
-        {hasSecond && (
-          <>
-            <Row>
-              <Field label="Loan Status" name="secondMtg_loanStatus" value={fields.secondMtg_loanStatus} onChange={set} options={LOAN_STATUSES} />
-              <Field label="Original Amount ($)" name="secondMtg_originalAmount" value={fields.secondMtg_originalAmount} onChange={set} placeholder="50000" />
-              <Field label="Current Balance ($)" name="secondMtg_currentBalance" value={fields.secondMtg_currentBalance} onChange={set} placeholder="45000" />
-            </Row>
-            <Row>
-              <Field label="Interest Rate (%)" name="secondMtg_interestRate" value={fields.secondMtg_interestRate} onChange={set} placeholder="7.5" />
-              <Field label="Monthly P&I ($)" name="secondMtg_monthlyPI" value={fields.secondMtg_monthlyPI} onChange={set} />
-              <Field label="Monthly Escrow ($)" name="secondMtg_monthlyEscrow" value={fields.secondMtg_monthlyEscrow} onChange={set} />
-            </Row>
-            <Row>
-              <Field label="Origination Date" name="secondMtg_originationDate" type="date" value={fields.secondMtg_originationDate} onChange={set} />
-              <Field label="Maturity Date" name="secondMtg_maturityDate" type="date" value={fields.secondMtg_maturityDate} onChange={set} />
-              <Field label="Next Due Date" name="secondMtg_nextDueDate" type="date" value={fields.secondMtg_nextDueDate} onChange={set} />
-            </Row>
-            <Row>
-              <Field label="Loan Term (months)" name="secondMtg_loanTermMonths" type="number" value={fields.secondMtg_loanTermMonths} onChange={set} />
-              <Field label="Months Paid" name="secondMtg_totalMonthsPaid" type="number" value={fields.secondMtg_totalMonthsPaid} onChange={set} />
-              <Field label="Months Remaining" name="secondMtg_monthsRemaining" type="number" value={fields.secondMtg_monthsRemaining} onChange={set} />
-            </Row>
-          </>
+      {/* Second Mortgage section — always shown, label adapts */}
+      <Section title={subjectSecondLabel}>
+        {subjectSecondHint && (
+          <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginBottom: '16px', marginTop: '-4px' }}>
+            {subjectSecondHint}
+          </p>
         )}
+        <Row>
+          <Field label="Loan Status" name="secondMtg_loanStatus" value={fields.secondMtg_loanStatus} onChange={set} options={LOAN_STATUSES} />
+          <Field label="Original Amount ($)" name="secondMtg_originalAmount" value={fields.secondMtg_originalAmount} onChange={set} placeholder="50000" />
+          <Field
+            label={lienPos === 'JUNIOR' ? 'UPB (Unpaid Principal Balance) ($) *' : 'UPB (Unpaid Principal Balance) ($)'}
+            name="secondMtg_currentBalance"
+            value={fields.secondMtg_currentBalance}
+            onChange={set}
+            placeholder="45000"
+            required={lienPos === 'JUNIOR'}
+          />
+        </Row>
+        <Row>
+          <Field label="Interest Rate (%)" name="secondMtg_interestRate" value={fields.secondMtg_interestRate} onChange={set} placeholder="7.5" />
+          <Field label="Monthly P&I ($)" name="secondMtg_monthlyPI" value={fields.secondMtg_monthlyPI} onChange={set} />
+          <Field label="Monthly Escrow ($)" name="secondMtg_monthlyEscrow" value={fields.secondMtg_monthlyEscrow} onChange={set} />
+        </Row>
+        <Row>
+          <Field label="Origination Date" name="secondMtg_originationDate" type="date" value={fields.secondMtg_originationDate} onChange={set} />
+          <Field label="Maturity Date" name="secondMtg_maturityDate" type="date" value={fields.secondMtg_maturityDate} onChange={set} />
+          <Field label="Next Due Date" name="secondMtg_nextDueDate" type="date" value={fields.secondMtg_nextDueDate} onChange={set} />
+        </Row>
+        <Row>
+          <Field label="Loan Term (months)" name="secondMtg_loanTermMonths" type="number" value={fields.secondMtg_loanTermMonths} onChange={set} />
+          <Field label="Months Paid" name="secondMtg_totalMonthsPaid" type="number" value={fields.secondMtg_totalMonthsPaid} onChange={set} />
+          <Field label="Months Remaining" name="secondMtg_monthsRemaining" type="number" value={fields.secondMtg_monthsRemaining} onChange={set} />
+        </Row>
       </Section>
 
       {/* Bankruptcy */}

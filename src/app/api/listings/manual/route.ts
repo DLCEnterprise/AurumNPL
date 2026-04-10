@@ -13,11 +13,12 @@ export async function POST(req: NextRequest) {
 
   const body = await req.json()
 
-  const { title, assetType, ...assetFields } = body
+  const { title, assetType, lienPosition, ...assetFields } = body
 
-  const unpaidBalance = assetFields.firstMtg_currentBalance
-    ?? assetFields.firstMtg_modCurrentBalance
-    ?? 0
+  // UPB: use subject loan balance based on lien position
+  const unpaidBalance = lienPosition === 'JUNIOR'
+    ? (assetFields.secondMtg_currentBalance ?? assetFields.firstMtg_currentBalance ?? assetFields.firstMtg_modCurrentBalance ?? 0)
+    : (assetFields.firstMtg_currentBalance ?? assetFields.firstMtg_modCurrentBalance ?? assetFields.secondMtg_currentBalance ?? 0)
 
   const location = [assetFields.propertyCity, assetFields.propertyState]
     .filter(Boolean).join(', ') || 'Unknown'
@@ -37,6 +38,7 @@ export async function POST(req: NextRequest) {
       data: {
         title: title || autoTitle || 'Manual Entry',
         assetType: assetType || 'RESIDENTIAL',
+        lienPosition: lienPosition ?? null,
         unpaidBalance,
         loanCount: 1,
         location,

@@ -192,7 +192,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               </svg>
               View Bids{bidCount > 0 ? ` (${bidCount})` : ''}
             </Link>
-            <ArchiveListingButton listingId={listing.id} />
+            {listing.status !== 'ARCHIVED' && <ArchiveListingButton listingId={listing.id} />}
           </>
         )}
       </div>

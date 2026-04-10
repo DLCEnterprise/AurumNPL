@@ -18,6 +18,7 @@ const SignUpSchema = z.object({
   company: z.string().min(2, 'Company name must be at least 2 characters.'),
   phone: z.string().optional(),
   role: z.enum(['SELLER', 'BUYER']),
+  pendingRoleRequest: z.enum(['SELLER', 'BUYER']).optional(),
   // Optional investor fields (BUYER only)
   entityName:     z.string().optional(),
   signerTitle:    z.string().optional(),
@@ -50,7 +51,7 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    const { name, email, password, company, phone, role,
+    const { name, email, password, company, phone, role, pendingRoleRequest,
             entityName, signerTitle, yearsExperience, investorType,
             lienPosition, loanStatusPref, mainObjective } = parsed.data
 
@@ -73,6 +74,7 @@ export async function POST(req: NextRequest) {
         company,
         phone: phone ?? null,
         role,
+        pendingRoleRequest: pendingRoleRequest ?? null,
         approvalStatus: 'PENDING',
         ...(role === 'BUYER' && {
           entityName:      entityName ?? null,

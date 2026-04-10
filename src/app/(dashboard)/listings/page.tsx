@@ -15,7 +15,7 @@ const PAGE_SIZE = 12
 interface SearchParams {
   assetType?: string
   status?: string
-  region?: string
+  state?: string
   upbMin?: string
   upbMax?: string
   page?: string
@@ -40,7 +40,7 @@ export default async function ListingsPage({
   const mine    = searchParams.mine === 'true'
   const assetType = searchParams.assetType as AssetType | undefined
   const status    = searchParams.status as ListingStatus | undefined
-  const region    = searchParams.region
+  const state     = searchParams.state
   const upbMin    = searchParams.upbMin ? parseFloat(searchParams.upbMin) : undefined
   const upbMax    = searchParams.upbMax ? parseFloat(searchParams.upbMax) : undefined
   const q              = searchParams.q
@@ -62,7 +62,12 @@ export default async function ListingsPage({
     ...(mine ? { sellerId: userId } : { status: status ?? ('ACTIVE' as ListingStatus) }),
     ...(assetType ? { assetType } : {}),
     ...(status && mine ? { status } : {}),
-    ...(region ? { region: { contains: region, mode: 'insensitive' as const } } : {}),
+    ...(state ? {
+      OR: [
+        { location: { contains: state, mode: 'insensitive' as const } },
+        { asset: { propertyState: { equals: state, mode: 'insensitive' as const } } },
+      ],
+    } : {}),
     ...(validatedLienPosition ? { lienPosition: validatedLienPosition } : {}),
     ...(upbMin !== undefined || upbMax !== undefined
       ? {
@@ -163,7 +168,7 @@ export default async function ListingsPage({
       <ListingsFilters
         initialAssetType={assetType}
         initialStatus={status}
-        initialRegion={region}
+        initialState={state}
         initialUpbMin={upbMin}
         initialUpbMax={upbMax}
         initialQ={q}
@@ -345,7 +350,7 @@ function buildUrl(params: SearchParams, page: number) {
   const qs = new URLSearchParams()
   if (params.assetType) qs.set('assetType', params.assetType)
   if (params.status) qs.set('status', params.status)
-  if (params.region) qs.set('region', params.region)
+  if (params.state) qs.set('state', params.state)
   if (params.upbMin) qs.set('upbMin', params.upbMin)
   if (params.upbMax) qs.set('upbMax', params.upbMax)
   if (params.mine === 'true') qs.set('mine', 'true')

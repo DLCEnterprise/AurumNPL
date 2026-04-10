@@ -110,6 +110,9 @@ model User {
   servicerContactPhone  String?
   servicerContactEmail  String?
 
+  // Role expansion request
+  pendingRoleRequest    String?   // 'BUYER' or 'SELLER' — pending admin review
+
   listings              Listing[]
   sentMessages          Message[]                 @relation("SentMessages")
   receivedMessages      Message[]                 @relation("ReceivedMessages")

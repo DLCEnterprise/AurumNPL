@@ -67,6 +67,7 @@ export default async function AdminUsersPage({
         role: true,
         approvalStatus: true,
         createdAt: true,
+        pendingRoleRequest: true,
       },
       orderBy: { createdAt: 'desc' },
       skip: (page - 1) * PAGE_SIZE,
@@ -195,12 +196,24 @@ export default async function AdminUsersPage({
                       {user.company ?? '—'}
                     </td>
                     <td data-label="Role" style={{ padding: '12px 16px' }}>
-                      <span
-                        className={`listing-card__type listing-card__type--${user.role === 'SELLER' ? 'residential' : user.role === 'BUYER' ? 'commercial' : 'mixed'}`}
-                        style={{ fontSize: '0.7rem' }}
-                      >
-                        {user.role}
-                      </span>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
+                        <span
+                          className={`listing-card__type listing-card__type--${user.role === 'SELLER' ? 'residential' : user.role === 'BUYER' ? 'commercial' : 'mixed'}`}
+                          style={{ fontSize: '0.7rem' }}
+                        >
+                          {user.role}
+                        </span>
+                        {user.pendingRoleRequest && (
+                          <span style={{
+                            fontSize: '0.65rem', fontWeight: 600, padding: '2px 7px',
+                            borderRadius: '100px', background: 'rgba(212,168,70,0.1)',
+                            color: 'var(--gold-300)', border: '1px solid rgba(212,168,70,0.3)',
+                            whiteSpace: 'nowrap',
+                          }}>
+                            + {user.pendingRoleRequest} pending
+                          </span>
+                        )}
+                      </div>
                     </td>
                     <td data-label="Status" style={{ padding: '12px 16px' }}>
                       <span style={{
