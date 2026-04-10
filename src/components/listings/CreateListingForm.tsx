@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ui/Toast'
 import { Spinner } from '@/components/ui/Skeleton'
+import { CurrencyInput, PercentInput } from '@/components/ui/FormattedInputs'
 
 type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7
 
@@ -250,6 +251,13 @@ export function CreateListingForm() {
     if (errors[key]) setErrors((p) => ({ ...p, [key]: undefined }))
   }
 
+  // For CurrencyInput / PercentInput which yield raw string values directly
+  const setRaw = (key: keyof FormData) => (raw: string) => {
+    setForm((p) => ({ ...p, [key]: raw }))
+    setIsDirty(true)
+    if (errors[key]) setErrors((p) => ({ ...p, [key]: undefined }))
+  }
+
   const validateStep = (): boolean => {
     const e: Partial<Record<keyof FormData, string>> = {}
     if (step === 1) {
@@ -429,7 +437,7 @@ export function CreateListingForm() {
   }
 
   const upbFormatted = form.unpaidBalance && !isNaN(parseFloat(form.unpaidBalance))
-    ? `$${parseFloat(form.unpaidBalance).toLocaleString('en-US', { maximumFractionDigits: 0 })}`
+    ? new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(parseFloat(form.unpaidBalance))
     : ''
 
   return (
@@ -517,8 +525,7 @@ export function CreateListingForm() {
                   placeholder="e.g. 127" value={form.loanCount} onChange={set('loanCount')} />
               </Field>
               <Field label="Asking Price (USD)">
-                <input type="number" min="0" className="form-input"
-                  placeholder="e.g. 9200000" value={form.askingPrice} onChange={set('askingPrice')} />
+                <CurrencyInput placeholder="e.g. $9,200,000.00" value={form.askingPrice} onValueChange={setRaw('askingPrice')} />
               </Field>
             </FieldRow>
 
@@ -538,40 +545,42 @@ export function CreateListingForm() {
             <SectionTitle>Loan Balances</SectionTitle>
             <FieldRow cols={2}>
               <Field label="UPB — Unpaid Principal Balance" required error={errors.unpaidBalance}>
-                <input type="number" min="1" step="1000" className={`form-input${errors.unpaidBalance ? ' form-input--error' : ''}`}
-                  placeholder="e.g. 18400000" value={form.unpaidBalance} onChange={set('unpaidBalance')} />
-                {upbFormatted && <span style={{ fontSize: '0.75rem', color: 'var(--gold-300)', marginTop: '3px', display: 'block' }}>{upbFormatted}</span>}
+                <CurrencyInput placeholder="e.g. $18,400,000.00"
+                  className={`form-input${errors.unpaidBalance ? ' form-input--error' : ''}`}
+                  value={form.unpaidBalance} onValueChange={setRaw('unpaidBalance')} />
               </Field>
               <Field label="Original Loan Amount" required error={errors.firstMtg_originalAmount}>
-                <input type="number" min="1" className={`form-input${errors.firstMtg_originalAmount ? ' form-input--error' : ''}`}
-                  placeholder="e.g. 20000000" value={form.firstMtg_originalAmount} onChange={set('firstMtg_originalAmount')} />
+                <CurrencyInput placeholder="e.g. $20,000,000.00"
+                  className={`form-input${errors.firstMtg_originalAmount ? ' form-input--error' : ''}`}
+                  value={form.firstMtg_originalAmount} onValueChange={setRaw('firstMtg_originalAmount')} />
               </Field>
             </FieldRow>
 
             <Field label="Current Balance">
-              <input type="number" min="0" className="form-input"
-                placeholder="e.g. 18400000" value={form.firstMtg_currentBalance} onChange={set('firstMtg_currentBalance')} />
+              <CurrencyInput placeholder="e.g. $18,400,000.00" value={form.firstMtg_currentBalance} onValueChange={setRaw('firstMtg_currentBalance')} />
             </Field>
 
             <div style={{ marginBottom: '16px' }} />
             <SectionTitle>Rate & Payments</SectionTitle>
             <FieldRow cols={2}>
               <Field label="Interest Rate (%)" required error={errors.firstMtg_interestRate}>
-                <input type="number" min="0" max="100" step="0.001" className={`form-input${errors.firstMtg_interestRate ? ' form-input--error' : ''}`}
-                  placeholder="e.g. 8.5" value={form.firstMtg_interestRate} onChange={set('firstMtg_interestRate')} />
+                <PercentInput placeholder="e.g. 8.5%"
+                  className={`form-input${errors.firstMtg_interestRate ? ' form-input--error' : ''}`}
+                  value={form.firstMtg_interestRate} onValueChange={setRaw('firstMtg_interestRate')} />
               </Field>
               <Field label="Monthly P&I" required error={errors.firstMtg_monthlyPI}>
-                <input type="number" min="0" className={`form-input${errors.firstMtg_monthlyPI ? ' form-input--error' : ''}`}
-                  placeholder="e.g. 1450" value={form.firstMtg_monthlyPI} onChange={set('firstMtg_monthlyPI')} />
+                <CurrencyInput placeholder="e.g. $1,450.00"
+                  className={`form-input${errors.firstMtg_monthlyPI ? ' form-input--error' : ''}`}
+                  value={form.firstMtg_monthlyPI} onValueChange={setRaw('firstMtg_monthlyPI')} />
               </Field>
             </FieldRow>
 
             <FieldRow cols={3}>
               <Field label="Monthly Escrow">
-                <input type="number" min="0" className="form-input" placeholder="e.g. 350" value={form.firstMtg_monthlyEscrow} onChange={set('firstMtg_monthlyEscrow')} />
+                <CurrencyInput placeholder="e.g. $350.00" value={form.firstMtg_monthlyEscrow} onValueChange={setRaw('firstMtg_monthlyEscrow')} />
               </Field>
               <Field label="Total Monthly Payment">
-                <input type="number" min="0" className="form-input" placeholder="e.g. 1800" value={form.totalMonthlyPayment} onChange={set('totalMonthlyPayment')} />
+                <CurrencyInput placeholder="e.g. $1,800.00" value={form.totalMonthlyPayment} onValueChange={setRaw('totalMonthlyPayment')} />
               </Field>
               <Field label="Avg. Delinquency (months)">
                 <input type="number" min="0" className="form-input" placeholder="e.g. 18" value={form.avgDelinquency} onChange={set('avgDelinquency')} />
@@ -746,10 +755,10 @@ export function CreateListingForm() {
             <SectionTitle>Valuation</SectionTitle>
             <FieldRow cols={2}>
               <Field label="Fair Market Value (FMV)">
-                <input type="number" min="0" className="form-input" placeholder="e.g. 250000" value={form.fairMarketValue} onChange={set('fairMarketValue')} />
+                <CurrencyInput placeholder="e.g. $250,000.00" value={form.fairMarketValue} onValueChange={setRaw('fairMarketValue')} />
               </Field>
               <Field label="Home Purchase Price">
-                <input type="number" min="0" className="form-input" placeholder="e.g. 220000" value={form.homePurchasePrice} onChange={set('homePurchasePrice')} />
+                <CurrencyInput placeholder="e.g. $220,000.00" value={form.homePurchasePrice} onValueChange={setRaw('homePurchasePrice')} />
               </Field>
             </FieldRow>
             <FieldRow cols={3}>
@@ -757,10 +766,10 @@ export function CreateListingForm() {
                 <input type="date" className="form-input" value={form.homePurchaseDate} onChange={set('homePurchaseDate')} />
               </Field>
               <Field label="LTV (%)">
-                <input type="number" min="0" max="999" step="0.01" className="form-input" placeholder="e.g. 95.5" value={form.ltv} onChange={set('ltv')} />
+                <PercentInput placeholder="e.g. 95.5%" value={form.ltv} onValueChange={setRaw('ltv')} />
               </Field>
               <Field label="CLTV (%)">
-                <input type="number" min="0" max="999" step="0.01" className="form-input" placeholder="e.g. 110.2" value={form.cltv} onChange={set('cltv')} />
+                <PercentInput placeholder="e.g. 110.2%" value={form.cltv} onValueChange={setRaw('cltv')} />
               </Field>
             </FieldRow>
           </div>
@@ -894,7 +903,7 @@ export function CreateListingForm() {
                 <input type="date" className="form-input" value={form.firstMtg_foreclosureDefaultDate} onChange={set('firstMtg_foreclosureDefaultDate')} />
               </Field>
               <Field label="Default Amount">
-                <input type="number" min="0" className="form-input" placeholder="e.g. 24500" value={form.firstMtg_foreclosureDefaultAmt} onChange={set('firstMtg_foreclosureDefaultAmt')} />
+                <CurrencyInput placeholder="e.g. $24,500.00" value={form.firstMtg_foreclosureDefaultAmt} onValueChange={setRaw('firstMtg_foreclosureDefaultAmt')} />
               </Field>
             </FieldRow>
             <Field label="Foreclosure Sale Date">
@@ -914,8 +923,7 @@ export function CreateListingForm() {
                 </select>
               </Field>
               <Field label="Interest Rate (%)">
-                <input type="number" min="0" max="100" step="0.001" className="form-input"
-                  placeholder="e.g. 10.5" value={form.secondMtg_interestRate} onChange={set('secondMtg_interestRate')} />
+                <PercentInput placeholder="e.g. 10.5%" value={form.secondMtg_interestRate} onValueChange={setRaw('secondMtg_interestRate')} />
               </Field>
             </FieldRow>
 
@@ -923,15 +931,15 @@ export function CreateListingForm() {
               <>
                 <FieldRow cols={2}>
                   <Field label="Original Amount">
-                    <input type="number" min="0" className="form-input" placeholder="e.g. 45000" value={form.secondMtg_originalAmount} onChange={set('secondMtg_originalAmount')} />
+                    <CurrencyInput placeholder="e.g. $45,000.00" value={form.secondMtg_originalAmount} onValueChange={setRaw('secondMtg_originalAmount')} />
                   </Field>
                   <Field label="Current Balance">
-                    <input type="number" min="0" className="form-input" placeholder="e.g. 38000" value={form.secondMtg_currentBalance} onChange={set('secondMtg_currentBalance')} />
+                    <CurrencyInput placeholder="e.g. $38,000.00" value={form.secondMtg_currentBalance} onValueChange={setRaw('secondMtg_currentBalance')} />
                   </Field>
                 </FieldRow>
                 <FieldRow cols={2}>
                   <Field label="Monthly P&I">
-                    <input type="number" min="0" className="form-input" placeholder="e.g. 480" value={form.secondMtg_monthlyPI} onChange={set('secondMtg_monthlyPI')} />
+                    <CurrencyInput placeholder="e.g. $480.00" value={form.secondMtg_monthlyPI} onValueChange={setRaw('secondMtg_monthlyPI')} />
                   </Field>
                   <Field label="Next Due Date">
                     <input type="date" className="form-input" value={form.secondMtg_nextDueDate} onChange={set('secondMtg_nextDueDate')} />
@@ -952,7 +960,7 @@ export function CreateListingForm() {
                     <input type="date" className="form-input" value={form.secondMtg_foreclosureDefaultDate} onChange={set('secondMtg_foreclosureDefaultDate')} />
                   </Field>
                   <Field label="Default Amount">
-                    <input type="number" min="0" className="form-input" placeholder="e.g. 8000" value={form.secondMtg_foreclosureDefaultAmt} onChange={set('secondMtg_foreclosureDefaultAmt')} />
+                    <CurrencyInput placeholder="e.g. $8,000.00" value={form.secondMtg_foreclosureDefaultAmt} onValueChange={setRaw('secondMtg_foreclosureDefaultAmt')} />
                   </Field>
                 </FieldRow>
                 <Field label="Sale Date">
@@ -1011,26 +1019,26 @@ export function CreateListingForm() {
                 </FieldRow>
                 <FieldRow cols={2}>
                   <Field label="Mod Loan Amount">
-                    <input type="number" min="0" className="form-input" value={form.firstMtg_modLoanAmount} onChange={set('firstMtg_modLoanAmount')} />
+                    <CurrencyInput value={form.firstMtg_modLoanAmount} onValueChange={setRaw('firstMtg_modLoanAmount')} />
                   </Field>
                   <Field label="Mod Current Balance">
-                    <input type="number" min="0" className="form-input" value={form.firstMtg_modCurrentBalance} onChange={set('firstMtg_modCurrentBalance')} />
+                    <CurrencyInput value={form.firstMtg_modCurrentBalance} onValueChange={setRaw('firstMtg_modCurrentBalance')} />
                   </Field>
                 </FieldRow>
                 <FieldRow cols={3}>
                   <Field label="Deferred Balance">
-                    <input type="number" min="0" className="form-input" value={form.firstMtg_modDeferredBalance} onChange={set('firstMtg_modDeferredBalance')} />
+                    <CurrencyInput value={form.firstMtg_modDeferredBalance} onValueChange={setRaw('firstMtg_modDeferredBalance')} />
                   </Field>
                   <Field label="Mod Interest Rate (%)">
-                    <input type="number" min="0" max="100" step="0.001" className="form-input" value={form.firstMtg_modInterestRate} onChange={set('firstMtg_modInterestRate')} />
+                    <PercentInput value={form.firstMtg_modInterestRate} onValueChange={setRaw('firstMtg_modInterestRate')} />
                   </Field>
                   <Field label="Mod Monthly P&I">
-                    <input type="number" min="0" className="form-input" value={form.firstMtg_modMonthlyPI} onChange={set('firstMtg_modMonthlyPI')} />
+                    <CurrencyInput value={form.firstMtg_modMonthlyPI} onValueChange={setRaw('firstMtg_modMonthlyPI')} />
                   </Field>
                 </FieldRow>
                 <FieldRow cols={3}>
                   <Field label="Mod Monthly Escrow">
-                    <input type="number" min="0" className="form-input" value={form.firstMtg_modMonthlyEscrow} onChange={set('firstMtg_modMonthlyEscrow')} />
+                    <CurrencyInput value={form.firstMtg_modMonthlyEscrow} onValueChange={setRaw('firstMtg_modMonthlyEscrow')} />
                   </Field>
                   <Field label="Mod Months Paid">
                     <input type="number" min="0" className="form-input" value={form.firstMtg_modMonthsPaid} onChange={set('firstMtg_modMonthsPaid')} />
@@ -1080,21 +1088,21 @@ export function CreateListingForm() {
                     </FieldRow>
                     <FieldRow cols={2}>
                       <Field label="Mod Loan Amount">
-                        <input type="number" min="0" className="form-input" value={form.secondMtg_modLoanAmount} onChange={set('secondMtg_modLoanAmount')} />
+                        <CurrencyInput value={form.secondMtg_modLoanAmount} onValueChange={setRaw('secondMtg_modLoanAmount')} />
                       </Field>
                       <Field label="Mod Current Balance">
-                        <input type="number" min="0" className="form-input" value={form.secondMtg_modCurrentBalance} onChange={set('secondMtg_modCurrentBalance')} />
+                        <CurrencyInput value={form.secondMtg_modCurrentBalance} onValueChange={setRaw('secondMtg_modCurrentBalance')} />
                       </Field>
                     </FieldRow>
                     <FieldRow cols={3}>
                       <Field label="Deferred Balance">
-                        <input type="number" min="0" className="form-input" value={form.secondMtg_modDeferredBalance} onChange={set('secondMtg_modDeferredBalance')} />
+                        <CurrencyInput value={form.secondMtg_modDeferredBalance} onValueChange={setRaw('secondMtg_modDeferredBalance')} />
                       </Field>
                       <Field label="Mod Interest Rate (%)">
-                        <input type="number" min="0" max="100" step="0.001" className="form-input" value={form.secondMtg_modInterestRate} onChange={set('secondMtg_modInterestRate')} />
+                        <PercentInput value={form.secondMtg_modInterestRate} onValueChange={setRaw('secondMtg_modInterestRate')} />
                       </Field>
                       <Field label="Mod Monthly P&I">
-                        <input type="number" min="0" className="form-input" value={form.secondMtg_modMonthlyPI} onChange={set('secondMtg_modMonthlyPI')} />
+                        <CurrencyInput value={form.secondMtg_modMonthlyPI} onValueChange={setRaw('secondMtg_modMonthlyPI')} />
                       </Field>
                     </FieldRow>
                     <FieldRow cols={3}>
