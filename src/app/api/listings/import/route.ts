@@ -68,6 +68,7 @@ export async function POST(req: NextRequest) {
         location: [asset.propertyCity, asset.propertyState].filter(Boolean).join(', ') || 'Unknown',
         zip: asset.propertyZip ?? null,
         region: asset.propertyState ?? null,
+        lienPosition: 'SENIOR',
         status: 'DRAFT',
         documents: [],
         sellerId: session.user.id,

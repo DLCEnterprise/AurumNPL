@@ -50,7 +50,9 @@ export async function PATCH(req: NextRequest, { params: paramsPromise }: Params)
   if (status === 'WITHDRAWN' && !isBidder && !isAdmin) {
     return NextResponse.json({ success: false, error: 'Only the bidder may withdraw their bid.' }, { status: 403 })
   }
-  if ((status === 'ACCEPTED' || status === 'REJECTED' || status === 'COUNTERED') && !isSeller && !isAdmin) {
+  // Bidder may accept or reject a counter offer (bid is currently COUNTERED)
+  const isRespondingToCounter = isBidder && bid.status === 'COUNTERED' && (status === 'ACCEPTED' || status === 'REJECTED')
+  if ((status === 'ACCEPTED' || status === 'REJECTED' || status === 'COUNTERED') && !isSeller && !isAdmin && !isRespondingToCounter) {
     return NextResponse.json({ success: false, error: 'Only the seller may accept, reject, or counter bids.' }, { status: 403 })
   }
 

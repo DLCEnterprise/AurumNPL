@@ -7,6 +7,7 @@ import { formatCurrency, timeAgo } from '@/lib/utils'
 import { ContactSellerButton } from '@/components/listings/ContactSellerButton'
 import { ArchiveListingButton } from '@/components/listings/ArchiveListingButton'
 import { UnarchiveListingButton } from '@/components/listings/UnarchiveListingButton'
+import { MarkAsSoldButton } from '@/components/listings/MarkAsSoldButton'
 import { PublishListingButton } from '@/components/listings/PublishListingButton'
 import { AssetDetail } from '@/components/listings/AssetDetail'
 import { ViewTracker } from '@/components/listings/ViewTracker'
@@ -193,6 +194,9 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               </svg>
               View Bids{bidCount > 0 ? ` (${bidCount})` : ''}
             </Link>
+            {listing.status !== 'SOLD' && listing.status !== 'ARCHIVED' && (
+              <MarkAsSoldButton listingId={listing.id} />
+            )}
             {listing.status !== 'ARCHIVED'
               ? <ArchiveListingButton listingId={listing.id} />
               : <UnarchiveListingButton listingId={listing.id} />

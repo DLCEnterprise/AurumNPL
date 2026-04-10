@@ -233,7 +233,7 @@ export default async function AdminUsersPage({
                       {timeAgo(user.createdAt)}
                     </td>
                     <td data-label="Actions" style={{ padding: '12px 16px' }}>
-                      <AdminUserActions userId={user.id} currentStatus={user.approvalStatus} />
+                      <AdminUserActions userId={user.id} currentStatus={user.approvalStatus} pendingRoleRequest={user.pendingRoleRequest} />
                     </td>
                   </tr>
                 )

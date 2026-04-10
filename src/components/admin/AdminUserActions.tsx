@@ -6,21 +6,21 @@ import { useRouter } from 'next/navigation'
 interface AdminUserActionsProps {
   userId: string
   currentStatus: string
+  pendingRoleRequest?: string | null
 }
 
-export function AdminUserActions({ userId, currentStatus }: AdminUserActionsProps) {
+export function AdminUserActions({ userId, currentStatus, pendingRoleRequest }: AdminUserActionsProps) {
   const router = useRouter()
-  const [loading, setLoading] = useState<'approve' | 'reject' | null>(null)
+  const [loading, setLoading] = useState<'approve' | 'reject' | 'grant-role' | 'deny-role' | null>(null)
   const [done, setDone] = useState<'APPROVED' | 'REJECTED' | null>(null)
+  const [roleRequestDone, setRoleRequestDone] = useState<'granted' | 'denied' | null>(null)
 
   const effectiveStatus = done ?? currentStatus
 
   const handleAction = async (action: 'approve' | 'reject') => {
     setLoading(action)
     try {
-      const res = await fetch(`/api/admin/users/${userId}/${action}`, {
-        method: 'POST',
-      })
+      const res = await fetch(`/api/admin/users/${userId}/${action}`, { method: 'POST' })
       if (res.ok) {
         setDone(action === 'approve' ? 'APPROVED' : 'REJECTED')
         router.refresh()
@@ -30,11 +30,54 @@ export function AdminUserActions({ userId, currentStatus }: AdminUserActionsProp
     }
   }
 
+  const handleRoleRequest = async (action: 'grant-role' | 'deny-role') => {
+    setLoading(action)
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/approve-role`, {
+        method: action === 'grant-role' ? 'POST' : 'DELETE',
+      })
+      if (res.ok) {
+        setRoleRequestDone(action === 'grant-role' ? 'granted' : 'denied')
+        router.refresh()
+      }
+    } finally {
+      setLoading(null)
+    }
+  }
+
+  const showRoleRequest = pendingRoleRequest && !roleRequestDone
+
   if (effectiveStatus === 'APPROVED') {
     return (
-      <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-        Approved
-      </span>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', alignItems: 'flex-start' }}>
+        <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Approved</span>
+        {showRoleRequest && (
+          <div style={{ display: 'flex', gap: '4px' }}>
+            <button
+              className="btn btn--gold btn--sm"
+              onClick={() => handleRoleRequest('grant-role')}
+              disabled={loading !== null}
+              style={{ fontSize: '0.7rem', padding: '2px 8px' }}
+              title={`Grant ${pendingRoleRequest} role`}
+            >
+              {loading === 'grant-role' ? '…' : `+ ${pendingRoleRequest}`}
+            </button>
+            <button
+              className="btn btn--ghost btn--sm"
+              onClick={() => handleRoleRequest('deny-role')}
+              disabled={loading !== null}
+              style={{ fontSize: '0.7rem', padding: '2px 8px' }}
+            >
+              {loading === 'deny-role' ? '…' : 'Deny'}
+            </button>
+          </div>
+        )}
+        {roleRequestDone && (
+          <span style={{ fontSize: '0.68rem', color: roleRequestDone === 'granted' ? '#34d399' : 'var(--text-muted)' }}>
+            Role {roleRequestDone}
+          </span>
+        )}
+      </div>
     )
   }
 

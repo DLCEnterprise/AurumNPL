@@ -737,10 +737,6 @@ export function CreateListingForm() {
                 />
               </Field>
             </FieldRow>
-            <Field label="Current Balance">
-              <CurrencyInput placeholder="e.g. $183,000.00" value={form.firstMtg_currentBalance} onValueChange={setRaw('firstMtg_currentBalance')} />
-            </Field>
-
             <div style={{ marginBottom: '16px' }} />
             <SectionTitle>Rate &amp; Payments</SectionTitle>
             <FieldRow cols={2}>

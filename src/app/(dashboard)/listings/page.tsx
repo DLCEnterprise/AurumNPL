@@ -16,6 +16,7 @@ interface SearchParams {
   assetType?: string
   status?: string
   state?: string
+  region?: string  // legacy param from saved searches — treated as state alias
   upbMin?: string
   upbMax?: string
   page?: string
@@ -40,7 +41,7 @@ export default async function ListingsPage({
   const mine    = searchParams.mine === 'true'
   const assetType = searchParams.assetType as AssetType | undefined
   const status    = searchParams.status as ListingStatus | undefined
-  const state     = searchParams.state
+  const state     = searchParams.state ?? searchParams.region  // region is legacy alias
   const upbMin    = searchParams.upbMin ? parseFloat(searchParams.upbMin) : undefined
   const upbMax    = searchParams.upbMax ? parseFloat(searchParams.upbMax) : undefined
   const q              = searchParams.q

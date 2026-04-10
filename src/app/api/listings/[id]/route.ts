@@ -137,6 +137,26 @@ export async function PUT(req: NextRequest, { params: paramsPromise }: Params) {
     }
   }
 
+  // Auto-derive location from asset address fields if they're being updated
+  if ('propertyCity' in assetUpdate || 'propertyState' in assetUpdate) {
+    const city  = (assetUpdate.propertyCity  as string | null | undefined) ?? listing.asset?.propertyCity ?? null
+    const state = (assetUpdate.propertyState as string | null | undefined) ?? listing.asset?.propertyState ?? null
+    const derived = [city, state].filter(Boolean).join(', ')
+    if (derived && !listingFields.location) listingFields.location = derived
+  }
+
+  // Auto-derive unpaidBalance from first mortgage balance if it's being updated
+  const balanceFields = ['firstMtg_currentBalance', 'firstMtg_modCurrentBalance', 'secondMtg_currentBalance'] as const
+  const updatingBalance = balanceFields.some((f) => f in assetUpdate && assetUpdate[f] != null)
+  if (updatingBalance && !('unpaidBalance' in listingFields)) {
+    const firstBal = (assetUpdate.firstMtg_currentBalance ?? assetUpdate.firstMtg_modCurrentBalance
+      ?? listing.asset?.firstMtg_currentBalance ?? listing.asset?.firstMtg_modCurrentBalance) as number | null | undefined
+    const secondBal = (assetUpdate.secondMtg_currentBalance ?? listing.asset?.secondMtg_currentBalance) as number | null | undefined
+    const lienPos = (listingFields.lienPosition ?? listing.lienPosition) as string | null | undefined
+    const upb = lienPos === 'JUNIOR' ? (secondBal ?? firstBal) : firstBal
+    if (upb != null) listingFields.unpaidBalance = upb
+  }
+
   await prisma.$transaction(async (tx) => {
     if (Object.keys(listingFields).length > 0) {
       await tx.listing.update({ where: { id }, data: listingFields })
