@@ -135,6 +135,11 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
         </p>
         {/* Key deal metrics row */}
         <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '12px' }}>
+          {(listing as { listingType?: string | null }).listingType && (
+            <span style={{ fontSize: '0.68rem', padding: '3px 10px', borderRadius: '100px', background: 'rgba(212,168,70,0.06)', color: 'var(--gold-400)', border: '1px solid rgba(212,168,70,0.18)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              {(listing as { listingType?: string | null }).listingType === 'portfolio' ? 'Portfolio' : 'Single Loan'}
+            </span>
+          )}
           {(listing as { performanceStatus?: string | null }).performanceStatus && (
             <span style={{ fontSize: '0.68rem', padding: '3px 10px', borderRadius: '100px', background: 'rgba(212,168,70,0.08)', color: 'var(--gold-400)', border: '1px solid rgba(212,168,70,0.15)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
               {(listing as { performanceStatus?: string | null }).performanceStatus}
@@ -148,6 +153,11 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
           {(listing as { askingPrice?: number | null }).askingPrice && (
             <span style={{ fontSize: '0.82rem', padding: '3px 12px', borderRadius: '100px', background: 'rgba(52,211,153,0.08)', color: '#34d399', border: '1px solid rgba(52,211,153,0.2)', fontWeight: 600 }}>
               {formatCurrency((listing as { askingPrice?: number | null }).askingPrice!)} Ask
+            </span>
+          )}
+          {(listing as { bidDeadline?: Date | null }).bidDeadline && (
+            <span style={{ fontSize: '0.68rem', padding: '3px 10px', borderRadius: '100px', background: 'rgba(251,146,60,0.08)', color: '#fb923c', border: '1px solid rgba(251,146,60,0.2)', letterSpacing: '0.03em' }}>
+              Bids due {new Date((listing as { bidDeadline?: Date | null }).bidDeadline!).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
             </span>
           )}
         </div>

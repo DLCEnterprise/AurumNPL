@@ -204,11 +204,16 @@ const CreateSchema = z.object({
   avgDelinquency:    z.number().int().min(0).optional(),
   status:            z.enum(['DRAFT', 'ACTIVE']).default('DRAFT'),
   dropboxLink:       z.string().url().optional(),
-  lienPosition:      z.enum(['SENIOR', 'JUNIOR']).optional(),
-  askingPrice:       z.number().positive().optional(),
-  performanceStatus: z.string().optional(),
-  noteType:          z.string().optional(),
-  asset:             AssetSchema,
+  lienPosition:        z.enum(['SENIOR', 'JUNIOR']).optional(),
+  askingPrice:         z.number().positive().optional(),
+  performanceStatus:   z.string().optional(),
+  noteType:            z.string().optional(),
+  listingType:         z.string().optional(),
+  bidDeadline:         z.string().optional(),
+  reservePrice:        z.number().positive().optional(),
+  preferredClosingDays:z.number().int().optional(),
+  ndaRequired:         z.boolean().optional(),
+  asset:               AssetSchema,
 })
 
 function parseDate(s: string | undefined | null): Date | undefined {
@@ -237,11 +242,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: 'Validation failed.', fieldErrors }, { status: 422 })
   }
 
-  const { asset: assetData, ...listingData } = parsed.data
+  const { asset: assetData, bidDeadline: bidDeadlineStr, ...listingData } = parsed.data
 
   const listing = await prisma.$transaction(async (tx) => {
     const created = await tx.listing.create({
-      data: { ...listingData, sellerId: session.user.id },
+      data: { ...listingData, bidDeadline: parseDate(bidDeadlineStr), sellerId: session.user.id },
     })
 
     if (assetData) {
