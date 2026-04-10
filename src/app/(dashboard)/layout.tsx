@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { DashboardNav } from '@/components/layout/DashboardNav'
 import { SellerTour } from '@/components/ui/SellerTour'
 import { BuyerTour } from '@/components/ui/BuyerTour'
+import { PageTransition } from '@/components/ui/PageTransition'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
@@ -87,7 +88,9 @@ export default async function DashboardLayout({ children }: { children: React.Re
             </div>
           )}
         </aside>
-        <main className="dashboard-main">{children}</main>
+        <main className="dashboard-main" id="main-content">
+          <PageTransition>{children}</PageTransition>
+        </main>
       </div>
       {session.user.role === 'SELLER' && <SellerTour />}
       {session.user.role === 'BUYER' && <BuyerTour />}
