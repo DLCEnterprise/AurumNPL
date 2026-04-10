@@ -31,6 +31,7 @@ export async function POST(
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
   }
   if (session.user.role === 'SELLER') {
+    // Pure sellers cannot sign NDAs; SELLER_BUYER can (they're also a buyer)
     return NextResponse.json({ success: false, error: 'Sellers cannot sign NDAs.' }, { status: 403 })
   }
 

@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 
 interface MobileNavProps {
-  role?: 'BUYER' | 'SELLER' | 'ADMIN'
+  role?: 'BUYER' | 'SELLER' | 'SELLER_BUYER' | 'ADMIN'
 }
 
 export function MobileNav({ role }: MobileNavProps) {
@@ -62,8 +62,8 @@ export function MobileNav({ role }: MobileNavProps) {
           Messages
         </Link>
 
-        {/* Role-specific 4th tab */}
-        {role === 'SELLER' ? (
+        {/* Role-specific 4th tab — sellers get Pipeline, buyers get Watchlist */}
+        {(role === 'SELLER' || role === 'SELLER_BUYER') ? (
           <Link href="/pipeline" className={`mobile-bottom-nav__item ${pathname === '/pipeline' ? 'active' : ''}`}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
               <rect x="3" y="3" width="5" height="18" rx="1"/><rect x="10" y="3" width="5" height="11" rx="1"/><rect x="17" y="3" width="5" height="15" rx="1"/>

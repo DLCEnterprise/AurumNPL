@@ -38,18 +38,22 @@ export function SidebarLinks({ role }: SidebarLinksProps) {
           </svg>
           Messages
         </Link>
-        <Link href="/watchlist" className={linkClass('/watchlist')}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
-          </svg>
-          Watchlist
-        </Link>
-        <Link href="/pipeline" className={linkClass('/pipeline')}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <rect x="3" y="3" width="5" height="18" rx="1" /><rect x="10" y="3" width="5" height="11" rx="1" /><rect x="17" y="3" width="5" height="15" rx="1" />
-          </svg>
-          Pipeline
-        </Link>
+        {(role === 'BUYER' || role === 'SELLER_BUYER') && (
+          <Link href="/watchlist" className={linkClass('/watchlist')}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M19 21l-7-5-7 5V5a2 2 0 012-2h10a2 2 0 012 2z" />
+            </svg>
+            Watchlist
+          </Link>
+        )}
+        {(role === 'SELLER' || role === 'SELLER_BUYER' || role === 'ADMIN') && (
+          <Link href="/pipeline" className={linkClass('/pipeline')}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="3" y="3" width="5" height="18" rx="1" /><rect x="10" y="3" width="5" height="11" rx="1" /><rect x="17" y="3" width="5" height="15" rx="1" />
+            </svg>
+            Pipeline
+          </Link>
+        )}
       </div>
 
       <div className="sidebar__section" style={{ marginTop: '16px' }}>

@@ -303,8 +303,8 @@ export function ProfileForm({ user }: { user: User }) {
         </div>
       </div>
 
-      {/* Request Additional Access — shown to non-admin buyers/sellers only */}
-      {user.role !== 'ADMIN' && (
+      {/* Request Additional Access — shown to single-role buyers/sellers only */}
+      {(user.role === 'BUYER' || user.role === 'SELLER') && (
         <div className="glass-card" style={{ padding: '24px 28px' }}>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 400, marginBottom: '6px' }}>
             Additional Access
@@ -383,7 +383,7 @@ export function ProfileForm({ user }: { user: User }) {
       </div>
 
       {/* Investor profile (buyers only) */}
-      {user.role === 'BUYER' && (
+      {(user.role === 'BUYER' || user.role === 'SELLER_BUYER') && (
         <div className="glass-card" style={{ padding: '32px' }}>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 400, marginBottom: '6px' }}>
             Investor Profile
@@ -445,7 +445,7 @@ export function ProfileForm({ user }: { user: User }) {
       )}
 
       {/* Loan servicer info (buyers only) */}
-      {user.role === 'BUYER' && (
+      {(user.role === 'BUYER' || user.role === 'SELLER_BUYER') && (
         <div className="glass-card" style={{ padding: '32px' }}>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 400, marginBottom: '6px' }}>
             Loan Servicer

@@ -84,16 +84,19 @@ export default async function DashboardPage() {
   const userId = session!.user.id
   const role = session!.user.role
 
+  const isSeller = role === 'SELLER' || role === 'SELLER_BUYER'
+  const isBuyer  = role === 'BUYER'  || role === 'SELLER_BUYER'
+
   // Role-aware stats queries
   const [stat1, stat2, convCount, unread] = await Promise.all([
-    role === 'SELLER'
+    isSeller
       ? prisma.listing.count({ where: { sellerId: userId } })
-      : role === 'BUYER'
+      : isBuyer
       ? prisma.bid.count({ where: { bidderId: userId, status: { in: ['PENDING', 'COUNTERED'] } } })
       : prisma.user.count(),
-    role === 'SELLER'
+    isSeller
       ? prisma.listing.count({ where: { sellerId: userId, status: 'ACTIVE' } })
-      : role === 'BUYER'
+      : isBuyer
       ? prisma.savedListing.count({ where: { userId } })
       : prisma.listing.count({ where: { status: 'ACTIVE' } }),
     prisma.conversationParticipant.count({ where: { userId } }),
@@ -112,17 +115,18 @@ export default async function DashboardPage() {
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
 
   const roleLabel =
-    role === 'SELLER' ? 'Seller Account' :
-    role === 'BUYER'  ? 'Buyer Account'  :
-    role === 'ADMIN'  ? 'Administrator'  : 'Account'
+    role === 'SELLER'       ? 'Seller Account'      :
+    role === 'BUYER'        ? 'Buyer Account'        :
+    role === 'SELLER_BUYER' ? 'Buyer + Seller'       :
+    role === 'ADMIN'        ? 'Administrator'        : 'Account'
 
   const stats =
-    role === 'SELLER' ? [
+    isSeller ? [
       { label: 'Total Listings',   value: stat1, sub: 'all time' },
       { label: 'Active Listings',  value: stat2, sub: 'currently live' },
       { label: 'Conversations',    value: convCount, sub: 'total inquiries' },
       { label: 'Unread Messages',  value: unread, sub: 'awaiting reply' },
-    ] : role === 'BUYER' ? [
+    ] : isBuyer ? [
       { label: 'Active Bids',      value: stat1, sub: 'pending / countered' },
       { label: 'Watchlist',        value: stat2, sub: 'saved listings' },
       { label: 'Conversations',    value: convCount, sub: 'total threads' },
@@ -135,9 +139,9 @@ export default async function DashboardPage() {
     ]
 
   const quickActions =
-    role === 'SELLER' ? QUICK_ACTIONS_SELLER :
-    role === 'BUYER'  ? QUICK_ACTIONS_BUYER  :
-    QUICK_ACTIONS_ADMIN
+    role === 'ADMIN'        ? QUICK_ACTIONS_ADMIN  :
+    role === 'BUYER'        ? QUICK_ACTIONS_BUYER  :
+    QUICK_ACTIONS_SELLER   // SELLER and SELLER_BUYER get seller actions
 
   return (
     <>

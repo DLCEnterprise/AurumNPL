@@ -57,6 +57,8 @@ export function AdminUserEditor({ user: initial }: { user: User }) {
   const [status,    setStatus]    = useState(initial.approvalStatus)
   const [suspendedAt,     setSuspendedAt]     = useState<string | null>(initial.suspendedAt)
   const [suspendedReason, setSuspendedReason] = useState<string | null>(initial.suspendedReason)
+  const [role,      setRole]      = useState(initial.role)
+  const [roleSaving, setRoleSaving] = useState(false)
 
   const patch = async (body: Record<string, unknown>) => {
     setSaving(true)
@@ -112,6 +114,24 @@ export function AdminUserEditor({ user: initial }: { user: User }) {
     if (ok) { toast.success('User rejected.'); setStatus('REJECTED'); router.refresh() }
   }
 
+  const saveRole = async (newRole: string) => {
+    setRoleSaving(true)
+    try {
+      const res = await fetch(`/api/admin/users/${initial.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role: newRole }),
+      })
+      const data = await res.json()
+      if (!res.ok) { toast.error(data.error ?? 'Failed to update role.'); return }
+      setRole(newRole)
+      toast.success('Role updated.')
+      router.refresh()
+    } finally {
+      setRoleSaving(false)
+    }
+  }
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
@@ -129,14 +149,27 @@ export function AdminUserEditor({ user: initial }: { user: User }) {
           }}>
             {status}
           </span>
-          <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>
-            Role: <strong style={{ color: 'var(--text-primary)' }}>{initial.role}</strong>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.78rem', color: 'var(--text-muted)' }}>Role:</span>
+            <select
+              className="form-input"
+              value={role}
+              onChange={(e) => saveRole(e.target.value)}
+              disabled={roleSaving}
+              style={{ width: 'auto', fontSize: '0.78rem', padding: '3px 8px' }}
+            >
+              <option value="BUYER">Buyer</option>
+              <option value="SELLER">Seller</option>
+              <option value="SELLER_BUYER">Buyer + Seller</option>
+              <option value="ADMIN">Admin</option>
+            </select>
+            {roleSaving && <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>Saving…</span>}
             {initial.pendingRoleRequest && (
-              <span style={{ marginLeft: '6px', fontSize: '0.72rem', color: 'var(--gold-300)' }}>
-                (requesting {initial.pendingRoleRequest})
+              <span style={{ fontSize: '0.72rem', color: 'var(--gold-300)' }}>
+                (pending: {initial.pendingRoleRequest})
               </span>
             )}
-          </span>
+          </div>
         </div>
 
         <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>

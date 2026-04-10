@@ -203,10 +203,14 @@ export default async function AdminUsersPage({
                     <td data-label="Role" style={{ padding: '12px 16px' }}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', alignItems: 'flex-start' }}>
                         <span
-                          className={`listing-card__type listing-card__type--${user.role === 'SELLER' ? 'residential' : user.role === 'BUYER' ? 'commercial' : 'mixed'}`}
+                          className={`listing-card__type listing-card__type--${
+                            user.role === 'SELLER' ? 'residential' :
+                            user.role === 'BUYER'  ? 'commercial'  :
+                            user.role === 'ADMIN'  ? 'mixed'       : 'mixed'
+                          }`}
                           style={{ fontSize: '0.7rem' }}
                         >
-                          {user.role}
+                          {user.role === 'SELLER_BUYER' ? 'Buyer + Seller' : user.role}
                         </span>
                         {user.pendingRoleRequest && (
                           <span style={{

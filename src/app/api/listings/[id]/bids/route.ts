@@ -50,7 +50,7 @@ export async function POST(req: NextRequest, { params: paramsPromise }: Params) 
   if (!session || session.user.approvalStatus !== 'APPROVED') {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
   }
-  if (session.user.role !== 'BUYER' && session.user.role !== 'ADMIN') {
+  if (session.user.role !== 'BUYER' && session.user.role !== 'SELLER_BUYER' && session.user.role !== 'ADMIN') {
     return NextResponse.json({ success: false, error: 'Only buyers may submit bids.' }, { status: 403 })
   }
 

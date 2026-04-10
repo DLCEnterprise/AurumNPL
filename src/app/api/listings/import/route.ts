@@ -12,7 +12,7 @@ export async function POST(req: NextRequest) {
   if (!session || session.user.approvalStatus !== 'APPROVED') {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
   }
-  if (session.user.role !== 'SELLER' && session.user.role !== 'ADMIN') {
+  if (session.user.role !== 'SELLER' && session.user.role !== 'SELLER_BUYER' && session.user.role !== 'ADMIN') {
     return NextResponse.json({ success: false, error: 'Only sellers can import listings.' }, { status: 403 })
   }
 

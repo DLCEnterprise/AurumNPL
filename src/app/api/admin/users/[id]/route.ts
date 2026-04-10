@@ -10,7 +10,7 @@ const PatchSchema = z.object({
   name:            z.string().min(1).max(200).optional(),
   company:         z.string().max(200).optional().nullable(),
   phone:           z.string().max(50).optional().nullable(),
-  role:            z.enum(['SELLER', 'BUYER', 'ADMIN']).optional(),
+  role:            z.enum(['SELLER', 'BUYER', 'SELLER_BUYER', 'ADMIN']).optional(),
 })
 
 export async function GET(
