@@ -5,7 +5,7 @@ function getResend() {
   if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY)
   return _resend
 }
-const FROM = 'AURUM <onboarding@resend.dev>'
+const FROM = process.env.EMAIL_FROM ?? 'AURUM <onboarding@resend.dev>'
 const BASE_URL = process.env.BASE_URL ?? 'http://localhost:3000'
 
 // ─── Shared HTML wrapper ────────────────────────────────────────────────────

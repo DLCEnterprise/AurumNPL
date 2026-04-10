@@ -383,7 +383,7 @@ export function ProfileForm({ user }: { user: User }) {
       </div>
 
       {/* Investor profile (buyers only) */}
-      {(user.role === 'BUYER' || user.role === 'ADMIN') && (
+      {user.role === 'BUYER' && (
         <div className="glass-card" style={{ padding: '32px' }}>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 400, marginBottom: '6px' }}>
             Investor Profile
@@ -445,7 +445,7 @@ export function ProfileForm({ user }: { user: User }) {
       )}
 
       {/* Loan servicer info (buyers only) */}
-      {(user.role === 'BUYER' || user.role === 'ADMIN') && (
+      {user.role === 'BUYER' && (
         <div className="glass-card" style={{ padding: '32px' }}>
           <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 400, marginBottom: '6px' }}>
             Loan Servicer
@@ -604,13 +604,13 @@ export function ProfileForm({ user }: { user: User }) {
         <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '16px' }}>
           Deactivating your account will remove your listings and revoke access. This cannot be undone.
         </p>
-        <button
+        <a
+          href="mailto:support@aurum.finance?subject=Account%20Deactivation%20Request&body=Please%20deactivate%20my%20AURUM%20account."
           className="btn btn--sm"
-          style={{ background: 'rgba(248,113,113,0.1)', color: '#f87171', border: '1px solid rgba(248,113,113,0.2)' }}
-          onClick={() => window.confirm('Are you sure you want to deactivate your account? This cannot be undone.') && alert('Contact support@aurum.finance to deactivate your account.')}
+          style={{ display: 'inline-block', background: 'rgba(248,113,113,0.1)', color: '#f87171', border: '1px solid rgba(248,113,113,0.2)' }}
         >
-          Deactivate Account
-        </button>
+          Request Account Deactivation
+        </a>
       </div>
     </div>
   )

@@ -1,11 +1,16 @@
 import { SignJWT, jwtVerify } from 'jose'
 
-const ADMIN_SECRET = new TextEncoder().encode(
-  process.env.ADMIN_SECRET ?? 'fallback-secret-change-in-production'
-)
-const RESET_SECRET = new TextEncoder().encode(
-  (process.env.ADMIN_SECRET ?? 'fallback-secret-change-in-production') + '-reset'
-)
+function requireAdminSecret(): Uint8Array {
+  const secret = process.env.ADMIN_SECRET
+  if (!secret) throw new Error('ADMIN_SECRET environment variable is not set')
+  return new TextEncoder().encode(secret)
+}
+
+function requireResetSecret(): Uint8Array {
+  const secret = process.env.ADMIN_SECRET
+  if (!secret) throw new Error('ADMIN_SECRET environment variable is not set')
+  return new TextEncoder().encode(secret + '-reset')
+}
 
 export type AdminTokenPayload = {
   userId: string
@@ -19,7 +24,7 @@ export async function signAdminToken(payload: AdminTokenPayload): Promise<string
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('7d')
-    .sign(ADMIN_SECRET)
+    .sign(requireAdminSecret())
 }
 
 /** Verify and decode an admin JWT. Returns null if invalid/expired. */
@@ -27,7 +32,7 @@ export async function verifyAdminToken(
   token: string
 ): Promise<AdminTokenPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, ADMIN_SECRET)
+    const { payload } = await jwtVerify(token, requireAdminSecret())
     return payload as unknown as AdminTokenPayload
   } catch {
     return null
@@ -42,13 +47,13 @@ export async function signResetToken(payload: ResetTokenPayload): Promise<string
     .setProtectedHeader({ alg: 'HS256' })
     .setIssuedAt()
     .setExpirationTime('1h')
-    .sign(RESET_SECRET)
+    .sign(requireResetSecret())
 }
 
 /** Verify and decode a password reset JWT. Returns null if invalid/expired. */
 export async function verifyResetToken(token: string): Promise<ResetTokenPayload | null> {
   try {
-    const { payload } = await jwtVerify(token, RESET_SECRET)
+    const { payload } = await jwtVerify(token, requireResetSecret())
     return payload as unknown as ResetTokenPayload
   } catch {
     return null

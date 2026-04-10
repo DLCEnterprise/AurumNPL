@@ -12,6 +12,8 @@ function escapeHtml(s: string): string {
     .replace(/'/g, '&#39;')
 }
 
+const NO_CACHE = { 'Cache-Control': 'no-store', 'Content-Type': 'text/html' }
+
 const HTML = (title: string, body: string, isError = false) => `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -50,7 +52,7 @@ export async function GET(req: NextRequest) {
   if (!token) {
     return new NextResponse(
       HTML('Invalid Link', '<p>This approval link is missing or malformed.</p>', true),
-      { status: 400, headers: { 'Content-Type': 'text/html' } }
+      { status: 400, headers: NO_CACHE }
     )
   }
 
@@ -59,7 +61,7 @@ export async function GET(req: NextRequest) {
   if (!payload) {
     return new NextResponse(
       HTML('Link Expired', '<p>This approval link has expired or is invalid. Please check for a newer email.</p>', true),
-      { status: 400, headers: { 'Content-Type': 'text/html' } }
+      { status: 400, headers: NO_CACHE }
     )
   }
 
@@ -68,7 +70,7 @@ export async function GET(req: NextRequest) {
   if (!adminToken || adminToken.usedAt !== null) {
     return new NextResponse(
       HTML('Already Used', '<p>This approval link has already been used and cannot be reused.</p>', true),
-      { status: 409, headers: { 'Content-Type': 'text/html' } }
+      { status: 409, headers: NO_CACHE }
     )
   }
 
@@ -77,7 +79,7 @@ export async function GET(req: NextRequest) {
   if (!user) {
     return new NextResponse(
       HTML('User Not Found', '<p>The user associated with this link could not be found.</p>', true),
-      { status: 404, headers: { 'Content-Type': 'text/html' } }
+      { status: 404, headers: NO_CACHE }
     )
   }
 
@@ -87,7 +89,7 @@ export async function GET(req: NextRequest) {
         'Already Processed',
         `<p>This account (${escapeHtml(user.email)}) has already been ${user.approvalStatus.toLowerCase()}.</p>`
       ),
-      { status: 200, headers: { 'Content-Type': 'text/html' } }
+      { status: 200, headers: NO_CACHE }
     )
   }
 
@@ -123,7 +125,7 @@ export async function GET(req: NextRequest) {
         'User Approved',
         `<p><strong>${escapeHtml(user.name ?? user.email)}</strong> has been approved and notified via email. They may now sign in to AURUM.</p>`
       ),
-      { status: 200, headers: { 'Content-Type': 'text/html' } }
+      { status: 200, headers: NO_CACHE }
     )
   } else {
     await sendRejectionEmail(user.email, user.name ?? 'there')
@@ -132,7 +134,7 @@ export async function GET(req: NextRequest) {
         'Application Rejected',
         `<p><strong>${escapeHtml(user.name ?? user.email)}</strong>&apos;s application has been rejected. They have been notified via email.</p>`
       ),
-      { status: 200, headers: { 'Content-Type': 'text/html' } }
+      { status: 200, headers: NO_CACHE }
     )
   }
 }

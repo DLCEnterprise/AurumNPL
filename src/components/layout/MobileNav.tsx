@@ -14,6 +14,12 @@ export function MobileNav({ role }: MobileNavProps) {
   // Close sidebar on route change
   useEffect(() => { setSidebarOpen(false) }, [pathname])
 
+  // Toggle body class so CSS controls the sidebar transform — no style injection
+  useEffect(() => {
+    document.body.classList.toggle('sidebar-open', sidebarOpen)
+    return () => { document.body.classList.remove('sidebar-open') }
+  }, [sidebarOpen])
+
   return (
     <>
       {/* Hamburger button — rendered in top nav area */}
@@ -32,9 +38,6 @@ export function MobileNav({ role }: MobileNavProps) {
         className={`sidebar-overlay ${sidebarOpen ? 'sidebar-overlay--visible' : ''}`}
         onClick={() => setSidebarOpen(false)}
       />
-
-      {/* Mobile sidebar open state injector */}
-      <style>{`.sidebar { ${sidebarOpen ? 'transform: translateX(0) !important;' : ''} }`}</style>
 
       {/* Bottom navigation — 5 tabs, role-aware */}
       <nav className="mobile-bottom-nav" aria-label="Mobile navigation">

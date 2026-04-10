@@ -62,7 +62,7 @@ export default async function AdminUsersPage({
 
   const where = statusFilter ? { approvalStatus: statusFilter } : {}
 
-  const [users, total, counts] = await Promise.all([
+  const [users, total, grouped] = await Promise.all([
     prisma.user.findMany({
       where,
       select: {
@@ -80,13 +80,11 @@ export default async function AdminUsersPage({
       take: PAGE_SIZE,
     }),
     prisma.user.count({ where }),
-    Promise.all(
-      APPROVAL_STATUSES.map((s) => prisma.user.count({ where: { approvalStatus: s } }))
-    ),
+    prisma.user.groupBy({ by: ['approvalStatus'], _count: { id: true } }),
   ])
 
   const statusCounts = Object.fromEntries(
-    APPROVAL_STATUSES.map((s, i) => [s, counts[i]])
+    APPROVAL_STATUSES.map((s) => [s, grouped.find((g) => g.approvalStatus === s)?._count.id ?? 0])
   ) as Record<ApprovalStatus, number>
 
   const totalAll = statusCounts.PENDING + statusCounts.APPROVED + statusCounts.REJECTED + (statusCounts.SUSPENDED ?? 0)

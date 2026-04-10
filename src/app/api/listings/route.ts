@@ -36,7 +36,7 @@ export async function GET(req: NextRequest) {
     ? (lienPositionParam as LienPosition)
     : null
 
-  const region    = searchParams.get('region')
+  const region    = searchParams.get('state') ?? searchParams.get('region')
   const q         = searchParams.get('q') ?? undefined
   const upbMin    = searchParams.get('upbMin') ? parseFloat(searchParams.get('upbMin')!) : undefined
   const upbMax    = searchParams.get('upbMax') ? parseFloat(searchParams.get('upbMax')!) : undefined
@@ -54,7 +54,7 @@ export async function GET(req: NextRequest) {
     ...(mine       ? { sellerId: session.user.id } : { status: status ?? 'ACTIVE' as ListingStatus }),
     ...(assetType  ? { assetType } : {}),
     ...(status && mine ? { status } : {}),
-    ...(region     ? { region: { contains: region, mode: 'insensitive' as const } } : {}),
+    ...(region     ? { location: { contains: region, mode: 'insensitive' as const } } : {}),
     ...(lienPosition ? { lienPosition } : {}),
     ...(upbMin !== undefined || upbMax !== undefined
       ? { unpaidBalance: { ...(upbMin !== undefined ? { gte: upbMin } : {}), ...(upbMax !== undefined ? { lte: upbMax } : {}) } }

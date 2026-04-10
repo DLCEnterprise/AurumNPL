@@ -123,6 +123,13 @@ export async function rateLimit(
   if (useUpstash) {
     return upstashLimit(key, cfg.limit, cfg.windowMs)
   }
+  if (process.env.NODE_ENV === 'production') {
+    console.warn(
+      '[rate-limit] UPSTASH_REDIS_REST_URL is not set — falling back to in-memory rate limiter. ' +
+      'Limits will NOT persist across serverless invocations. Set UPSTASH_REDIS_REST_URL and ' +
+      'UPSTASH_REDIS_REST_TOKEN in your environment to enable persistent rate limiting.'
+    )
+  }
   return inMemoryLimit(key, cfg.limit, cfg.windowMs)
 }
 

@@ -172,7 +172,7 @@ export function AssetDetail({ asset }: { asset: SerializedAsset }) {
   const totalArrears = monthsDelinquent != null ? monthsDelinquent * monthlyPI : null
 
   const hasSecond = !!(a.secondMtg_currentBalance || a.secondMtg_loanStatus || a.secondMtg_originalAmount)
-  const hasBk = !!(a.isInBankruptcy !== null || a.bkFilingDate || a.ch7PetitionDate)
+  const hasBk = !!(a.isInBankruptcy || a.bkFilingDate || a.ch7PetitionDate)
   const hasFirstForeclosure = !!(a.firstMtg_foreclosureDefaultDate || a.firstMtg_foreclosureSaleDate)
   const hasSecondForeclosure = !!(a.secondMtg_foreclosureDefaultDate || a.secondMtg_foreclosureSaleDate)
   const streetViewKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY

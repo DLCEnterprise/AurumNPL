@@ -55,6 +55,8 @@ export function AdminUserEditor({ user: initial }: { user: User }) {
   const [reason,    setReason]    = useState(initial.suspendedReason ?? '')
   const [showSuspendInput, setShowSuspendInput] = useState(false)
   const [status,    setStatus]    = useState(initial.approvalStatus)
+  const [suspendedAt,     setSuspendedAt]     = useState<string | null>(initial.suspendedAt)
+  const [suspendedReason, setSuspendedReason] = useState<string | null>(initial.suspendedReason)
 
   const patch = async (body: Record<string, unknown>) => {
     setSaving(true)
@@ -82,6 +84,8 @@ export function AdminUserEditor({ user: initial }: { user: User }) {
     if (ok) {
       toast.success('User suspended.')
       setStatus('SUSPENDED')
+      setSuspendedAt(new Date().toISOString())
+      setSuspendedReason(reason || null)
       setShowSuspendInput(false)
       router.refresh()
     }
@@ -92,6 +96,8 @@ export function AdminUserEditor({ user: initial }: { user: User }) {
     if (ok) {
       toast.success('User restored to approved.')
       setStatus('APPROVED')
+      setSuspendedAt(null)
+      setSuspendedReason(null)
       router.refresh()
     }
   }
@@ -190,13 +196,13 @@ export function AdminUserEditor({ user: initial }: { user: User }) {
         )}
 
         {/* Show suspension info if suspended */}
-        {status === 'SUSPENDED' && initial.suspendedAt && (
+        {status === 'SUSPENDED' && suspendedAt && (
           <div style={{ marginTop: '14px', padding: '10px 14px', background: 'rgba(251,146,60,0.05)', border: '1px solid rgba(251,146,60,0.15)', borderRadius: '8px' }}>
             <div style={{ fontSize: '0.72rem', color: '#fb923c', marginBottom: '4px' }}>
-              Suspended {new Date(initial.suspendedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              Suspended {new Date(suspendedAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
             </div>
-            {initial.suspendedReason && (
-              <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{initial.suspendedReason}</div>
+            {suspendedReason && (
+              <div style={{ fontSize: '0.82rem', color: 'var(--text-secondary)' }}>{suspendedReason}</div>
             )}
           </div>
         )}

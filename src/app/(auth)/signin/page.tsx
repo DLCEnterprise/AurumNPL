@@ -20,6 +20,8 @@ function SignInForm() {
   const [error, setError] = useState<string | null>(
     errorParam === 'rejected'
       ? 'Your application was not approved. Contact support@aurum.finance for details.'
+      : errorParam === 'suspended'
+      ? 'Your account has been suspended. Contact support@aurum.finance for assistance.'
       : null
   )
   const success = resetParam === 'success'
