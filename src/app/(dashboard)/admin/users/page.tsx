@@ -10,7 +10,7 @@ import type { ApprovalStatus } from '@prisma/client'
 
 export const metadata: Metadata = { title: 'Admin — Users' }
 
-const APPROVAL_STATUSES: ApprovalStatus[] = ['PENDING', 'APPROVED', 'REJECTED']
+const APPROVAL_STATUSES: ApprovalStatus[] = ['PENDING', 'APPROVED', 'REJECTED', 'SUSPENDED']
 
 const STATUS_STYLE: Record<ApprovalStatus, { bg: string; color: string; border: string; label: string }> = {
   PENDING: {
@@ -30,6 +30,12 @@ const STATUS_STYLE: Record<ApprovalStatus, { bg: string; color: string; border: 
     color: '#f87171',
     border: 'rgba(239,68,68,0.25)',
     label: 'Rejected',
+  },
+  SUSPENDED: {
+    bg: 'rgba(251,146,60,0.08)',
+    color: '#fb923c',
+    border: 'rgba(251,146,60,0.25)',
+    label: 'Suspended',
   },
 }
 
@@ -83,7 +89,7 @@ export default async function AdminUsersPage({
     APPROVAL_STATUSES.map((s, i) => [s, counts[i]])
   ) as Record<ApprovalStatus, number>
 
-  const totalAll = statusCounts.PENDING + statusCounts.APPROVED + statusCounts.REJECTED
+  const totalAll = statusCounts.PENDING + statusCounts.APPROVED + statusCounts.REJECTED + (statusCounts.SUSPENDED ?? 0)
   const pages = Math.ceil(total / PAGE_SIZE)
 
   function buildTabHref(status: string | null) {
@@ -105,6 +111,7 @@ export default async function AdminUsersPage({
     { label: 'Pending', status: 'PENDING' as ApprovalStatus, count: statusCounts.PENDING },
     { label: 'Approved', status: 'APPROVED' as ApprovalStatus, count: statusCounts.APPROVED },
     { label: 'Rejected', status: 'REJECTED' as ApprovalStatus, count: statusCounts.REJECTED },
+    { label: 'Suspended', status: 'SUSPENDED' as ApprovalStatus, count: statusCounts.SUSPENDED },
   ]
 
   return (
@@ -233,7 +240,16 @@ export default async function AdminUsersPage({
                       {timeAgo(user.createdAt)}
                     </td>
                     <td data-label="Actions" style={{ padding: '12px 16px' }}>
-                      <AdminUserActions userId={user.id} currentStatus={user.approvalStatus} pendingRoleRequest={user.pendingRoleRequest} />
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', alignItems: 'flex-start' }}>
+                        <AdminUserActions userId={user.id} currentStatus={user.approvalStatus} pendingRoleRequest={user.pendingRoleRequest} />
+                        <Link
+                          href={`/admin/users/${user.id}`}
+                          className="btn btn--ghost btn--sm"
+                          style={{ fontSize: '0.72rem', padding: '3px 9px' }}
+                        >
+                          Edit / Notes
+                        </Link>
+                      </div>
                     </td>
                   </tr>
                 )

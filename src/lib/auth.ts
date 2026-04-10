@@ -60,7 +60,8 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       // Block non-approved users from completing sign-in
       if (
         user.approvalStatus === 'PENDING' ||
-        user.approvalStatus === 'REJECTED'
+        user.approvalStatus === 'REJECTED' ||
+        user.approvalStatus === 'SUSPENDED'
       ) {
         return false
       }

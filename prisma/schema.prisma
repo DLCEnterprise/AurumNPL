@@ -17,6 +17,7 @@ enum ApprovalStatus {
   PENDING
   APPROVED
   REJECTED
+  SUSPENDED
 }
 
 enum ListingStatus {
@@ -112,6 +113,11 @@ model User {
 
   // Role expansion request
   pendingRoleRequest    String?   // 'BUYER' or 'SELLER' — pending admin review
+
+  // Admin-only fields
+  adminNotes            String?   // Internal notes, never exposed to the user
+  suspendedAt           DateTime?
+  suspendedReason       String?
 
   listings              Listing[]
   sentMessages          Message[]                 @relation("SentMessages")
