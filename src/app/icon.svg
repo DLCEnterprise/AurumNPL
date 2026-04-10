@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Dark background with slight rounding -->
+  <rect width="32" height="32" rx="5" fill="#0a0a0a"/>
+  <!-- Outer diamond outline -->
+  <polygon points="16,2.5 29.5,16 16,29.5 2.5,16" fill="none" stroke="#d4a846" stroke-width="1.8" stroke-linejoin="round"/>
+  <!-- Inner diamond filled -->
+  <polygon points="16,10.5 21.5,16 16,21.5 10.5,16" fill="#d4a846"/>
+</svg>

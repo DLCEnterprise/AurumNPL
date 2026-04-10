@@ -10,6 +10,10 @@ export const metadata: Metadata = {
   },
   description:
     'The institutional marketplace for non-performing loan transactions. Premium analytics, direct negotiation, seamless execution.',
+  icons: {
+    icon: '/icon.svg',
+    shortcut: '/icon.svg',
+  },
   openGraph: {
     title: 'AURUM — NPL Marketplace',
     description:
