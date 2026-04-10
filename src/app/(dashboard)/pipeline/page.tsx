@@ -6,6 +6,7 @@ import { formatCurrency } from '@/lib/utils'
 import { Spinner } from '@/components/ui/Skeleton'
 import type { DealStage, LienPosition, AssetType, ListingStatus } from '@prisma/client'
 import { EmptyState } from '@/components/ui/EmptyState'
+import { useToast } from '@/components/ui/Toast'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -257,6 +258,7 @@ function KanbanColumn({
 // ─── Page ─────────────────────────────────────────────────────────────────────
 
 export default function PipelinePage() {
+  const toast = useToast()
   const [pipeline, setPipeline] = useState<PipelineData>(emptyPipeline())
   const [loading, setLoading] = useState(true)
   const [draggingId, setDraggingId] = useState<string | null>(null)
@@ -307,13 +309,14 @@ export default function PipelinePage() {
 
     // API call
     try {
-      await fetch('/api/deal-pipeline', {
+      const res = await fetch('/api/deal-pipeline', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: itemId, stage: targetStage }),
       })
+      if (!res.ok) throw new Error()
     } catch {
-      // Revert on failure
+      toast.error('Could not move item. Please try again.')
       load()
     }
   }
@@ -329,8 +332,10 @@ export default function PipelinePage() {
     })
 
     try {
-      await fetch(`/api/deal-pipeline?id=${itemId}`, { method: 'DELETE' })
+      const res = await fetch(`/api/deal-pipeline?id=${itemId}`, { method: 'DELETE' })
+      if (!res.ok) throw new Error()
     } catch {
+      toast.error('Could not remove item. Please try again.')
       load()
     }
   }

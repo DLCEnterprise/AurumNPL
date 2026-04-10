@@ -133,6 +133,24 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
         <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>
           Listed {timeAgo(listing.createdAt)} · {listing.seller.company ?? listing.seller.name}
         </p>
+        {/* Key deal metrics row */}
+        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '12px' }}>
+          {(listing as { performanceStatus?: string | null }).performanceStatus && (
+            <span style={{ fontSize: '0.68rem', padding: '3px 10px', borderRadius: '100px', background: 'rgba(212,168,70,0.08)', color: 'var(--gold-400)', border: '1px solid rgba(212,168,70,0.15)', textTransform: 'uppercase', letterSpacing: '0.05em', fontWeight: 600 }}>
+              {(listing as { performanceStatus?: string | null }).performanceStatus}
+            </span>
+          )}
+          {(listing as { noteType?: string | null }).noteType && (
+            <span style={{ fontSize: '0.68rem', padding: '3px 10px', borderRadius: '100px', background: 'rgba(255,255,255,0.05)', color: 'var(--text-secondary)', border: '1px solid var(--border-light)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              {(listing as { noteType?: string | null }).noteType}
+            </span>
+          )}
+          {(listing as { askingPrice?: number | null }).askingPrice && (
+            <span style={{ fontSize: '0.82rem', padding: '3px 12px', borderRadius: '100px', background: 'rgba(52,211,153,0.08)', color: '#34d399', border: '1px solid rgba(52,211,153,0.2)', fontWeight: 600 }}>
+              {formatCurrency((listing as { askingPrice?: number | null }).askingPrice!)} Ask
+            </span>
+          )}
+        </div>
       </div>
 
       {/* Actions row */}

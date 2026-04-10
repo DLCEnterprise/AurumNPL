@@ -35,6 +35,19 @@ interface FieldErrors {
 
 const PASSWORD_REGEX = /^(?=.*[A-Z])(?=.*[0-9])(?=.*[^A-Za-z0-9]).{8,}$/
 
+function getPasswordStrength(pw: string): { score: number; label: string; color: string } {
+  if (!pw) return { score: 0, label: '', color: 'transparent' }
+  let score = 0
+  if (pw.length >= 8)            score++
+  if (/[A-Z]/.test(pw))         score++
+  if (/[0-9]/.test(pw))         score++
+  if (/[^A-Za-z0-9]/.test(pw))  score++
+  if (score === 1) return { score, label: 'Weak',   color: '#f87171' }
+  if (score === 2) return { score, label: 'Fair',   color: '#fb923c' }
+  if (score === 3) return { score, label: 'Good',   color: '#fbbf24' }
+  return                         { score, label: 'Strong', color: '#34d399' }
+}
+
 function validateForm(form: FormState): FieldErrors {
   const errors: FieldErrors = {}
   if (!form.name.trim()) errors.name = 'Full name is required.'
@@ -108,8 +121,15 @@ export default function SignUpPage() {
       body: JSON.stringify(body),
     })
     setLoading(false)
-    const data = await res.json()
 
+    if (res.status === 429) {
+      const retryAfter = res.headers.get('Retry-After')
+      const mins = retryAfter ? Math.ceil(parseInt(retryAfter) / 60) : 15
+      setServerError(`Too many sign-up attempts. Please try again in ${mins} minute${mins !== 1 ? 's' : ''}.`)
+      return
+    }
+
+    const data = await res.json()
     if (!res.ok || !data.success) {
       setServerError(data.error ?? 'Registration failed. Please try again.')
       if (data.fieldErrors) setFieldErrors(data.fieldErrors)
@@ -188,6 +208,23 @@ export default function SignUpPage() {
             <label htmlFor="password">Password *</label>
             <input id="password" type="password" className={`form-input${fieldErrors.password ? ' form-input--error' : ''}`}
               placeholder="Min 8 chars, 1 uppercase, 1 number, 1 special" value={form.password} onChange={set('password')} autoComplete="new-password" />
+            {form.password && (() => {
+              const { score, label, color } = getPasswordStrength(form.password)
+              return (
+                <div style={{ marginTop: '8px' }}>
+                  <div style={{ display: 'flex', gap: '4px', marginBottom: '4px' }}>
+                    {[1, 2, 3, 4].map((i) => (
+                      <div key={i} style={{
+                        flex: 1, height: '3px', borderRadius: '2px',
+                        background: i <= score ? color : 'var(--border-light)',
+                        transition: 'background 0.25s',
+                      }} />
+                    ))}
+                  </div>
+                  <span style={{ fontSize: '0.7rem', color, fontWeight: 500 }}>{label}</span>
+                </div>
+              )
+            })()}
             {fieldErrors.password && <span className="form-error">{fieldErrors.password}</span>}
           </div>
 
@@ -195,6 +232,12 @@ export default function SignUpPage() {
             <label htmlFor="confirmPassword">Confirm Password *</label>
             <input id="confirmPassword" type="password" className={`form-input${fieldErrors.confirmPassword ? ' form-input--error' : ''}`}
               placeholder="Re-enter your password" value={form.confirmPassword} onChange={set('confirmPassword')} autoComplete="new-password" />
+            {form.confirmPassword && !fieldErrors.confirmPassword && (
+              <div style={{ marginTop: '4px', fontSize: '0.72rem', fontWeight: 500,
+                color: form.password === form.confirmPassword ? '#34d399' : '#f87171' }}>
+                {form.password === form.confirmPassword ? '✓ Passwords match' : '✗ Passwords do not match'}
+              </div>
+            )}
             {fieldErrors.confirmPassword && <span className="form-error">{fieldErrors.confirmPassword}</span>}
           </div>
 

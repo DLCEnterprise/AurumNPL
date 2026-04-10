@@ -210,7 +210,12 @@ export function AssetDetail({ asset }: { asset: SerializedAsset }) {
             )}
 
             <MetricGrid items={[
+              { label: 'Property Type', value: fmtVal(a.propertyType) },
               { label: 'Occupancy', value: fmtVal(a.occupancyType) },
+              { label: 'County', value: fmtVal(a.county) },
+              { label: 'Year Built', value: fmtVal(a.yearBuilt) },
+              { label: 'Sq Ft', value: a.floorSizeSqFt ? `${(a.floorSizeSqFt as number).toLocaleString()} sqft` : '—' },
+              { label: 'Bedrooms / Baths', value: a.bedrooms != null || a.bathrooms != null ? `${a.bedrooms ?? '?'} bd / ${a.bathrooms ?? '?'} ba` : '—' },
               { label: 'Purchase Date', value: fmtDate(a.homePurchaseDate as string) },
               { label: 'Purchase Price', value: fmtCurrency(a.homePurchasePrice as number) },
               { label: 'State', value: fmtVal(a.propertyState) },
@@ -275,6 +280,12 @@ export function AssetDetail({ asset }: { asset: SerializedAsset }) {
           { label: 'Months Paid', value: fmtVal(a.firstMtg_totalMonthsPaid) },
           { label: 'Months Remaining', value: fmtVal(a.firstMtg_monthsRemaining) },
           { label: 'Interest Paid To', value: fmtDate(a.firstMtg_interestPaidToDate as string) },
+          { label: 'Last Pmt Received', value: fmtDate(a.lastPaymentReceivedDate as string) },
+          { label: 'Payment Accepted', value: fmtVal(a.paymentAccepted) },
+          { label: 'Interest Only', value: a.isInterestOnly != null ? (a.isInterestOnly ? 'Yes' : 'No') : '—' },
+          { label: 'Total Monthly Pmt', value: fmtCurrency(a.totalMonthlyPayment as number) },
+          { label: 'Legal Status', value: fmtVal(a.legalStatus) },
+          { label: 'Judicial State', value: a.isJudicialState != null ? (a.isJudicialState ? 'Yes' : 'No') : '—' },
         ]} />
       </CollapsibleSection>
 

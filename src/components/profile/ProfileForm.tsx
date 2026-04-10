@@ -87,6 +87,15 @@ export function ProfileForm({ user }: { user: User }) {
   const [company, setCompany] = useState(user.company ?? '')
   const [phone, setPhone]     = useState(user.phone ?? '')
   const [profileSaving, setProfileSaving] = useState(false)
+  const [isDirty, setIsDirty] = useState(false)
+
+  useEffect(() => {
+    const handler = (e: BeforeUnloadEvent) => {
+      if (isDirty) { e.preventDefault(); e.returnValue = '' }
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [isDirty])
 
   // Investor fields
   const [entityName, setEntityName]         = useState(user.entityName ?? '')
@@ -191,6 +200,7 @@ export function ProfileForm({ user }: { user: User }) {
     const data = await res.json()
 
     if (res.ok && data.success) {
+      setIsDirty(false)
       toast.success('Profile updated successfully.')
       router.refresh()
     } else {
@@ -253,7 +263,7 @@ export function ProfileForm({ user }: { user: User }) {
         <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.25rem', fontWeight: 400, marginBottom: '24px' }}>
           Account Information
         </h2>
-        <form onSubmit={saveProfile}>
+        <form onSubmit={saveProfile} onChange={() => setIsDirty(true)}>
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <div className="form-group">
               <label htmlFor="name">Full Name</label>

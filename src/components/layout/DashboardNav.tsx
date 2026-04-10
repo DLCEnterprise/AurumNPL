@@ -22,7 +22,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
         </Link>
 
         <div className="nav__actions">
-          <MobileNav />
+          <MobileNav role={user.role as 'BUYER' | 'SELLER' | 'ADMIN'} />
           <ThemeToggle />
           <NotificationBell />
           <div style={{

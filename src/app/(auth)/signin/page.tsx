@@ -31,6 +31,21 @@ function SignInForm() {
     setError(null)
     setLoading(true)
 
+    // Check for rate limiting before handing off to NextAuth
+    const rateCheck = await fetch('/api/auth/rate-check', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: email.trim().toLowerCase() }),
+    }).catch(() => null)
+
+    if (rateCheck?.status === 429) {
+      const retryAfter = rateCheck.headers.get('Retry-After')
+      const mins = retryAfter ? Math.ceil(parseInt(retryAfter) / 60) : 15
+      setError(`Too many sign-in attempts. Please try again in ${mins} minute${mins !== 1 ? 's' : ''}.`)
+      setLoading(false)
+      return
+    }
+
     const result = await signIn('credentials', {
       email: email.trim().toLowerCase(),
       password,

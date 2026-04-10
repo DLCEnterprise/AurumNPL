@@ -1670,3 +1670,70 @@ img { max-width: 100%; display: block; }
   }
 }
 
+/* ── Light mode alert text (readable on white) ───────────── */
+[data-theme="light"] .alert--error {
+  background: rgba(220,38,38,0.06);
+  border-color: rgba(220,38,38,0.20);
+  color: #991b1b;
+}
+[data-theme="light"] .alert--warning {
+  background: rgba(217,119,6,0.08);
+  border-color: rgba(217,119,6,0.25);
+  color: #92400e;
+}
+[data-theme="light"] .alert--success {
+  background: rgba(5,150,105,0.08);
+  border-color: rgba(5,150,105,0.25);
+  color: #065f46;
+}
+
+/* ── Light mode form error text ──────────────────────────── */
+[data-theme="light"] .form-error { color: #dc2626; }
+
+/* ── Light mode notification bell & dropdown ─────────────── */
+[data-theme="light"] .notification-bell-btn {
+  background: rgba(0,0,0,0.04) !important;
+}
+[data-theme="light"] .notification-dropdown {
+  background: #ffffff !important;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.12) !important;
+}
+[data-theme="light"] .notification-row--unread {
+  background: rgba(37,99,235,0.05) !important;
+}
+[data-theme="light"] .notification-row:hover {
+  background: rgba(0,0,0,0.03) !important;
+}
+
+/* ── Keyboard focus visible states ───────────────────────── */
+/* Global rule — shows a gold/blue ring on keyboard focus */
+:focus-visible {
+  outline: 2px solid var(--gold-400);
+  outline-offset: 2px;
+  border-radius: var(--radius-sm);
+}
+/* Inputs already show focus via border; remove duplicate outline */
+.form-input:focus-visible {
+  outline: none;
+}
+/* Inline text links */
+a:focus-visible {
+  border-radius: 2px;
+}
+/* Skip-to-main (hidden until focused) */
+.skip-to-main {
+  position: fixed;
+  top: 8px;
+  left: 8px;
+  z-index: 9999;
+  padding: 8px 16px;
+  background: var(--gold-400);
+  color: #0a0a0a;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: var(--radius-sm);
+  transform: translateY(-80px);
+  transition: transform 0.15s;
+}
+.skip-to-main:focus { transform: translateY(0); }
+

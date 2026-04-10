@@ -41,11 +41,12 @@ function formatCurrencyLocal(n: number) {
 export function BidButton({ listingId, existingBid }: Props) {
   const router = useRouter()
   const toast  = useToast()
-  const [open,     setOpen]     = useState(false)
-  const [loading,  setLoading]  = useState<boolean | 'accept-counter' | 'decline-counter'>(false)
-  const [amount,   setAmount]   = useState('')
-  const [noteRate, setNoteRate] = useState('')
-  const [message,  setMessage]  = useState('')
+  const [open,         setOpen]         = useState(false)
+  const [loading,      setLoading]      = useState<boolean | 'accept-counter' | 'decline-counter'>(false)
+  const [amount,       setAmount]       = useState('')
+  const [noteRate,     setNoteRate]     = useState('')
+  const [message,      setMessage]      = useState('')
+  const [confirmedBid, setConfirmedBid] = useState<{ amount: number; submittedAt: string } | null>(null)
 
   const submit = async () => {
     const amt = parseFloat(amount)
@@ -71,6 +72,7 @@ export function BidButton({ listingId, existingBid }: Props) {
 
     toast.success('Bid submitted successfully.')
     setOpen(false)
+    setConfirmedBid({ amount: amt, submittedAt: new Date().toISOString() })
     router.refresh()
   }
 
@@ -97,6 +99,31 @@ export function BidButton({ listingId, existingBid }: Props) {
 
     toast.success(action === 'accept-counter' ? 'Counter offer accepted.' : 'Counter offer declined.')
     router.refresh()
+  }
+
+  // Optimistic confirmation shown immediately after submit, before server re-renders existingBid
+  if (confirmedBid && !existingBid && !open) {
+    return (
+      <div className="glass-card" style={{ padding: '16px 20px', maxWidth: '500px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+        <div style={{
+          width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'rgba(52,211,153,0.12)', color: '#34d399',
+        }}>
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+            <polyline points="20 6 9 17 4 12" />
+          </svg>
+        </div>
+        <div>
+          <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#34d399', marginBottom: '2px' }}>
+            Bid Submitted
+          </div>
+          <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
+            {formatCurrencyLocal(confirmedBid.amount)} &middot; Pending seller review
+          </div>
+        </div>
+      </div>
+    )
   }
 
   // Counter offer panel for buyer

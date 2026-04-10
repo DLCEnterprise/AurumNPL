@@ -132,22 +132,25 @@ model User {
 }
 
 model Listing {
-  id             String        @id @default(cuid())
-  title          String
-  description    String?
-  assetType      AssetType
-  unpaidBalance  Float
-  loanCount      Int
-  location       String
-  zip            String?
-  region         String?
-  avgDelinquency Int?
-  status         ListingStatus @default(DRAFT)
-  documents      String[]
-  dropboxLink    String?
-  lienPosition   LienPosition?
-  createdAt      DateTime      @default(now())
-  updatedAt      DateTime      @updatedAt
+  id                String        @id @default(cuid())
+  title             String
+  description       String?
+  assetType         AssetType
+  unpaidBalance     Float
+  loanCount         Int
+  location          String
+  zip               String?
+  region            String?
+  avgDelinquency    Int?
+  status            ListingStatus @default(DRAFT)
+  documents         String[]
+  dropboxLink       String?
+  lienPosition      LienPosition?
+  askingPrice       Float?
+  performanceStatus String?
+  noteType          String?
+  createdAt         DateTime      @default(now())
+  updatedAt         DateTime      @updatedAt
 
   seller   User   @relation(fields: [sellerId], references: [id])
   sellerId String
@@ -178,15 +181,29 @@ model Asset {
   payoffCltv  Float?
 
   // ── Property Data ─────────────────────────────────────────
-  fairMarketValue    Float?
-  occupancyType      String?
-  homePurchaseDate   DateTime?
-  homePurchasePrice  Float?
-  propertyStreet     String?
-  propertyCity       String?
-  propertyState      String?
-  propertyZip        String?
-  streetViewUrl      String?
+  fairMarketValue         Float?
+  occupancyType           String?
+  homePurchaseDate        DateTime?
+  homePurchasePrice       Float?
+  propertyStreet          String?
+  propertyCity            String?
+  propertyState           String?
+  propertyZip             String?
+  propertyType            String?
+  county                  String?
+  yearBuilt               Int?
+  floorSizeSqFt           Float?
+  lotSizeSqFt             Float?
+  bedrooms                Int?
+  bathrooms               Float?
+  streetViewUrl           String?
+  lastPaymentReceivedDate DateTime?
+  paymentAccepted         String?
+  isInterestOnly          Boolean?
+  interestOnlyPeriod      Int?
+  totalMonthlyPayment     Float?
+  legalStatus             String?
+  isJudicialState         Boolean?
 
   // ── Bankruptcy — Current ──────────────────────────────────
   isInBankruptcy       Boolean?

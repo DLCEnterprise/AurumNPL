@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 
 interface Notification {
   id: string
@@ -94,6 +95,7 @@ export function NotificationBell() {
       <button
         onClick={openDropdown}
         aria-label="Notifications"
+        className="notification-bell-btn"
         style={{
           position: 'relative',
           display:  'flex',
@@ -133,20 +135,23 @@ export function NotificationBell() {
 
       {/* Dropdown */}
       {open && (
-        <div style={{
-          position: 'absolute',
-          top: 'calc(100% + 8px)',
-          right: 0,
-          width: '340px',
-          background: 'var(--bg-card)',
-          border: '1px solid var(--border)',
-          borderRadius: 'var(--radius)',
-          boxShadow: '0 8px 32px rgba(0,0,0,0.6)',
-          backdropFilter: 'blur(20px)',
-          WebkitBackdropFilter: 'blur(20px)',
-          zIndex: 1000,
-          overflow: 'hidden',
-        }}>
+        <div
+          className="notification-dropdown"
+          style={{
+            position: 'absolute',
+            top: 'calc(100% + 8px)',
+            right: 0,
+            width: '340px',
+            background: 'var(--bg-elevated)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-md)',
+            boxShadow: '0 8px 32px rgba(0,0,0,0.5)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            zIndex: 1000,
+            overflow: 'hidden',
+          }}
+        >
           {/* Header */}
           <div style={{
             display: 'flex', alignItems: 'center', justifyContent: 'space-between',
@@ -179,6 +184,7 @@ export function NotificationBell() {
                 <button
                   key={n.id}
                   onClick={() => markRead(n)}
+                  className={`notification-row${!n.readAt ? ' notification-row--unread' : ''}`}
                   style={{
                     display: 'block',
                     width: '100%',
@@ -212,6 +218,26 @@ export function NotificationBell() {
                 </button>
               ))
             )}
+          </div>
+
+          {/* Footer — view all */}
+          <div style={{ borderTop: '1px solid var(--border)' }}>
+            <Link
+              href="/notifications"
+              onClick={() => setOpen(false)}
+              style={{
+                display: 'block',
+                padding: '11px 16px',
+                textAlign: 'center',
+                fontSize: '0.78rem',
+                color: 'var(--gold-400)',
+                transition: 'background 0.15s',
+              }}
+              onMouseEnter={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = 'rgba(255,255,255,0.03)' }}
+              onMouseLeave={(e) => { (e.currentTarget as HTMLAnchorElement).style.background = 'transparent' }}
+            >
+              View all notifications →
+            </Link>
           </div>
         </div>
       )}
