@@ -108,6 +108,7 @@ export default function SignUpPage() {
       phone: form.phone.trim() || undefined,
       role: primaryRole,
       pendingRoleRequest,
+      terms: true,
     }
 
     if (form.role === 'BUYER' || form.role === 'BOTH') {
@@ -325,9 +326,10 @@ export default function SignUpPage() {
               onChange={(e) => { setForm((p) => ({ ...p, terms: e.target.checked })); setFieldErrors((p) => ({ ...p, terms: undefined })) }} />
             <label htmlFor="terms" style={{ cursor: 'pointer' }}>
               I agree to the{' '}
-              <a href="#" onClick={(e) => e.preventDefault()}>Terms of Service</a>
-              {' '}and{' '}
-              <a href="#" onClick={(e) => e.preventDefault()}>Privacy Policy</a>.
+              <Link href="/terms" target="_blank" style={{ color: 'var(--gold-400)' }}>
+                Terms of Service &amp; Confidentiality Agreement
+              </Link>
+              , including the NDA and Non-Circumvention provisions (60-month obligation).
               I confirm I am an institutional or accredited investor.
             </label>
           </div>

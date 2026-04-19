@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { sendAdminNotification, sendRegistrationConfirmationEmail } from '@/lib/email'
 import { signAdminToken, generateNonce } from '@/lib/utils'
 import { rateLimit, getIp, rateLimitResponse } from '@/lib/rate-limit'
+import { CURRENT_TERMS_VERSION } from '@/lib/terms'
 
 const SignUpSchema = z.object({
   name: z.string().min(2, 'Full name must be at least 2 characters.'),
@@ -19,6 +20,7 @@ const SignUpSchema = z.object({
   phone: z.string().optional(),
   role: z.enum(['SELLER', 'BUYER']),
   pendingRoleRequest: z.enum(['SELLER', 'BUYER']).optional(),
+  terms: z.literal(true, { errorMap: () => ({ message: 'You must accept the Terms of Service to continue.' }) }),
   // Optional investor fields (BUYER only)
   entityName:     z.string().optional(),
   signerTitle:    z.string().optional(),
@@ -55,6 +57,9 @@ export async function POST(req: NextRequest) {
             entityName, signerTitle, yearsExperience, investorType,
             lienPosition, loanStatusPref, mainObjective } = parsed.data
 
+    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null
+    const userAgent = req.headers.get('user-agent') ?? null
+
     // Check for existing user
     const existing = await prisma.user.findUnique({ where: { email } })
     if (existing) {
@@ -76,6 +81,7 @@ export async function POST(req: NextRequest) {
         role,
         pendingRoleRequest: pendingRoleRequest ?? null,
         approvalStatus: 'PENDING',
+        termsVersion: CURRENT_TERMS_VERSION,
         ...(role === 'BUYER' && {
           entityName:      entityName ?? null,
           signerTitle:     signerTitle ?? null,
@@ -85,6 +91,13 @@ export async function POST(req: NextRequest) {
           loanStatusPref:  loanStatusPref ?? null,
           mainObjective:   mainObjective ?? null,
         }),
+        termsAcceptances: {
+          create: {
+            version: CURRENT_TERMS_VERSION,
+            ipAddress: ip,
+            userAgent,
+          },
+        },
       },
     })
 

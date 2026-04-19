@@ -116,6 +116,9 @@ model User {
   // Role expansion request
   pendingRoleRequest    String?   // 'BUYER' or 'SELLER' — pending admin review
 
+  // Legal agreements
+  termsVersion          String?
+
   // Admin-only fields
   adminNotes            String?   // Internal notes, never exposed to the user
   suspendedAt           DateTime?
@@ -137,6 +140,7 @@ model User {
   notificationPrefs     NotificationPreference?   @relation("NotificationPrefs")
   twoFactorSecret       TwoFactorSecret?          @relation("TwoFactor")
   passwordResets        PasswordResetToken[]      @relation("PasswordResets")
+  termsAcceptances      TermsAcceptance[]
 
   @@index([email])
   @@index([approvalStatus])
@@ -584,4 +588,17 @@ model TwoFactorSecret {
   createdAt   DateTime @default(now())
 
   user        User     @relation("TwoFactor", fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model TermsAcceptance {
+  id         String   @id @default(cuid())
+  userId     String
+  version    String
+  acceptedAt DateTime @default(now())
+  ipAddress  String?
+  userAgent  String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
 }
