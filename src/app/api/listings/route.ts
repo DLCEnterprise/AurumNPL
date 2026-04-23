@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { generateListingNumber } from '@/lib/listing-number'
 import type { AssetType, ListingStatus, LienPosition } from '@prisma/client'
 
 // ─── GET /api/listings ────────────────────────────────────────────────────────
@@ -18,7 +19,7 @@ export async function GET(req: NextRequest) {
   const mine    = searchParams.get('mine') === 'true'
 
   const VALID_ASSET_TYPES: AssetType[] = ['RESIDENTIAL', 'COMMERCIAL', 'CONSUMER', 'MIXED']
-  const VALID_STATUSES: ListingStatus[] = ['DRAFT', 'ACTIVE', 'UNDER_REVIEW', 'PENDING', 'SOLD', 'ARCHIVED']
+  const VALID_STATUSES: ListingStatus[] = ['DRAFT', 'ACTIVE', 'OFFER_ACCEPTED', 'DUE_DILIGENCE', 'CLOSING', 'UNDER_REVIEW', 'PENDING', 'SOLD', 'ARCHIVED']
   const VALID_LIEN_POSITIONS: LienPosition[] = ['SENIOR', 'JUNIOR']
 
   const assetTypeParam = searchParams.get('assetType')
@@ -44,10 +45,13 @@ export async function GET(req: NextRequest) {
   const delinquencyMax = searchParams.get('delinquencyMax') ? parseInt(searchParams.get('delinquencyMax')!) : undefined
   const sortBy    = searchParams.get('sortBy') ?? 'newest'
 
+  // firstMortgage/secondMortgage sorts by lienPosition (SENIOR first, JUNIOR first)
   const orderBy = sortBy === 'upbAsc' ? { unpaidBalance: 'asc' as const }
     : sortBy === 'upbDesc' ? { unpaidBalance: 'desc' as const }
     : sortBy === 'delinquencyAsc' ? { avgDelinquency: 'asc' as const }
     : sortBy === 'delinquencyDesc' ? { avgDelinquency: 'desc' as const }
+    : sortBy === 'firstMortgage' ? { lienPosition: 'asc' as const }   // JUNIOR < SENIOR alphabetically, so asc = JUNIOR first; we want SENIOR first → desc
+    : sortBy === 'secondMortgage' ? { lienPosition: 'desc' as const }
     : { createdAt: 'desc' as const }
 
   const where = {
@@ -130,8 +134,10 @@ const AssetSchema = z.object({
   homePurchasePrice:          z.number().optional(),
   ltv:                        z.number().optional(),
   cltv:                       z.number().optional(),
+  borrowerEverFiledBK:        z.boolean().optional(),
   isInBankruptcy:             z.boolean().optional(),
   bankruptcyChapter:          z.string().optional(),
+  bkCaseNumber:               z.string().optional(),
   bkFilingDate:               z.string().optional(),
   ch13PocFilingDate:          z.string().optional(),
   bkConfirmationDate:         z.string().optional(),
@@ -189,8 +195,13 @@ const AssetSchema = z.object({
   secondMtg_modLoanAmount:       z.number().optional(),
   secondMtg_modCurrentBalance:   z.number().optional(),
   secondMtg_modDeferredBalance:  z.number().optional(),
-  secondMtg_modMonthlyPI:        z.number().optional(),
-  secondMtg_modPaymentsRemaining:z.number().int().optional(),
+  secondMtg_modMonthlyPI:         z.number().optional(),
+  secondMtg_modPaymentsRemaining: z.number().int().optional(),
+  firstMtg_accruedInterest:       z.number().optional(),
+  firstMtg_lateFees:              z.number().optional(),
+  secondMtg_accruedInterest:      z.number().optional(),
+  secondMtg_lateFees:             z.number().optional(),
+  payoffCltv:                     z.number().optional(),
 }).optional()
 
 const CreateSchema = z.object({
@@ -245,8 +256,9 @@ export async function POST(req: NextRequest) {
   const { asset: assetData, bidDeadline: bidDeadlineStr, ...listingData } = parsed.data
 
   const listing = await prisma.$transaction(async (tx) => {
+    const listingNumber = await generateListingNumber(tx)
     const created = await tx.listing.create({
-      data: { ...listingData, bidDeadline: parseDate(bidDeadlineStr), sellerId: session.user.id },
+      data: { ...listingData, listingNumber, bidDeadline: parseDate(bidDeadlineStr), sellerId: session.user.id },
     })
 
     if (assetData) {
@@ -290,8 +302,10 @@ export async function POST(req: NextRequest) {
           homePurchasePrice:          ad.homePurchasePrice,
           ltv:                        ad.ltv,
           cltv:                       ad.cltv,
+          borrowerEverFiledBK:        ad.borrowerEverFiledBK,
           isInBankruptcy:             ad.isInBankruptcy,
           bankruptcyChapter:          ad.bankruptcyChapter,
+          bkCaseNumber:               ad.bkCaseNumber,
           bkFilingDate:               parseDate(ad.bkFilingDate),
           ch13PocFilingDate:          parseDate(ad.ch13PocFilingDate),
           bkConfirmationDate:         parseDate(ad.bkConfirmationDate),
@@ -349,8 +363,13 @@ export async function POST(req: NextRequest) {
           secondMtg_modLoanAmount:       ad.secondMtg_modLoanAmount,
           secondMtg_modCurrentBalance:   ad.secondMtg_modCurrentBalance,
           secondMtg_modDeferredBalance:  ad.secondMtg_modDeferredBalance,
-          secondMtg_modMonthlyPI:        ad.secondMtg_modMonthlyPI,
-          secondMtg_modPaymentsRemaining:ad.secondMtg_modPaymentsRemaining,
+          secondMtg_modMonthlyPI:         ad.secondMtg_modMonthlyPI,
+          secondMtg_modPaymentsRemaining: ad.secondMtg_modPaymentsRemaining,
+          firstMtg_accruedInterest:       ad.firstMtg_accruedInterest,
+          firstMtg_lateFees:              ad.firstMtg_lateFees,
+          secondMtg_accruedInterest:      ad.secondMtg_accruedInterest,
+          secondMtg_lateFees:             ad.secondMtg_lateFees,
+          payoffCltv:                     ad.payoffCltv,
         },
       })
     }

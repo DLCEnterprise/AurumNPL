@@ -26,8 +26,8 @@ export async function PATCH(req: NextRequest, { params: paramsPromise }: Params)
   const bid = await prisma.bid.findUnique({
     where: { id: bidId },
     include: {
-      listing: { select: { sellerId: true, title: true } },
-      bidder: { select: { email: true, name: true } },
+      listing: { select: { sellerId: true, title: true, dropboxLink: true } },
+      bidder:  { select: { id: true, email: true, name: true } },
     },
   })
   if (!bid || bid.listingId !== listingId) {
@@ -46,33 +46,66 @@ export async function PATCH(req: NextRequest, { params: paramsPromise }: Params)
   const isAdmin  = session.user.role === 'ADMIN'
   const isBidder = bid.bidderId === userId
 
-  // Permission check
   if (status === 'WITHDRAWN' && !isBidder && !isAdmin) {
     return NextResponse.json({ success: false, error: 'Only the bidder may withdraw their bid.' }, { status: 403 })
   }
-  // Bidder may accept or reject a counter offer (bid is currently COUNTERED)
   const isRespondingToCounter = isBidder && bid.status === 'COUNTERED' && (status === 'ACCEPTED' || status === 'REJECTED')
   if ((status === 'ACCEPTED' || status === 'REJECTED' || status === 'COUNTERED') && !isSeller && !isAdmin && !isRespondingToCounter) {
     return NextResponse.json({ success: false, error: 'Only the seller may accept, reject, or counter bids.' }, { status: 403 })
   }
 
-  // Expiry check for terminal status changes by seller
-  if (status === 'ACCEPTED' || status === 'REJECTED') {
-    if (bid.expiresAt && bid.expiresAt < new Date()) {
-      return NextResponse.json({ success: false, error: 'This bid has expired.' }, { status: 409 })
-    }
+  if ((status === 'ACCEPTED' || status === 'REJECTED') && bid.expiresAt && bid.expiresAt < new Date()) {
+    return NextResponse.json({ success: false, error: 'This bid has expired.' }, { status: 409 })
   }
 
-  const updated = await prisma.bid.update({
-    where: { id: bidId },
-    data: status === 'COUNTERED'
-      ? { status, counterAmount, counterNote }
-      : status === 'ACCEPTED' && amount != null
-        ? { status, amount }
-        : { status },
-  })
+  const bidData = status === 'COUNTERED'
+    ? { status, counterAmount, counterNote }
+    : status === 'ACCEPTED' && amount != null
+      ? { status, amount }
+      : { status }
 
-  // Notifications
+  let updated
+  if (status === 'ACCEPTED') {
+    // All changes happen atomically: update bid, advance listing status,
+    // reject competing bids, and create the DD timeline.
+    const now = new Date()
+    const bpoOeDeadline = new Date(now.getTime() + 5  * 24 * 60 * 60 * 1000)
+    const ddDeadline    = new Date(now.getTime() + 12 * 24 * 60 * 60 * 1000)
+
+    const [updatedBid] = await prisma.$transaction([
+      // Accept the winning bid
+      prisma.bid.update({ where: { id: bidId }, data: bidData }),
+
+      // Reject all other PENDING bids on this listing
+      prisma.bid.updateMany({
+        where: { listingId, id: { not: bidId }, status: 'PENDING' },
+        data:  { status: 'REJECTED' },
+      }),
+
+      // Advance listing to OFFER_ACCEPTED
+      prisma.listing.update({
+        where: { id: listingId },
+        data:  { status: 'OFFER_ACCEPTED' },
+      }),
+
+      // Create the due diligence timeline
+      prisma.dueDiligenceTimeline.create({
+        data: {
+          listingId,
+          bidId,
+          buyerId:       bid.bidder.id,
+          bidAcceptedAt: now,
+          bpoOeDeadline,
+          ddDeadline,
+        },
+      }),
+    ])
+    updated = updatedBid
+  } else {
+    updated = await prisma.bid.update({ where: { id: bidId }, data: bidData })
+  }
+
+  // ── Notifications (fire-and-forget) ─────────────────────────────────────────
   if (status === 'ACCEPTED') {
     createNotification({
       userId:  bid.bidderId,
@@ -81,18 +114,13 @@ export async function PATCH(req: NextRequest, { params: paramsPromise }: Params)
       linkUrl: `/listings/${listingId}`,
     }).catch(() => {})
 
-    // Send bid accepted email with dropbox link if available
-    const listingWithDropbox = await prisma.listing.findUnique({
-      where: { id: listingId },
-      select: { title: true, dropboxLink: true },
-    })
     if (bid.bidder?.email) {
       sendBidAcceptedEmail({
         to:           bid.bidder.email,
         buyerName:    bid.bidder.name ?? 'Buyer',
-        listingTitle: listingWithDropbox?.title ?? bid.listing.title,
+        listingTitle: bid.listing.title,
         amount:       amount ?? bid.amount,
-        dropboxLink:  listingWithDropbox?.dropboxLink,
+        dropboxLink:  bid.listing.dropboxLink ?? undefined,
         listingUrl:   `${process.env.BASE_URL ?? 'http://localhost:3000'}/listings/${listingId}`,
       }).catch(() => {})
     }

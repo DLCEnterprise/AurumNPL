@@ -25,6 +25,9 @@ enum ApprovalStatus {
 enum ListingStatus {
   DRAFT
   ACTIVE
+  OFFER_ACCEPTED
+  DUE_DILIGENCE
+  CLOSING
   UNDER_REVIEW
   PENDING
   SOLD
@@ -113,6 +116,9 @@ model User {
   servicerContactPhone  String?
   servicerContactEmail  String?
 
+  // Buyer fund type (visible to sellers and admins)
+  fundType              String?   // PERSONAL | BUSINESS
+
   // Role expansion request
   pendingRoleRequest    String?   // 'BUYER' or 'SELLER' — pending admin review
 
@@ -137,6 +143,7 @@ model User {
   auditLogs             AuditLog[]                @relation("AuditLogs")
   savedSearches         SavedSearch[]             @relation("SavedSearches")
   dealPipelines         DealPipeline[]            @relation("DealPipelines")
+  ddTimelinesAsBuyer    DueDiligenceTimeline[]    @relation("DDTimelines")
   notificationPrefs     NotificationPreference?   @relation("NotificationPrefs")
   twoFactorSecret       TwoFactorSecret?          @relation("TwoFactor")
   passwordResets        PasswordResetToken[]      @relation("PasswordResets")
@@ -148,6 +155,7 @@ model User {
 
 model Listing {
   id                String        @id @default(cuid())
+  listingNumber     String?       @unique  // AUR-YYYY-NNNNN
   title             String
   description       String?
   assetType         AssetType
@@ -175,15 +183,16 @@ model Listing {
   seller   User   @relation(fields: [sellerId], references: [id])
   sellerId String
 
-  asset             Asset?
-  savedBy           SavedListing[]
-  bids              Bid[]
-  views             ListingView[]
-  vaultDocuments    Document[]
-  ndaAgreements     NdaAgreement[]
-  dueDiligenceItems DueDiligenceChecklist[]
-  auditLogs         AuditLog[]
-  dealPipelines     DealPipeline[]
+  asset                 Asset?
+  savedBy               SavedListing[]
+  bids                  Bid[]
+  views                 ListingView[]
+  vaultDocuments        Document[]
+  ndaAgreements         NdaAgreement[]
+  dueDiligenceItems     DueDiligenceChecklist[]
+  dueDiligenceTimelines DueDiligenceTimeline[]
+  auditLogs             AuditLog[]
+  dealPipelines         DealPipeline[]
 
   @@index([status])
   @@index([assetType])
@@ -226,8 +235,10 @@ model Asset {
   isJudicialState         Boolean?
 
   // ── Bankruptcy — Current ──────────────────────────────────
+  borrowerEverFiledBK  Boolean?  // "Has borrower ever filed BK?" — top-level gate
   isInBankruptcy       Boolean?
   bankruptcyChapter    String?
+  bkCaseNumber         String?
   bkFilingDate         DateTime?
   ch13PocFilingDate    DateTime?
   bkConfirmationDate   DateTime?
@@ -280,6 +291,10 @@ model Asset {
   firstMtg_modMonthlyPI         Float?
   firstMtg_modMonthlyEscrow     Float?
 
+  // ── First Mortgage — Payoff Components (for Payoff CLTV) ─
+  firstMtg_accruedInterest Float?
+  firstMtg_lateFees        Float?
+
   // ── First Mortgage — Foreclosure Status ──────────────────
   firstMtg_foreclosureDefaultDate DateTime?
   firstMtg_foreclosureDefaultAmt  Float?
@@ -318,6 +333,10 @@ model Asset {
   secondMtg_modInterestRate      Float?
   secondMtg_modMonthlyPI         Float?
   secondMtg_modMonthlyEscrow     Float?
+
+  // ── Second Mortgage — Payoff Components ──────────────────
+  secondMtg_accruedInterest Float?
+  secondMtg_lateFees        Float?
 
   // ── Second Mortgage — Foreclosure Status ─────────────────
   secondMtg_foreclosureDefaultDate DateTime?
@@ -396,11 +415,13 @@ model SavedListing {
 
 model Bid {
   id            String    @id @default(cuid())
+  offerNumber   String?   @unique  // OFF-NNNNN, generated on create
   listingId     String
   bidderId      String
   amount        Float
   noteRate      Float?
   message       String?
+  fundType      String?   // PERSONAL | BUSINESS — snapshot from buyer profile at bid time
   status        BidStatus @default(PENDING)
   expiresAt     DateTime?
   counterAmount Float?
@@ -408,8 +429,9 @@ model Bid {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
 
-  listing Listing @relation(fields: [listingId], references: [id], onDelete: Cascade)
-  bidder  User    @relation("BidsPlaced", fields: [bidderId], references: [id])
+  listing              Listing               @relation(fields: [listingId], references: [id], onDelete: Cascade)
+  bidder               User                  @relation("BidsPlaced", fields: [bidderId], references: [id])
+  dueDiligenceTimeline DueDiligenceTimeline?
 
   @@index([listingId])
   @@index([bidderId])
@@ -601,4 +623,68 @@ model TermsAcceptance {
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId])
+}
+
+// ─── Due Diligence Timeline ───────────────────────────────────────────────────
+// Created automatically when a bid is accepted. Tracks all closing milestones.
+
+model DueDiligenceTimeline {
+  id              String    @id @default(cuid())
+  listingId       String
+  bidId           String    @unique
+  buyerId         String
+
+  // Key milestone timestamps
+  bidAcceptedAt   DateTime  @default(now())
+  bpoOeDeadline   DateTime  // bidAcceptedAt + 5 days
+  bpoOrderedAt    DateTime?
+  oeOrderedAt     DateTime?
+  ddDeadline      DateTime  // bidAcceptedAt + 12 days
+  ddCompletedAt   DateTime?
+  mlpaSentAt      DateTime?
+  mlpaSignedAt    DateTime?
+  wireReceivedAt  DateTime?
+  closedAt        DateTime?
+
+  notes           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  listing Listing @relation(fields: [listingId], references: [id])
+  bid     Bid     @relation(fields: [bidId], references: [id])
+  buyer   User    @relation("DDTimelines", fields: [buyerId], references: [id])
+
+  @@index([listingId])
+  @@index([buyerId])
+}
+
+// ─── Vendor Directory ─────────────────────────────────────────────────────────
+
+model Vendor {
+  id           String   @id @default(cuid())
+  name         String
+  category     String   // BPO | Title_OE | Legal | Other
+  description  String?
+  contactName  String?
+  contactPhone String?
+  contactEmail String?
+  website      String?
+  address      String?
+  isActive     Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+// ─── MLPA Template ────────────────────────────────────────────────────────────
+// Admin-editable. Body uses {{PLACEHOLDER}} tokens replaced at generation time.
+
+model MlpaTemplate {
+  id        String   @id @default(cuid())
+  version   String   @unique
+  body      String
+  notes     String?
+  isActive  Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }

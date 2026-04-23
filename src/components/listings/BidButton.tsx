@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ui/Toast'
 import { Spinner } from '@/components/ui/Skeleton'
@@ -38,6 +38,52 @@ function formatCurrencyLocal(n: number) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
 }
 
+// Slide-out drawer overlay
+function BidDrawer({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
+  // Lock body scroll when open
+  useEffect(() => {
+    if (open) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [open])
+
+  return (
+    <>
+      {/* Backdrop */}
+      <div
+        onClick={onClose}
+        style={{
+          position: 'fixed', inset: 0, zIndex: 200,
+          background: 'rgba(0,0,0,0.55)',
+          opacity: open ? 1 : 0,
+          pointerEvents: open ? 'auto' : 'none',
+          transition: 'opacity 0.25s ease',
+          backdropFilter: 'blur(2px)',
+        }}
+      />
+      {/* Panel */}
+      <div
+        style={{
+          position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 201,
+          width: '100%', maxWidth: '480px',
+          background: 'var(--surface-1)',
+          borderLeft: '1px solid var(--border)',
+          boxShadow: '-20px 0 60px rgba(0,0,0,0.4)',
+          transform: open ? 'translateX(0)' : 'translateX(100%)',
+          transition: 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
+          display: 'flex', flexDirection: 'column',
+          overflowY: 'auto',
+        }}
+      >
+        {children}
+      </div>
+    </>
+  )
+}
+
 export function BidButton({ listingId, existingBid }: Props) {
   const router = useRouter()
   const toast  = useToast()
@@ -72,6 +118,9 @@ export function BidButton({ listingId, existingBid }: Props) {
 
     toast.success('Bid submitted successfully.')
     setOpen(false)
+    setAmount('')
+    setNoteRate('')
+    setMessage('')
     setConfirmedBid({ amount: amt, submittedAt: new Date().toISOString() })
     router.refresh()
   }
@@ -101,10 +150,10 @@ export function BidButton({ listingId, existingBid }: Props) {
     router.refresh()
   }
 
-  // Optimistic confirmation shown immediately after submit, before server re-renders existingBid
-  if (confirmedBid && !existingBid && !open) {
+  // Optimistic confirmation shown immediately after submit
+  if (confirmedBid && !existingBid) {
     return (
-      <div className="glass-card" style={{ padding: '16px 20px', maxWidth: '500px', display: 'flex', alignItems: 'center', gap: '14px' }}>
+      <div className="glass-card" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '14px' }}>
         <div style={{
           width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -115,11 +164,9 @@ export function BidButton({ listingId, existingBid }: Props) {
           </svg>
         </div>
         <div>
-          <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#34d399', marginBottom: '2px' }}>
-            Bid Submitted
-          </div>
+          <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#34d399', marginBottom: '2px' }}>Bid Submitted</div>
           <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
-            {formatCurrencyLocal(confirmedBid.amount)} &middot; Pending seller review
+            {formatCurrencyLocal(confirmedBid.amount)} · Pending seller review
           </div>
         </div>
       </div>
@@ -127,7 +174,7 @@ export function BidButton({ listingId, existingBid }: Props) {
   }
 
   // Counter offer panel for buyer
-  if (existingBid && existingBid.status === 'COUNTERED' && !open) {
+  if (existingBid && existingBid.status === 'COUNTERED') {
     return (
       <div className="glass-card" style={{ padding: '18px 20px', maxWidth: '500px' }}>
         <div style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#fb923c', marginBottom: '10px' }}>
@@ -157,11 +204,7 @@ export function BidButton({ listingId, existingBid }: Props) {
           </div>
         )}
         <div style={{ display: 'flex', gap: '8px' }}>
-          <button
-            className="btn btn--gold btn--sm"
-            disabled={loading !== false}
-            onClick={() => respondToCounter('accept-counter')}
-          >
+          <button className="btn btn--gold btn--sm" disabled={loading !== false} onClick={() => respondToCounter('accept-counter')}>
             {loading === 'accept-counter' && <Spinner size={13} color="#0a0a0a" />}
             Accept Counter
           </button>
@@ -180,95 +223,133 @@ export function BidButton({ listingId, existingBid }: Props) {
   }
 
   // Show existing bid status (non-COUNTERED)
-  if (existingBid && !open) {
+  if (existingBid) {
     return (
-      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-        <div className="glass-card" style={{ padding: '10px 16px', display: 'flex', alignItems: 'center', gap: '10px' }}>
-          <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-muted)' }}>
-            Your Bid
-          </div>
-          <div style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: 500, background: 'var(--gold-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
-            {formatCurrencyLocal(existingBid.amount)}
-          </div>
-          <span style={{ fontSize: '0.75rem', color: STATUS_COLOR[existingBid.status] ?? 'var(--text-muted)' }}>
-            {STATUS_LABEL[existingBid.status] ?? existingBid.status}
-          </span>
+      <div className="glass-card" style={{ padding: '10px 16px', display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-muted)' }}>
+          Your Bid
         </div>
+        <div style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', fontWeight: 500, background: 'var(--gold-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+          {formatCurrencyLocal(existingBid.amount)}
+        </div>
+        <span style={{ fontSize: '0.75rem', color: STATUS_COLOR[existingBid.status] ?? 'var(--text-muted)' }}>
+          {STATUS_LABEL[existingBid.status] ?? existingBid.status}
+        </span>
       </div>
     )
   }
 
-  if (!open) {
-    return (
+  // Default: "Submit Bid" trigger button + slide-out drawer
+  return (
+    <>
       <button className="btn btn--gold" onClick={() => setOpen(true)}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M12 5v14M5 12h14" />
         </svg>
         Submit Bid / LOI
       </button>
-    )
-  }
 
-  return (
-    <div className="glass-card" style={{ padding: '20px', width: '100%', maxWidth: '500px' }}>
-      <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 400, marginBottom: '16px' }}>
-        Submit Bid / LOI
-      </h4>
-
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '12px' }}>
-        <div>
-          <label style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-muted)', marginBottom: '6px' }}>
-            Amount (USD) *
-          </label>
-          <input
-            type="number"
-            className="form-input"
-            placeholder="e.g. 500000"
-            value={amount}
-            onChange={(e) => setAmount(e.target.value)}
-            min="1"
-            step="1"
-          />
+      <BidDrawer open={open} onClose={() => setOpen(false)}>
+        {/* Drawer header */}
+        <div style={{ padding: '28px 28px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+          <div>
+            <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', fontWeight: 400, margin: 0, lineHeight: 1.2 }}>
+              Submit Bid / LOI
+            </h2>
+            <p style={{ fontSize: '0.78rem', color: 'var(--text-muted)', marginTop: '4px', marginBottom: 0 }}>
+              Your offer is non-binding until a purchase agreement is executed.
+            </p>
+          </div>
+          <button
+            onClick={() => setOpen(false)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '6px', borderRadius: '6px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+            aria-label="Close"
+          >
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+            </svg>
+          </button>
         </div>
-        <div>
-          <label style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-muted)', marginBottom: '6px' }}>
-            Note Rate (%)
-          </label>
-          <input
-            type="number"
-            className="form-input"
-            placeholder="e.g. 5.5"
-            value={noteRate}
-            onChange={(e) => setNoteRate(e.target.value)}
-            min="0"
-            max="100"
-            step="0.01"
-          />
+
+        {/* Drawer body */}
+        <div style={{ padding: '28px', flex: 1 }}>
+
+          {/* Offer amount */}
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '8px' }}>
+              Offer Amount (USD) <span style={{ color: '#f87171' }}>*</span>
+            </label>
+            <input
+              type="number"
+              className="form-input"
+              placeholder="e.g. 500,000"
+              value={amount}
+              onChange={(e) => setAmount(e.target.value)}
+              min="1"
+              step="1"
+              style={{ fontSize: '1.1rem' }}
+              autoFocus
+            />
+          </div>
+
+          {/* Note rate */}
+          <div style={{ marginBottom: '20px' }}>
+            <label style={{ display: 'block', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '8px' }}>
+              Note Rate (%) — optional
+            </label>
+            <input
+              type="number"
+              className="form-input"
+              placeholder="e.g. 5.5"
+              value={noteRate}
+              onChange={(e) => setNoteRate(e.target.value)}
+              min="0"
+              max="100"
+              step="0.01"
+            />
+          </div>
+
+          {/* Message */}
+          <div style={{ marginBottom: '28px' }}>
+            <label style={{ display: 'block', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '8px' }}>
+              Message / Terms — optional
+            </label>
+            <textarea
+              className="form-input"
+              rows={6}
+              placeholder="Include any terms, conditions, or notes for the seller…"
+              value={message}
+              onChange={(e) => setMessage(e.target.value)}
+              maxLength={2000}
+              style={{ resize: 'vertical', minHeight: '120px' }}
+            />
+            <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', marginTop: '4px', textAlign: 'right' }}>
+              {message.length} / 2000
+            </div>
+          </div>
+
+          {/* Disclaimer */}
+          <div style={{ padding: '12px 14px', background: 'rgba(212,168,70,0.06)', border: '1px solid rgba(212,168,70,0.15)', borderRadius: 'var(--radius-sm)', marginBottom: '24px', fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+            By submitting this bid you acknowledge that this is a letter of intent only. A binding agreement requires execution of a purchase and sale agreement.
+          </div>
+
+          {/* Actions */}
+          <div style={{ display: 'flex', gap: '10px' }}>
+            <button
+              className="btn btn--gold"
+              disabled={loading !== false || !amount}
+              onClick={submit}
+              style={{ flex: 1 }}
+            >
+              {loading === true && <Spinner size={15} color="#0a0a0a" />}
+              {loading === true ? 'Submitting…' : 'Submit Bid'}
+            </button>
+            <button className="btn btn--ghost" onClick={() => setOpen(false)}>
+              Cancel
+            </button>
+          </div>
         </div>
-      </div>
-
-      <div style={{ marginBottom: '16px' }}>
-        <label style={{ display: 'block', fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-muted)', marginBottom: '6px' }}>
-          Message (optional)
-        </label>
-        <textarea
-          className="form-input"
-          rows={4}
-          placeholder="Include any terms, conditions, or notes for the seller…"
-          value={message}
-          onChange={(e) => setMessage(e.target.value)}
-          maxLength={2000}
-          style={{ resize: 'vertical' }}
-        />
-      </div>
-
-      <div style={{ display: 'flex', gap: '10px' }}>
-        <button className="btn btn--gold" disabled={loading !== false || !amount} onClick={submit}>
-          {loading === true && <Spinner size={15} color="#0a0a0a" />}
-          {loading === true ? 'Submitting…' : 'Submit Bid'}
-        </button>
-        <button className="btn btn--ghost" onClick={() => setOpen(false)}>Cancel</button>
-      </div>
-    </div>
+      </BidDrawer>
+    </>
   )
 }

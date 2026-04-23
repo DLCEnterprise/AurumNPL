@@ -27,6 +27,13 @@ const TYPE_CLASS: Record<AssetType, string> = {
 const STATUS_CLASS: Record<ListingStatus, string> = {
   ACTIVE: 'active', UNDER_REVIEW: 'review', PENDING: 'pending',
   DRAFT: 'pending', SOLD: 'active', ARCHIVED: 'pending',
+  OFFER_ACCEPTED: 'active', DUE_DILIGENCE: 'review', CLOSING: 'review',
+}
+
+const STATUS_LABEL: Partial<Record<ListingStatus, string>> = {
+  OFFER_ACCEPTED: 'Offer Accepted',
+  DUE_DILIGENCE:  'Due Diligence',
+  CLOSING:        'Closing',
 }
 
 const BID_STATUS_COLOR: Record<string, string> = {
@@ -61,7 +68,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
 
   const isOwner = listing.sellerId === userId
   const isAdmin = session!.user.role === 'ADMIN'
-  const isBuyer = session!.user.role === 'BUYER'
+  const isBuyer = session!.user.role === 'BUYER' || session!.user.role === 'SELLER_BUYER'
 
   if (!isOwner && !isAdmin && (listing.status === 'DRAFT' || listing.status === 'ARCHIVED')) {
     notFound()
@@ -118,20 +125,35 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
       <div style={{ marginBottom: '28px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px', flexWrap: 'wrap' }}>
           <span className={`listing-card__type listing-card__type--${TYPE_CLASS[listing.assetType]}`}>
-            {listing.assetType.charAt(0) + listing.assetType.slice(1).toLowerCase()}
+            {listing.assetType === 'RESIDENTIAL' ? 'Residential 1–4' : listing.assetType.charAt(0) + listing.assetType.slice(1).toLowerCase()}
           </span>
           <span className={`listing-card__status listing-card__status--${STATUS_CLASS[listing.status]}`}>
-            {listing.status.replace('_', ' ')}
+            {STATUS_LABEL[listing.status] ?? listing.status.replace(/_/g, ' ')}
           </span>
+          {listing.lienPosition && (
+            <span style={{ fontSize: '0.68rem', padding: '3px 9px', borderRadius: '100px', background: listing.lienPosition === 'SENIOR' ? 'rgba(59,130,246,0.1)' : 'rgba(251,146,60,0.1)', color: listing.lienPosition === 'SENIOR' ? '#60a5fa' : '#fb923c', border: `1px solid ${listing.lienPosition === 'SENIOR' ? 'rgba(59,130,246,0.2)' : 'rgba(251,146,60,0.2)'}` }}>
+              {listing.lienPosition === 'SENIOR' ? '1st Mortgage' : '2nd Mortgage'}
+            </span>
+          )}
           {isOwner && (
             <span style={{ fontSize: '0.68rem', padding: '3px 9px', borderRadius: '100px', background: 'rgba(212,168,70,0.08)', color: 'var(--gold-400)', border: '1px solid rgba(212,168,70,0.15)' }}>
               Your Listing
+            </span>
+          )}
+          {(listing as { listingNumber?: string | null }).listingNumber && (
+            <span style={{ fontSize: '0.68rem', padding: '3px 9px', borderRadius: '100px', background: 'rgba(255,255,255,0.04)', color: 'var(--text-muted)', border: '1px solid var(--border-light)', fontFamily: 'monospace' }}>
+              {(listing as { listingNumber?: string | null }).listingNumber}
             </span>
           )}
         </div>
         <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2.2rem', fontWeight: 400, marginBottom: '8px', lineHeight: 1.2 }}>
           {listing.title}
         </h1>
+        {asset?.propertyStreet && (
+          <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', marginBottom: '4px', fontWeight: 500 }}>
+            {asset.propertyStreet}{asset.propertyCity ? `, ${asset.propertyCity}` : ''}{asset.propertyState ? `, ${asset.propertyState}` : ''}{asset.propertyZip ? ` ${asset.propertyZip}` : ''}
+          </p>
+        )}
         <p style={{ color: 'var(--text-muted)', fontSize: '0.82rem' }}>
           Listed {timeAgo(listing.createdAt)} · {listing.seller.company ?? listing.seller.name}
         </p>
@@ -184,6 +206,9 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
         {!isOwner && isBuyer && (
           <AddToPipelineButton listingId={listing.id} />
         )}
+        {!isOwner && isBuyer && listing.status === 'ACTIVE' && (
+          <BidButton listingId={listing.id} existingBid={serializedBid} />
+        )}
         {isOwner && (
           <>
             {listing.status === 'DRAFT' && <PublishListingButton listingId={listing.id} />}
@@ -204,13 +229,6 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
           </>
         )}
       </div>
-
-      {/* Bid form for buyers */}
-      {!isOwner && isBuyer && listing.status === 'ACTIVE' && (
-        <div style={{ marginBottom: '28px' }}>
-          <BidButton listingId={listing.id} existingBid={serializedBid} />
-        </div>
-      )}
 
       {/* Collateral Documents */}
       {listing.dropboxLink && (canSeeDropbox ? (

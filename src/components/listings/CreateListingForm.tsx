@@ -76,8 +76,10 @@ interface FormData {
   // Single — Legal & Status
   legalStatus: string
   isJudicialState: string
+  borrowerEverFiledBK: string   // gate: 'false' | 'true'
   isInBankruptcy: string
   bankruptcyChapter: string
+  bkCaseNumber: string
   bkFilingDate: string
   ch13PocFilingDate: string
   bkConfirmationDate: string
@@ -135,6 +137,12 @@ interface FormData {
   secondMtg_modDeferredBalance: string
   secondMtg_modMonthlyPI: string
   secondMtg_modPaymentsRemaining: string
+  // Payoff components for Payoff CLTV calculation
+  firstMtg_accruedInterest: string
+  firstMtg_lateFees: string
+  secondMtg_accruedInterest: string
+  secondMtg_lateFees: string
+  payoffCltv: string
   // Deal Terms
   askingPrice: string
   reservePrice: string
@@ -164,7 +172,8 @@ const EMPTY: FormData = {
   bedrooms: '', bathrooms: '', occupancyType: '', fairMarketValue: '',
   homePurchaseDate: '', homePurchasePrice: '', ltv: '', cltv: '',
   legalStatus: '', isJudicialState: 'false',
-  isInBankruptcy: 'false', bankruptcyChapter: '', bkFilingDate: '', ch13PocFilingDate: '',
+  borrowerEverFiledBK: 'false', isInBankruptcy: 'false', bankruptcyChapter: '', bkCaseNumber: '',
+  bkFilingDate: '', ch13PocFilingDate: '',
   bkConfirmationDate: '', bkDismissalDate: '', ch13DischargedDate: '',
   ch7PetitionDate: '', ch7CaseNumber: '', ch7DateFiled: '', ch7DismissalDate: '', ch7DischargeDate: '',
   prevCh13PetitionDate: '', prevCh13CaseNumber: '', prevCh13DateFiled: '',
@@ -184,6 +193,8 @@ const EMPTY: FormData = {
   secondMtg_modFirstPayDate: '', secondMtg_modInterestRate: '', secondMtg_modLoanAmount: '',
   secondMtg_modCurrentBalance: '', secondMtg_modDeferredBalance: '', secondMtg_modMonthlyPI: '',
   secondMtg_modPaymentsRemaining: '',
+  firstMtg_accruedInterest: '', firstMtg_lateFees: '',
+  secondMtg_accruedInterest: '', secondMtg_lateFees: '', payoffCltv: '',
   askingPrice: '', reservePrice: '', bidDeadline: '', preferredClosingDays: '', ndaRequired: 'false',
   dropboxLink: '', loanTapeLink: '', status: 'ACTIVE',
 }
@@ -328,12 +339,35 @@ export function CreateListingForm() {
     return Math.max(0, days)
   }, [form.lastPaymentReceivedDate])
 
+  const fmv = parseFloat(form.fairMarketValue) || 0
+  const firstBal  = parseFloat(form.firstMtg_currentBalance)  || parseFloat(form.unpaidBalance) || 0
+  const secondBal = parseFloat(form.secondMtg_currentBalance) || 0
+  const firstDef  = parseFloat(form.firstMtg_modDeferredBalance)  || 0
+  const secondDef = parseFloat(form.secondMtg_modDeferredBalance) || 0
+  const firstAccr = parseFloat(form.firstMtg_accruedInterest)   || 0
+  const firstFees = parseFloat(form.firstMtg_lateFees)          || 0
+  const secAccr   = parseFloat(form.secondMtg_accruedInterest)  || 0
+  const secFees   = parseFloat(form.secondMtg_lateFees)         || 0
+
   const autoLtv = useMemo(() => {
-    const upb = parseFloat(form.unpaidBalance)
-    const fmv = parseFloat(form.fairMarketValue)
-    if (isNaN(upb) || isNaN(fmv) || fmv === 0) return null
-    return ((upb / fmv) * 100).toFixed(1)
-  }, [form.unpaidBalance, form.fairMarketValue])
+    if (!fmv) return null
+    return ((firstBal / fmv) * 100).toFixed(1)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firstBal, fmv])
+
+  const autoCltv = useMemo(() => {
+    if (!fmv || !secondBal) return null
+    return (((firstBal + secondBal) / fmv) * 100).toFixed(1)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firstBal, secondBal, fmv])
+
+  const autoPayoffCltv = useMemo(() => {
+    if (!fmv) return null
+    const firstPayoff  = firstBal  + firstAccr  + firstFees  + firstDef
+    const secondPayoff = secondBal + secAccr    + secFees    + secondDef
+    return (((firstPayoff + secondPayoff) / fmv) * 100).toFixed(1)
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [firstBal, firstAccr, firstFees, firstDef, secondBal, secAccr, secFees, secondDef, fmv])
 
   // ── Validation ──────────────────────────────────────────────────────────────
 
@@ -456,16 +490,16 @@ export function CreateListingForm() {
         bedrooms:        parseOptInt(f.bedrooms),
         bathrooms:       parseOptFloat(f.bathrooms),
         occupancyType:   f.occupancyType || undefined,
-        fairMarketValue: parseOptFloat(f.fairMarketValue),
+        fairMarketValue:   parseOptFloat(f.fairMarketValue),
         homePurchaseDate:  parseOptDate(f.homePurchaseDate),
         homePurchasePrice: parseOptFloat(f.homePurchasePrice),
-        ltv:  parseOptFloat(f.ltv)  != null ? parseOptFloat(f.ltv)!  / 100 : undefined,
-        cltv: parseOptFloat(f.cltv) != null ? parseOptFloat(f.cltv)! / 100 : undefined,
-        legalStatus:     f.legalStatus || undefined,
-        isJudicialState: f.isJudicialState === 'true' ? true : f.isJudicialState === 'false' ? false : undefined,
-        isInBankruptcy:  f.isInBankruptcy === 'true',
-        bankruptcyChapter:     f.bankruptcyChapter || undefined,
-        bkFilingDate:          parseOptDate(f.bkFilingDate),
+        legalStatus:       f.legalStatus || undefined,
+        isJudicialState:     f.isJudicialState === 'true' ? true : false,
+        borrowerEverFiledBK: f.borrowerEverFiledBK === 'true',
+        isInBankruptcy:      f.isInBankruptcy === 'true',
+        bankruptcyChapter:   f.bankruptcyChapter || undefined,
+        bkCaseNumber:        f.bkCaseNumber || undefined,
+        bkFilingDate:        parseOptDate(f.bkFilingDate),
         ch13PocFilingDate:     parseOptDate(f.ch13PocFilingDate),
         bkConfirmationDate:    parseOptDate(f.bkConfirmationDate),
         bkDismissalDate:       parseOptDate(f.bkDismissalDate),
@@ -522,6 +556,13 @@ export function CreateListingForm() {
         secondMtg_modDeferredBalance:  parseOptFloat(f.secondMtg_modDeferredBalance),
         secondMtg_modMonthlyPI:        parseOptFloat(f.secondMtg_modMonthlyPI),
         secondMtg_modPaymentsRemaining:parseOptInt(f.secondMtg_modPaymentsRemaining),
+        firstMtg_accruedInterest:  parseOptFloat(f.firstMtg_accruedInterest),
+        firstMtg_lateFees:         parseOptFloat(f.firstMtg_lateFees),
+        secondMtg_accruedInterest: parseOptFloat(f.secondMtg_accruedInterest),
+        secondMtg_lateFees:        parseOptFloat(f.secondMtg_lateFees),
+        payoffCltv:  parseOptFloat(f.payoffCltv) != null ? parseOptFloat(f.payoffCltv)! / 100 : autoPayoffCltv ? parseFloat(autoPayoffCltv) / 100 : undefined,
+        ltv:   parseOptFloat(f.ltv)   != null ? parseOptFloat(f.ltv)!   / 100 : autoLtv   ? parseFloat(autoLtv)   / 100 : undefined,
+        cltv:  parseOptFloat(f.cltv)  != null ? parseOptFloat(f.cltv)!  / 100 : autoCltv  ? parseFloat(autoCltv)  / 100 : undefined,
       },
     }
   }
@@ -626,10 +667,10 @@ export function CreateListingForm() {
               <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-muted)', marginBottom: '10px' }}>Performance Status</div>
               <CardGroup cols={4}>
                 {[
-                  { val: 'PL',  label: 'Performing',     sub: 'Current' },
-                  { val: 'SUB', label: 'Sub-Performing', sub: '< 60 DPD' },
-                  { val: 'NPL', label: 'Non-Performing',  sub: '60+ DPD' },
-                  { val: 'REO', label: 'REO',             sub: 'Owned real estate' },
+                  { val: 'PERFORMING',     label: 'Performing / Mod', sub: 'Current or modified' },
+                  { val: 'SUB_PERFORMING', label: 'Sub-Performing',   sub: '< 60 DPD' },
+                  { val: 'BK_PERFORMING',  label: 'BK Performing',    sub: 'Ch. 13 current' },
+                  { val: 'NON_PERFORMING', label: 'Non-Performing',   sub: '60+ DPD' },
                 ].map(({ val, label, sub }) => (
                   <CardOption key={val} label={label} sub={sub} selected={form.performanceStatus === val} onClick={() => pick('performanceStatus', val)} />
                 ))}
@@ -641,15 +682,19 @@ export function CreateListingForm() {
               <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-muted)', marginBottom: '10px' }}>
                 Asset Class<span style={{ color: 'var(--gold-400)', marginLeft: '3px' }}>*</span>
               </div>
-              <CardGroup cols={4}>
-                {[
-                  { val: 'RESIDENTIAL', label: 'Residential' },
-                  { val: 'COMMERCIAL',  label: 'Commercial' },
-                  { val: 'CONSUMER',    label: 'Consumer' },
-                  { val: 'MIXED',       label: 'Mixed' },
-                ].map(({ val, label }) => (
-                  <CardOption key={val} label={label} selected={form.assetType === val} onClick={() => pick('assetType', val)} />
-                ))}
+              <CardGroup cols={2}>
+                <CardOption
+                  label="Residential 1–4 Units"
+                  sub="SFR, condo, duplex, tri/quad-plex"
+                  selected={form.assetType === 'RESIDENTIAL'}
+                  onClick={() => pick('assetType', 'RESIDENTIAL')}
+                />
+                <CardOption
+                  label="Commercial"
+                  sub="Mixed-use, retail, multifamily 5+, industrial"
+                  selected={form.assetType === 'COMMERCIAL'}
+                  onClick={() => pick('assetType', 'COMMERCIAL')}
+                />
               </CardGroup>
               {errors.assetType && <span className="form-error">{errors.assetType}</span>}
             </div>
@@ -819,10 +864,13 @@ export function CreateListingForm() {
             <FieldRow cols={2}>
               <Field label="Loan Status">
                 <select className="form-input" value={form.firstMtg_loanStatus} onChange={set('firstMtg_loanStatus')}>
-                  <option value="Non-Performing">Non-Performing</option>
-                  <option value="Re-Performing">Re-Performing</option>
+                  <option value="Performing">Performing</option>
                   <option value="Sub-Performing">Sub-Performing</option>
-                  <option value="Current">Current</option>
+                  <option value="BK 13 Performing">BK 13 Performing</option>
+                  <option value="Non-Performing">Non-Performing</option>
+                  <option value="Performing / Modified">Performing / Modified</option>
+                  <option value="Default">Default</option>
+                  <option value="Foreclosure">Foreclosure</option>
                 </select>
               </Field>
               <Field label="Payment Accepted">
@@ -929,26 +977,43 @@ export function CreateListingForm() {
             <div style={{ marginBottom: '16px' }} />
             <SectionTitle>Valuation</SectionTitle>
             <FieldRow cols={2}>
-              <Field label="Fair Market Value (FMV)">
+              <Field label="Fair Market Value (FMV)" required hint="Required for LTV / CLTV calculations">
                 <CurrencyInput placeholder="e.g. $250,000.00" value={form.fairMarketValue} onValueChange={setRaw('fairMarketValue')} />
               </Field>
               <Field label="Home Purchase Price">
                 <CurrencyInput placeholder="e.g. $220,000.00" value={form.homePurchasePrice} onValueChange={setRaw('homePurchasePrice')} />
               </Field>
             </FieldRow>
-            <FieldRow cols={3}>
-              <Field label="Purchase Date">
-                <input type="date" className="form-input" value={form.homePurchaseDate} onChange={set('homePurchaseDate')} />
+            <Field label="Purchase Date">
+              <input type="date" className="form-input" value={form.homePurchaseDate} onChange={set('homePurchaseDate')} />
+            </Field>
+
+            <div style={{ marginBottom: '16px' }} />
+            <SectionTitle>Payoff Components (for Payoff CLTV)</SectionTitle>
+            <FieldRow cols={2}>
+              <Field label="1st — Accrued Interest">
+                <CurrencyInput placeholder="e.g. $4,200.00" value={form.firstMtg_accruedInterest} onValueChange={setRaw('firstMtg_accruedInterest')} />
               </Field>
-              <Field label="LTV (%)">
-                <PercentInput placeholder="e.g. 95.5%" value={form.ltv} onValueChange={setRaw('ltv')} />
-              </Field>
-              <Field label="CLTV (%)">
-                <PercentInput placeholder="e.g. 110.2%" value={form.cltv} onValueChange={setRaw('cltv')} />
+              <Field label="1st — Late Fees">
+                <CurrencyInput placeholder="e.g. $850.00" value={form.firstMtg_lateFees} onValueChange={setRaw('firstMtg_lateFees')} />
               </Field>
             </FieldRow>
-            {autoLtv && !form.ltv && (
-              <DerivedField label="LTV (auto-calculated from UPB ÷ FMV)" value={`${autoLtv}%`} highlight />
+            <FieldRow cols={2}>
+              <Field label="2nd — Accrued Interest">
+                <CurrencyInput placeholder="e.g. $1,100.00" value={form.secondMtg_accruedInterest} onValueChange={setRaw('secondMtg_accruedInterest')} />
+              </Field>
+              <Field label="2nd — Late Fees">
+                <CurrencyInput placeholder="e.g. $250.00" value={form.secondMtg_lateFees} onValueChange={setRaw('secondMtg_lateFees')} />
+              </Field>
+            </FieldRow>
+
+            {/* Auto-calculated metrics */}
+            {fmv > 0 && (
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '12px', marginTop: '8px' }}>
+                <DerivedField label="LTV (1st ÷ FMV)" value={autoLtv ? `${autoLtv}%` : '—'} highlight={!!autoLtv} />
+                <DerivedField label="CLTV ((1st + 2nd) ÷ FMV)" value={autoCltv ? `${autoCltv}%` : secondBal ? `${autoLtv ?? '—'}%` : '—'} highlight={!!autoCltv} />
+                <DerivedField label="Payoff CLTV (incl. fees)" value={autoPayoffCltv ? `${autoPayoffCltv}%` : '—'} highlight={!!autoPayoffCltv} />
+              </div>
             )}
           </div>
         )}
@@ -984,51 +1049,71 @@ export function CreateListingForm() {
               </Field>
             </FieldRow>
 
-            {/* Bankruptcy */}
+            {/* Bankruptcy — gated by "ever filed?" */}
             <div style={{ marginBottom: '16px' }} />
             <SectionTitle>Bankruptcy</SectionTitle>
-            <FieldRow cols={2}>
-              <Field label="Currently in Bankruptcy?">
-                <select className="form-input" value={form.isInBankruptcy} onChange={set('isInBankruptcy')}>
-                  <option value="false">No</option>
-                  <option value="true">Yes</option>
-                </select>
-              </Field>
-              {form.isInBankruptcy === 'true' && (
-                <Field label="Chapter">
-                  <select className="form-input" value={form.bankruptcyChapter} onChange={set('bankruptcyChapter')}>
-                    <option value="">Select…</option>
-                    <option value="7">Chapter 7</option>
-                    <option value="11">Chapter 11</option>
-                    <option value="13">Chapter 13</option>
-                  </select>
-                </Field>
-              )}
-            </FieldRow>
+            <Field label="Has the borrower ever filed bankruptcy?">
+              <select className="form-input" value={form.borrowerEverFiledBK} onChange={set('borrowerEverFiledBK')}>
+                <option value="false">No</option>
+                <option value="true">Yes</option>
+              </select>
+            </Field>
 
-            {form.isInBankruptcy === 'true' && (
+            {form.borrowerEverFiledBK === 'true' && (
               <>
+                <div style={{ marginTop: '16px' }} />
                 <FieldRow cols={2}>
-                  <Field label="BK Filing Date">
-                    <input type="date" className="form-input" value={form.bkFilingDate} onChange={set('bkFilingDate')} />
+                  <Field label="Is loan currently in Bankruptcy?">
+                    <select className="form-input" value={form.isInBankruptcy} onChange={set('isInBankruptcy')}>
+                      <option value="false">No</option>
+                      <option value="true">Yes</option>
+                    </select>
                   </Field>
-                  <Field label="Confirmation Date">
-                    <input type="date" className="form-input" value={form.bkConfirmationDate} onChange={set('bkConfirmationDate')} />
-                  </Field>
+                  {form.isInBankruptcy === 'true' && (
+                    <Field label="Chapter">
+                      <select className="form-input" value={form.bankruptcyChapter} onChange={set('bankruptcyChapter')}>
+                        <option value="">Select…</option>
+                        <option value="7">Chapter 7</option>
+                        <option value="11">Chapter 11</option>
+                        <option value="13">Chapter 13</option>
+                      </select>
+                    </Field>
+                  )}
                 </FieldRow>
-                <FieldRow cols={2}>
-                  <Field label="Ch.13 POC Filing Date">
-                    <input type="date" className="form-input" value={form.ch13PocFilingDate} onChange={set('ch13PocFilingDate')} />
-                  </Field>
-                  <Field label="Dismissal Date">
-                    <input type="date" className="form-input" value={form.bkDismissalDate} onChange={set('bkDismissalDate')} />
-                  </Field>
-                </FieldRow>
-                <Field label="Ch.13 Discharged Date">
-                  <input type="date" className="form-input" value={form.ch13DischargedDate} onChange={set('ch13DischargedDate')} />
-                </Field>
 
-                <div style={{ marginTop: '12px', marginBottom: '12px', fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Previous BK History — Ch. 7</div>
+                {form.isInBankruptcy === 'true' && (
+                  <>
+                    <FieldRow cols={2}>
+                      <Field label="BK Case Number">
+                        <input type="text" className="form-input" placeholder="e.g. 25-01234" value={form.bkCaseNumber} onChange={set('bkCaseNumber')} />
+                      </Field>
+                      <Field label="BK Filing Date">
+                        <input type="date" className="form-input" value={form.bkFilingDate} onChange={set('bkFilingDate')} />
+                      </Field>
+                    </FieldRow>
+                    <FieldRow cols={2}>
+                      <Field label="Confirmation Date">
+                        <input type="date" className="form-input" value={form.bkConfirmationDate} onChange={set('bkConfirmationDate')} />
+                      </Field>
+                      <Field label="Ch.13 POC Filing Date">
+                        <input type="date" className="form-input" value={form.ch13PocFilingDate} onChange={set('ch13PocFilingDate')} />
+                      </Field>
+                    </FieldRow>
+                    <FieldRow cols={2}>
+                      <Field label="Dismissal Date">
+                        <input type="date" className="form-input" value={form.bkDismissalDate} onChange={set('bkDismissalDate')} />
+                      </Field>
+                      <Field label="Ch.13 Discharged Date">
+                        <input type="date" className="form-input" value={form.ch13DischargedDate} onChange={set('ch13DischargedDate')} />
+                      </Field>
+                    </FieldRow>
+                  </>
+                )}
+
+                {/* Prior BK History — always shown if borrower ever filed */}
+                <div style={{ margin: '16px 0 12px', fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  Prior BK History — Ch. 7
+                </div>
                 <FieldRow cols={2}>
                   <Field label="Petition Date">
                     <input type="date" className="form-input" value={form.ch7PetitionDate} onChange={set('ch7PetitionDate')} />
@@ -1049,7 +1134,9 @@ export function CreateListingForm() {
                   </Field>
                 </FieldRow>
 
-                <div style={{ marginTop: '12px', marginBottom: '12px', fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Previous BK History — Ch. 13</div>
+                <div style={{ margin: '16px 0 12px', fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                  Prior BK History — Ch. 13
+                </div>
                 <FieldRow cols={2}>
                   <Field label="Petition Date">
                     <input type="date" className="form-input" value={form.prevCh13PetitionDate} onChange={set('prevCh13PetitionDate')} />

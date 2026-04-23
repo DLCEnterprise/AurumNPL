@@ -183,29 +183,40 @@ export function AssetDetail({ asset }: { asset: SerializedAsset }) {
 
       {/* ── Section 1: Property Overview ──────────────────────── */}
       <CollapsibleSection title="Property Overview" defaultOpen>
-        <div style={{ display: 'grid', gridTemplateColumns: fmv > 0 ? '1fr 1fr' : '1fr', gap: '28px', marginBottom: '24px' }}>
-          {/* Street view / placeholder */}
-          <div style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', aspectRatio: '16/9', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+
+        {/* Property tile: thumbnail left + data right */}
+        <div style={{ display: 'grid', gridTemplateColumns: '200px 1fr', gap: '20px', marginBottom: '24px', alignItems: 'start' }}>
+          {/* Street view thumbnail */}
+          <div style={{ borderRadius: 'var(--radius-md)', overflow: 'hidden', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border)', height: '140px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
             {streetViewKey && address ? (
               <StreetViewPanorama address={address} apiKey={streetViewKey} />
             ) : (
-              <div style={{ textAlign: 'center', color: 'var(--text-muted)' }}>
-                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ margin: '0 auto 8px' }}>
+              <div style={{ textAlign: 'center', color: 'var(--text-muted)', padding: '12px' }}>
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" style={{ margin: '0 auto 6px', display: 'block' }}>
                   <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
                 </svg>
-                <div style={{ fontSize: '0.75rem' }}>{address || 'Address not available'}</div>
+                <div style={{ fontSize: '0.65rem' }}>{address || 'No address'}</div>
               </div>
             )}
           </div>
 
-          {/* Property metrics */}
+          {/* Right: FMV + key metrics + LTV gauges */}
           <div>
             {fmv > 0 && (
-              <div style={{ marginBottom: '20px' }}>
-                <div style={{ fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '4px' }}>Fair Market Value</div>
-                <div style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 400, background: 'var(--gold-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{ fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '2px' }}>Fair Market Value</div>
+                <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.75rem', fontWeight: 400, background: 'var(--gold-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1.2 }}>
                   {fmtCurrency(fmv)}
                 </div>
+              </div>
+            )}
+
+            {/* LTV gauges — prominent above the grid */}
+            {!!(a.ltv || a.cltv || a.payoffCltv) && (
+              <div style={{ marginBottom: '16px', padding: '12px 14px', background: 'rgba(255,255,255,0.03)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
+                <LtvBar label="LTV" value={a.ltv as number} />
+                <LtvBar label="CLTV" value={a.cltv as number} />
+                <LtvBar label="Payoff CLTV" value={a.payoffCltv as number} />
               </div>
             )}
 
@@ -220,15 +231,6 @@ export function AssetDetail({ asset }: { asset: SerializedAsset }) {
               { label: 'Purchase Price', value: fmtCurrency(a.homePurchasePrice as number) },
               { label: 'State', value: fmtVal(a.propertyState) },
             ]} />
-
-            {/* LTV gauges */}
-            {!!(a.ltv || a.cltv || a.payoffCltv) && (
-              <div style={{ marginTop: '20px' }}>
-                <LtvBar label="LTV" value={a.ltv as number} />
-                <LtvBar label="CLTV" value={a.cltv as number} />
-                <LtvBar label="Payoff CLTV" value={a.payoffCltv as number} />
-              </div>
-            )}
           </div>
         </div>
 
@@ -272,20 +274,21 @@ export function AssetDetail({ asset }: { asset: SerializedAsset }) {
           { label: 'Interest Rate', value: fmtPct(a.firstMtg_interestRate as number) },
           { label: 'Monthly P&I', value: fmtCurrency(a.firstMtg_monthlyPI as number) },
           { label: 'Monthly Escrow', value: fmtCurrency(a.firstMtg_monthlyEscrow as number) },
-          { label: 'Origination Date', value: fmtDate(a.firstMtg_originationDate as string) },
-          { label: 'Maturity Date', value: fmtDate(a.firstMtg_maturityDate as string) },
-          { label: 'First Payment Date', value: fmtDate(a.firstMtg_firstPaymentDate as string) },
-          { label: 'Next Due Date', value: fmtDate(a.firstMtg_nextDueDate as string) },
+          { label: 'Total Monthly Pmt', value: fmtCurrency(a.totalMonthlyPayment as number) },
           { label: 'Loan Term', value: a.firstMtg_loanTermMonths ? `${a.firstMtg_loanTermMonths} months` : '—' },
           { label: 'Months Paid', value: fmtVal(a.firstMtg_totalMonthsPaid) },
           { label: 'Months Remaining', value: fmtVal(a.firstMtg_monthsRemaining) },
-          { label: 'Interest Paid To', value: fmtDate(a.firstMtg_interestPaidToDate as string) },
-          { label: 'Last Pmt Received', value: fmtDate(a.lastPaymentReceivedDate as string) },
-          { label: 'Payment Accepted', value: fmtVal(a.paymentAccepted) },
           { label: 'Interest Only', value: a.isInterestOnly != null ? (a.isInterestOnly ? 'Yes' : 'No') : '—' },
-          { label: 'Total Monthly Pmt', value: fmtCurrency(a.totalMonthlyPayment as number) },
+          { label: 'Payment Accepted', value: fmtVal(a.paymentAccepted) },
           { label: 'Legal Status', value: fmtVal(a.legalStatus) },
           { label: 'Judicial State', value: a.isJudicialState != null ? (a.isJudicialState ? 'Yes' : 'No') : '—' },
+          { label: 'Last Pmt Received', value: fmtDate(a.lastPaymentReceivedDate as string) },
+          // Dates grouped at end: origination → first payment → next due → interest paid to → maturity
+          { label: 'Origination Date', value: fmtDate(a.firstMtg_originationDate as string) },
+          { label: 'First Payment Date', value: fmtDate(a.firstMtg_firstPaymentDate as string) },
+          { label: 'Next Due Date', value: fmtDate(a.firstMtg_nextDueDate as string) },
+          { label: 'Interest Paid To', value: fmtDate(a.firstMtg_interestPaidToDate as string) },
+          { label: 'Maturity Date', value: fmtDate(a.firstMtg_maturityDate as string) },
         ]} />
       </CollapsibleSection>
 

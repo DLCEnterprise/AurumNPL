@@ -53,11 +53,11 @@ const US_STATES = [
 ]
 
 const UPB_RANGES = [
-  { label: 'Any', min: undefined, max: undefined },
-  { label: '$0 – $5M', min: 0, max: 5_000_000 },
-  { label: '$5M – $25M', min: 5_000_000, max: 25_000_000 },
-  { label: '$25M – $100M', min: 25_000_000, max: 100_000_000 },
-  { label: '$100M+', min: 100_000_000, max: undefined },
+  { label: 'Any UPB',       min: undefined,  max: undefined  },
+  { label: '$1 – $50K',    min: 1,          max: 50_000     },
+  { label: '$50K – $100K', min: 50_000,     max: 100_000    },
+  { label: '$100K – $500K',min: 100_000,    max: 500_000    },
+  { label: '$500K+',       min: 500_000,    max: undefined  },
 ]
 
 export function ListingsFilters({
@@ -263,10 +263,8 @@ export function ListingsFilters({
             onChange={(e) => push({ assetType: e.target.value || undefined })}
           >
             <option value="">All Types</option>
-            <option value="RESIDENTIAL">Residential</option>
+            <option value="RESIDENTIAL">Residential 1–4 Units</option>
             <option value="COMMERCIAL">Commercial</option>
-            <option value="CONSUMER">Consumer</option>
-            <option value="MIXED">Mixed</option>
           </select>
         </div>
 
@@ -309,10 +307,12 @@ export function ListingsFilters({
           >
             <option value="">Active</option>
             <option value="ACTIVE">Active</option>
-            <option value="UNDER_REVIEW">Under Review</option>
-            <option value="PENDING">Pending</option>
+            <option value="OFFER_ACCEPTED">Offer Accepted</option>
+            <option value="DUE_DILIGENCE">Due Diligence</option>
+            <option value="CLOSING">Closing</option>
             {mine && <option value="DRAFT">Draft</option>}
             {mine && <option value="SOLD">Sold</option>}
+            {mine && <option value="ARCHIVED">Archived</option>}
           </select>
         </div>
 
@@ -327,6 +327,8 @@ export function ListingsFilters({
             <option value="upbAsc">UPB: Low to High</option>
             <option value="delinquencyDesc">Most Delinquent</option>
             <option value="delinquencyAsc">Least Delinquent</option>
+            <option value="firstMortgage">First Mortgage</option>
+            <option value="secondMortgage">Second Mortgage</option>
           </select>
         </div>
 
@@ -482,8 +484,25 @@ export function ListingsFilters({
               }}
             >
               <option value="">All</option>
-              <option value="SENIOR">Senior</option>
-              <option value="JUNIOR">Junior</option>
+              <option value="SENIOR">First Mortgage</option>
+              <option value="JUNIOR">Second Mortgage</option>
+            </select>
+          </div>
+
+          {/* Loan Performance */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+            <label style={{ fontSize: '0.75rem', color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Loan Performance
+            </label>
+            <select
+              value={''}
+              onChange={(e) => push({ performanceStatus: e.target.value || undefined })}
+            >
+              <option value="">All</option>
+              <option value="PERFORMING">Performing / Mod</option>
+              <option value="SUB_PERFORMING">Sub-Performing</option>
+              <option value="BK_PERFORMING">BK Performing</option>
+              <option value="NON_PERFORMING">Non-Performing</option>
             </select>
           </div>
         </div>

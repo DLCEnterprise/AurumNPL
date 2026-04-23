@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { generateOfferNumber } from '@/lib/listing-number'
 import { createNotification } from '@/lib/notifications'
 import { sendBidNotificationEmail } from '@/lib/email'
 
@@ -87,16 +88,27 @@ export async function POST(req: NextRequest, { params: paramsPromise }: Params) 
 
   const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
 
-  const bid = await prisma.bid.create({
-    data: {
-      listingId,
-      bidderId: session.user.id,
-      amount:   parsed.data.amount,
-      noteRate: parsed.data.noteRate,
-      message:  parsed.data.message,
-      expiresAt,
-    },
-    include: { bidder: { select: { id: true, name: true, company: true, email: true } } },
+  // Snapshot buyer's fund type at time of offer
+  const buyer = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: { fundType: true },
+  })
+
+  const bid = await prisma.$transaction(async (tx) => {
+    const offerNumber = await generateOfferNumber(tx)
+    return tx.bid.create({
+      data: {
+        offerNumber,
+        listingId,
+        bidderId: session.user.id,
+        amount:   parsed.data.amount,
+        noteRate: parsed.data.noteRate,
+        message:  parsed.data.message,
+        fundType: buyer?.fundType ?? null,
+        expiresAt,
+      },
+      include: { bidder: { select: { id: true, name: true, company: true, email: true } } },
+    })
   })
 
   // Notify seller (fire and forget)

@@ -40,6 +40,21 @@ const STATUS_STYLE: Record<ListingStatus, { bg: string; color: string; border: s
     color: '#71717a',
     border: 'rgba(113,113,122,0.15)',
   },
+  OFFER_ACCEPTED: {
+    bg: 'rgba(34,197,94,0.1)',
+    color: '#4ade80',
+    border: 'rgba(34,197,94,0.25)',
+  },
+  DUE_DILIGENCE: {
+    bg: 'rgba(59,130,246,0.08)',
+    color: '#60a5fa',
+    border: 'rgba(59,130,246,0.25)',
+  },
+  CLOSING: {
+    bg: 'rgba(168,85,247,0.08)',
+    color: '#c084fc',
+    border: 'rgba(168,85,247,0.25)',
+  },
 }
 
 const PAGE_SIZE = 25

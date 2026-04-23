@@ -121,9 +121,9 @@ export default function EditListingPage() {
     fetch(`/api/listings/${id}`)
       .then((r) => r.json())
       .then((data) => {
-        if (data.success) {
-          const l = data.data
-          const a = l.asset ?? {}
+        if (!data.success) throw new Error(data.error ?? 'Failed to load listing')
+        const l = data.data
+        const a = l.asset ?? {}
 
           const toStr = (v: unknown) => v == null ? '' : String(v)
           const toDateStr = (v: unknown) => {
@@ -217,7 +217,11 @@ export default function EditListingPage() {
             bkDismissalDate: toDateStr(a.bkDismissalDate),
             ch13DischargedDate: toDateStr(a.ch13DischargedDate),
           })
-        }
+        setLoading(false)
+      })
+      .catch((err) => {
+        console.error('[edit] load error:', err)
+        setError('Failed to load listing. Please refresh.')
         setLoading(false)
       })
   }, [id])
@@ -319,19 +323,27 @@ export default function EditListingPage() {
       ch13DischargedDate: dt(f.ch13DischargedDate),
     }
 
-    const res = await fetch(`/api/listings/${id}`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(body),
-    })
-    const data = await res.json()
-    setSaving(false)
-
-    if (data.success) {
-      router.push(`/listings/${id}`)
-      router.refresh()
-    } else {
-      setError(data.error ?? 'Save failed.')
+    try {
+      const res = await fetch(`/api/listings/${id}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+        signal: AbortSignal.timeout(30_000),
+      })
+      const data = await res.json()
+      if (data.success) {
+        router.push(`/listings/${id}`)
+        router.refresh()
+      } else {
+        setError(data.error ?? 'Save failed. Please try again.')
+      }
+    } catch (err) {
+      const msg = err instanceof DOMException && err.name === 'TimeoutError'
+        ? 'Save timed out. Please check your connection and try again.'
+        : 'Save failed. Please try again.'
+      setError(msg)
+    } finally {
+      setSaving(false)
     }
   }
 

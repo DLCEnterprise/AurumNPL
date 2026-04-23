@@ -14,6 +14,7 @@ const TYPE_CLASS: Record<AssetType, string> = {
 const STATUS_CLASS: Record<ListingStatus, string> = {
   ACTIVE: 'active', UNDER_REVIEW: 'review', PENDING: 'pending',
   DRAFT: 'pending', SOLD: 'active', ARCHIVED: 'pending',
+  OFFER_ACCEPTED: 'active', DUE_DILIGENCE: 'review', CLOSING: 'review',
 }
 
 export default async function WatchlistPage() {

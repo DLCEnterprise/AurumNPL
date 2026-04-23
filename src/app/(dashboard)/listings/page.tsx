@@ -124,6 +124,9 @@ export default async function ListingsPage({
     DRAFT: 'pending',
     SOLD: 'active',
     ARCHIVED: 'pending',
+    OFFER_ACCEPTED: 'active',
+    DUE_DILIGENCE: 'review',
+    CLOSING: 'review',
   }
 
   return (
