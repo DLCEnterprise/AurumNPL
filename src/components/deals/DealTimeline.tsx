@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ui/Toast'
 import { Spinner } from '@/components/ui/Skeleton'
 
+interface MlpaData { body: string; version: string }
+
 interface Props {
   timelineId: string
   isSeller: boolean
@@ -106,9 +108,11 @@ export function DealTimeline({
 }: Props) {
   const router = useRouter()
   const toast  = useToast()
-  const [saving, setSaving] = useState<string | null>(null)
-  const [notes, setNotes]   = useState(initialNotes ?? '')
+  const [saving, setSaving]         = useState<string | null>(null)
+  const [notes, setNotes]           = useState(initialNotes ?? '')
   const [notesSaving, setNotesSaving] = useState(false)
+  const [mlpa, setMlpa]             = useState<MlpaData | null>(null)
+  const [mlpaLoading, setMlpaLoading] = useState(false)
 
   const now = new Date().toISOString()
 
@@ -177,8 +181,49 @@ export function DealTimeline({
     )
   }
 
+  const generateMlpa = async () => {
+    setMlpaLoading(true)
+    try {
+      const res = await fetch(`/api/deals/${timelineId}/mlpa`)
+      const data = await res.json()
+      if (!res.ok || !data.success) { toast.error(data.error ?? 'Failed to generate MLPA.'); return }
+      setMlpa(data.data)
+    } catch { toast.error('Failed to generate MLPA.') }
+    finally { setMlpaLoading(false) }
+  }
+
+  const copyMlpa = () => {
+    if (!mlpa) return
+    navigator.clipboard.writeText(mlpa.body)
+    toast.success('Copied to clipboard.')
+  }
+
   return (
     <div>
+      {/* MLPA modal */}
+      {mlpa && (
+        <>
+          <div onClick={() => setMlpa(null)} style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(2px)' }} />
+          <div style={{ position: 'fixed', top: '5vh', left: '50%', transform: 'translateX(-50%)', zIndex: 201, width: '90%', maxWidth: '760px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', background: 'var(--surface-1)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
+            <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+              <div>
+                <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem' }}>MLPA — {mlpa.version}</span>
+                <span style={{ marginLeft: '10px', fontSize: '0.7rem', color: 'var(--text-muted)' }}>Generated {fmtDate(new Date().toISOString())}</span>
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="btn btn--ghost btn--sm" onClick={copyMlpa}>Copy</button>
+                <button onClick={() => setMlpa(null)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', padding: '4px' }}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                </button>
+              </div>
+            </div>
+            <pre style={{ flex: 1, overflowY: 'auto', padding: '24px', fontFamily: 'monospace', fontSize: '0.78rem', lineHeight: 1.8, color: 'var(--text-secondary)', whiteSpace: 'pre-wrap', margin: 0 }}>
+              {mlpa.body}
+            </pre>
+          </div>
+        </>
+      )}
+
       {/* Steps */}
       <div style={{ position: 'relative' }}>
         {/* Connector line */}
@@ -247,6 +292,24 @@ export function DealTimeline({
             <CheckBtn field="closedAt" doneAt={closedAt} label="Mark Closed" />
           )}
         </Step>
+      </div>
+
+      {/* Generate MLPA */}
+      <div style={{ paddingTop: '4px', paddingBottom: '4px' }}>
+        <button
+          type="button"
+          className="btn btn--ghost btn--sm"
+          onClick={generateMlpa}
+          disabled={mlpaLoading}
+          style={{ fontSize: '0.75rem' }}
+        >
+          {mlpaLoading ? <Spinner size={12} /> : (
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/>
+            </svg>
+          )}
+          {mlpaLoading ? 'Generating…' : 'Generate MLPA'}
+        </button>
       </div>
 
       {/* Notes (seller/admin only) */}
