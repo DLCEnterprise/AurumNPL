@@ -16,6 +16,8 @@ const UpdateProfileSchema = z.object({
   lienPosition:         z.string().optional().nullable(),
   loanStatusPref:       z.string().optional().nullable(),
   mainObjective:        z.string().optional().nullable(),
+  // Fund type
+  fundType: z.enum(['PERSONAL', 'BUSINESS']).optional().nullable(),
   // Servicer fields
   servicerName:         z.string().optional().nullable(),
   servicerAddress:      z.string().optional().nullable(),

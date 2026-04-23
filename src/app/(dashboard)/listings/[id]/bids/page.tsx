@@ -42,7 +42,7 @@ export default async function BidsPage({ params }: { params: Promise<{ id: strin
 
   const bids = await prisma.bid.findMany({
     where: { listingId: id },
-    include: { bidder: { select: { id: true, name: true, company: true, email: true } } },
+    include: { bidder: { select: { id: true, name: true, company: true, email: true, fundType: true } } },
     orderBy: { createdAt: 'desc' },
   })
 
@@ -123,6 +123,14 @@ export default async function BidsPage({ params }: { params: Promise<{ id: strin
                           <div style={{ fontSize: '1rem', fontWeight: 500 }}>{bid.noteRate}%</div>
                         </div>
                       )}
+                      {(bid as { fundType?: string | null }).fundType && (
+                        <div>
+                          <div style={{ fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '3px' }}>Fund Type</div>
+                          <span style={{ fontSize: '0.78rem', padding: '3px 10px', borderRadius: '100px', fontWeight: 600, background: (bid as { fundType?: string | null }).fundType === 'BUSINESS' ? 'rgba(59,130,246,0.1)' : 'rgba(168,85,247,0.08)', color: (bid as { fundType?: string | null }).fundType === 'BUSINESS' ? '#60a5fa' : '#c084fc', border: `1px solid ${(bid as { fundType?: string | null }).fundType === 'BUSINESS' ? 'rgba(59,130,246,0.2)' : 'rgba(168,85,247,0.2)'}` }}>
+                            {(bid as { fundType?: string | null }).fundType === 'BUSINESS' ? 'Business / Entity' : 'Personal'}
+                          </span>
+                        </div>
+                      )}
                       <div>
                         <div style={{ fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '3px' }}>Submitted</div>
                         <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>{timeAgo(bid.createdAt)}</div>
@@ -131,6 +139,12 @@ export default async function BidsPage({ params }: { params: Promise<{ id: strin
                         <div>
                           <div style={{ fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '3px' }}>Expiry</div>
                           <div style={{ fontSize: '0.85rem', color: expiry.color }}>{expiry.label}</div>
+                        </div>
+                      )}
+                      {(bid as { offerNumber?: string | null }).offerNumber && (
+                        <div>
+                          <div style={{ fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '3px' }}>Offer #</div>
+                          <div style={{ fontSize: '0.78rem', fontFamily: 'monospace', color: 'var(--text-muted)' }}>{(bid as { offerNumber?: string | null }).offerNumber}</div>
                         </div>
                       )}
                     </div>

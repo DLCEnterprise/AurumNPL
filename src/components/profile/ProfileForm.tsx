@@ -64,6 +64,7 @@ interface User {
   createdAt: string
   pendingRoleRequest?: string | null
   // Investor fields
+  fundType?: string | null
   entityName?: string | null
   signerTitle?: string | null
   yearsExperience?: number | null
@@ -99,6 +100,7 @@ export function ProfileForm({ user }: { user: User }) {
   }, [isDirty])
 
   // Investor fields
+  const [fundType, setFundType]             = useState(user.fundType ?? '')
   const [entityName, setEntityName]         = useState(user.entityName ?? '')
   const [signerTitle, setSignerTitle]       = useState(user.signerTitle ?? '')
   const [yearsExp, setYearsExp]             = useState(user.yearsExperience?.toString() ?? '')
@@ -227,6 +229,7 @@ export function ProfileForm({ user }: { user: User }) {
         name: name.trim(),
         company: company.trim(),
         phone: phone.trim() || null,
+        fundType: (fundType as 'PERSONAL' | 'BUSINESS') || null,
         entityName: entityName.trim() || null,
         signerTitle: signerTitle.trim() || null,
         yearsExperience: yearsExp ? parseInt(yearsExp) : null,
@@ -389,8 +392,33 @@ export function ProfileForm({ user }: { user: User }) {
             Investor Profile
           </h2>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.8rem', marginBottom: '24px' }}>
-            This information helps match you with suitable listings.
+            This information helps match you with suitable listings and is shared with sellers when you bid.
           </p>
+          <div className="form-group">
+            <label>Fund Type</label>
+            <div style={{ display: 'flex', gap: '10px' }}>
+              {(['PERSONAL', 'BUSINESS'] as const).map((ft) => (
+                <button
+                  key={ft}
+                  type="button"
+                  onClick={() => { setFundType(ft === fundType ? '' : ft); setIsDirty(true) }}
+                  style={{
+                    padding: '8px 20px', borderRadius: 'var(--radius-sm)', border: '1px solid',
+                    cursor: 'pointer', fontSize: '0.82rem', fontWeight: 500, transition: 'all 0.15s',
+                    background: fundType === ft ? 'rgba(212,168,70,0.12)' : 'rgba(255,255,255,0.04)',
+                    borderColor: fundType === ft ? 'rgba(212,168,70,0.4)' : 'var(--border)',
+                    color: fundType === ft ? 'var(--gold-300)' : 'var(--text-secondary)',
+                  }}
+                >
+                  {ft === 'PERSONAL' ? 'Personal' : 'Business / Entity'}
+                </button>
+              ))}
+            </div>
+            <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px', display: 'block' }}>
+              Visible to sellers and admins when you submit a bid.
+            </span>
+          </div>
+
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
             <div className="form-group">
               <label>Entity Name</label>
@@ -432,7 +460,7 @@ export function ProfileForm({ user }: { user: User }) {
               </select>
             </div>
           </div>
-          <div className="form-group" style={{ marginBottom: '0' }}>
+          <div className="form-group">
             <label>Main Objective</label>
             <select className="form-input" value={mainObjective} onChange={(e) => setMainObjective(e.target.value)}>
               <option value="">Select…</option>
@@ -441,6 +469,53 @@ export function ProfileForm({ user }: { user: User }) {
               <option>Obtain Real Estate</option>
             </select>
           </div>
+          <button
+            type="button"
+            className="btn btn--gold"
+            disabled={profileSaving}
+            onClick={async () => {
+              setProfileSaving(true)
+              try {
+                const res = await fetch('/api/profile', {
+                  method: 'PUT',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    name: name.trim(),
+                    company: company.trim(),
+                    phone: phone.trim() || null,
+                    fundType: (fundType as 'PERSONAL' | 'BUSINESS') || null,
+                    entityName: entityName.trim() || null,
+                    signerTitle: signerTitle.trim() || null,
+                    yearsExperience: yearsExp ? parseInt(yearsExp) : null,
+                    investorType: investorType || null,
+                    lienPosition: lienPosition || null,
+                    loanStatusPref: loanStatusPref || null,
+                    mainObjective: mainObjective || null,
+                    servicerName: servicerName.trim() || null,
+                    servicerAddress: servicerAddress.trim() || null,
+                    servicerContactName: servicerContactName.trim() || null,
+                    servicerContactPhone: servicerContactPhone.trim() || null,
+                    servicerContactEmail: servicerContactEmail.trim() || null,
+                  }),
+                })
+                const data = await res.json()
+                if (res.ok && data.success) {
+                  setIsDirty(false)
+                  toast.success('Investor profile saved.')
+                  router.refresh()
+                } else {
+                  toast.error(data.error ?? 'Failed to save.')
+                }
+              } catch {
+                toast.error('Failed to save.')
+              } finally {
+                setProfileSaving(false)
+              }
+            }}
+          >
+            {profileSaving && <Spinner size={15} color="#0a0a0a" />}
+            {profileSaving ? 'Saving…' : 'Save Investor Profile'}
+          </button>
         </div>
       )}
 
