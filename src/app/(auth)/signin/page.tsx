@@ -57,9 +57,8 @@ function SignInForm() {
     setLoading(false)
 
     if (!result || result.error) {
-      // Check if this is a pending account (credentials provider returns false → callbackUrl has error)
       if (result?.error === 'CredentialsSignin') {
-        // Try to give a more specific message by checking status via the signup check endpoint
+        // Try to give a more specific message by checking account status
         const res = await fetch('/api/auth/status', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -77,8 +76,31 @@ function SignInForm() {
           }
         }
         setError('Incorrect email or password. Please try again.')
+      } else if (result?.error === 'AccessDenied') {
+        // signIn callback returned false — account is pending/rejected/suspended
+        const res = await fetch('/api/auth/status', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: email.trim().toLowerCase() }),
+        })
+        if (res.ok) {
+          const data = await res.json()
+          if (data.approvalStatus === 'PENDING') {
+            setError('Your account is still pending approval. You will receive an email once approved.')
+            return
+          }
+          if (data.approvalStatus === 'REJECTED') {
+            setError('Your application was not approved. Contact support@aurum.finance for details.')
+            return
+          }
+          if (data.approvalStatus === 'SUSPENDED') {
+            setError('Your account has been suspended. Contact support@aurum.finance for assistance.')
+            return
+          }
+        }
+        setError('Access denied. Contact support@aurum.finance for assistance.')
       } else {
-        setError('An unexpected error occurred. Please try again.')
+        setError('Sign-in failed. Please try again or contact support@aurum.finance.')
       }
       return
     }

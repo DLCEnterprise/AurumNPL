@@ -36,20 +36,25 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
         if (!email || !password) return null
 
-        const user = await prisma.user.findUnique({ where: { email } })
-        if (!user || !user.passwordHash) return null
+        try {
+          const user = await prisma.user.findUnique({ where: { email } })
+          if (!user || !user.passwordHash) return null
 
-        const valid = await compare(password, user.passwordHash)
-        if (!valid) return null
+          const valid = await compare(password, user.passwordHash)
+          if (!valid) return null
 
-        // Return the user — approvalStatus check happens in sign-in callback
-        return {
-          id: user.id,
-          email: user.email,
-          name: user.name,
-          role: user.role,
-          approvalStatus: user.approvalStatus,
-          company: user.company,
+          // Return the user — approvalStatus check happens in sign-in callback
+          return {
+            id: user.id,
+            email: user.email,
+            name: user.name,
+            role: user.role,
+            approvalStatus: user.approvalStatus,
+            company: user.company,
+          }
+        } catch (err) {
+          console.error('[auth] Database error during sign-in:', err)
+          return null
         }
       },
     }),
