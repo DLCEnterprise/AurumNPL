@@ -49,7 +49,7 @@ export default function TermsUpdatePage() {
           Updated Terms of Service
         </h1>
         <p style={{ color: 'var(--text-muted, #888)', fontSize: '0.875rem', lineHeight: '1.6', marginBottom: '28px' }}>
-          We've updated our Terms of Service & Confidentiality Agreement. Please review and accept the
+          We&apos;ve updated our Terms of Service & Confidentiality Agreement. Please review and accept the
           updated terms to continue using the AURUM platform.
         </p>
 

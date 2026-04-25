@@ -71,7 +71,6 @@ export default function ImportListingPage() {
   const [csvFile,       setCsvFile]       = useState<File | null>(null)
   const [csvDragging,   setCsvDragging]   = useState(false)
   const [csvRawRows,    setCsvRawRows]    = useState<CsvRow[] | null>(null)
-  const [csvRows,       setCsvRows]       = useState<ReturnType<typeof parseCsvRow>[] | null>(null)
   const [csvPreview,    setCsvPreview]    = useState<BulkPreviewRow[] | null>(null)
   const [csvLoading,    setCsvLoading]    = useState(false)
   const [csvError,      setCsvError]      = useState<string | null>(null)
@@ -135,7 +134,6 @@ export default function ImportListingPage() {
   const handleCsvFile = async (f: File) => {
     setCsvError(null)
     setCsvPreview(null)
-    setCsvRows(null)
     setCsvRawRows(null)
     setBulkResult(null)
     if (!f.name.toLowerCase().endsWith('.csv')) { setCsvError('Only .csv files are accepted.'); return }
@@ -159,7 +157,6 @@ export default function ImportListingPage() {
 
       const parsed = rawRows.map((r, i) => parseCsvRow(r, i + 1))
       setCsvRawRows(rawRows)
-      setCsvRows(parsed)
       setCsvPreview(parsed.map(p => ({
         rowIndex: p.rowIndex,
         title: p.title,
@@ -188,7 +185,6 @@ export default function ImportListingPage() {
       if (!res.ok || !data.success) { setCsvError(data.error ?? 'Import failed.'); return }
       setBulkResult(data.data)
       setCsvPreview(null)
-      setCsvRows(null)
       setCsvRawRows(null)
       setCsvFile(null)
     } catch { setCsvError('Import failed. Please try again.') }
@@ -460,7 +456,7 @@ export default function ImportListingPage() {
                     </span>
                   )}
                 </div>
-                <button className="btn btn--ghost btn--sm" onClick={() => { setCsvPreview(null); setCsvRows(null); setCsvRawRows(null); setCsvFile(null) }}>Clear</button>
+                <button className="btn btn--ghost btn--sm" onClick={() => { setCsvPreview(null); setCsvRawRows(null); setCsvFile(null) }}>Clear</button>
               </div>
 
               <div className="glass-card" style={{ overflow: 'hidden', marginBottom: '16px' }}>

@@ -1,6 +1,5 @@
 import { auth } from '@/lib/auth'
 import { redirect } from 'next/navigation'
-import Link from 'next/link'
 import { DashboardNav } from '@/components/layout/DashboardNav'
 import { SidebarLinks } from '@/components/layout/SidebarLinks'
 import { SellerTour } from '@/components/ui/SellerTour'
