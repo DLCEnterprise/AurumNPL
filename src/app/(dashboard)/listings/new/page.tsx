@@ -1,9 +1,14 @@
 import type { Metadata } from 'next'
+import { redirect } from 'next/navigation'
+import { auth } from '@/lib/auth'
 import { CreateListingForm } from '@/components/listings/CreateListingForm'
 
 export const metadata: Metadata = { title: 'Create Listing' }
 
-export default function NewListingPage() {
+export default async function NewListingPage() {
+  const session = await auth()
+  if (!session || session.user.role === 'BUYER') redirect('/listings')
+
   return (
     <div>
       <div style={{ marginBottom: '32px' }}>

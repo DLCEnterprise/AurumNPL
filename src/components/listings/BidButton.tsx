@@ -150,8 +150,8 @@ export function BidButton({ listingId, existingBid }: Props) {
     router.refresh()
   }
 
-  // Optimistic confirmation shown immediately after submit
-  if (confirmedBid && !existingBid) {
+  // Optimistic confirmation shown immediately after submit (including after re-bid on a declined bid)
+  if (confirmedBid && (!existingBid || existingBid.status === 'REJECTED')) {
     return (
       <div className="glass-card" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '14px' }}>
         <div style={{
@@ -222,8 +222,8 @@ export function BidButton({ listingId, existingBid }: Props) {
     )
   }
 
-  // Show existing bid status (non-COUNTERED)
-  if (existingBid) {
+  // Show existing bid status (PENDING, ACCEPTED, WITHDRAWN — not REJECTED, which allows re-bid)
+  if (existingBid && existingBid.status !== 'REJECTED') {
     return (
       <div className="glass-card" style={{ padding: '10px 16px', display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
         <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.07em', color: 'var(--text-muted)' }}>
@@ -239,14 +239,16 @@ export function BidButton({ listingId, existingBid }: Props) {
     )
   }
 
-  // Default: "Submit Bid" trigger button + slide-out drawer
+  const isRebid = existingBid?.status === 'REJECTED'
+
+  // Default: "Submit Bid" trigger button + slide-out drawer (also used for re-bid after decline)
   return (
     <>
       <button className="btn btn--gold" onClick={() => setOpen(true)}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M12 5v14M5 12h14" />
         </svg>
-        Submit Bid / LOI
+        {isRebid ? 'Submit New Bid' : 'Submit Bid / LOI'}
       </button>
 
       <BidDrawer open={open} onClose={() => setOpen(false)}>
@@ -273,6 +275,13 @@ export function BidButton({ listingId, existingBid }: Props) {
 
         {/* Drawer body */}
         <div style={{ padding: '28px', flex: 1 }}>
+
+          {/* Re-bid notice */}
+          {isRebid && existingBid && (
+            <div style={{ padding: '10px 14px', background: 'rgba(248,113,113,0.06)', border: '1px solid rgba(248,113,113,0.15)', borderRadius: 'var(--radius-sm)', marginBottom: '20px', fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
+              Your previous bid of <strong style={{ color: 'var(--text-secondary)' }}>{formatCurrencyLocal(existingBid.amount)}</strong> was declined. Submit a revised offer below.
+            </div>
+          )}
 
           {/* Offer amount */}
           <div style={{ marginBottom: '20px' }}>

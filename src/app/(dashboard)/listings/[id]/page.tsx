@@ -18,6 +18,8 @@ import { AddToPipelineButton } from '@/components/listings/AddToPipelineButton'
 import type { AssetType, ListingStatus } from '@prisma/client'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { NdaGate } from '@/components/listings/NdaGate'
+import { YieldCalculatorModal } from '@/components/tools/YieldCalculatorModal'
+import type { YieldPrefill } from '@/components/tools/YieldCalculator'
 
 export const metadata: Metadata = { title: 'Listing Detail' }
 
@@ -104,6 +106,18 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   }) : []
 
   const canSeeDropbox = isOwner || isAdmin || !!acceptedBid
+
+  // Yield calculator prefill from asset data
+  const yieldPrefill: YieldPrefill | undefined = listing.asset ? (() => {
+    const a = listing.asset!
+    const payment = (a as { firstMtg_isModified?: boolean | null }).firstMtg_isModified
+      ? ((a as { firstMtg_modMonthlyPI?: number | null }).firstMtg_modMonthlyPI ?? (a as { firstMtg_monthlyPI?: number | null }).firstMtg_monthlyPI ?? undefined)
+      : ((a as { firstMtg_monthlyPI?: number | null }).firstMtg_monthlyPI ?? undefined)
+    const months = (a as { firstMtg_isModified?: boolean | null }).firstMtg_isModified
+      ? ((a as { firstMtg_modPaymentsRemaining?: number | null }).firstMtg_modPaymentsRemaining ?? (a as { firstMtg_monthsRemaining?: number | null }).firstMtg_monthsRemaining ?? undefined)
+      : ((a as { firstMtg_monthsRemaining?: number | null }).firstMtg_monthsRemaining ?? undefined)
+    return (payment || months) ? { paymentAmount: payment ?? undefined, durationMonths: months ?? undefined } : undefined
+  })() : undefined
 
   const isSaved = !!savedRecord
   const serializedBid = existingBidRaw
@@ -193,12 +207,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
           <ContactSellerButton sellerId={listing.seller.id} listingId={listing.id} listingTitle={listing.title} />
         )}
         {!isOwner && (
-          <Link href={`/tools/yield-calculator?listingId=${listing.id}`} className="btn btn--ghost">
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/>
-            </svg>
-            Calculate Yield
-          </Link>
+          <YieldCalculatorModal prefill={yieldPrefill} />
         )}
         {!isOwner && (
           <SaveListingButton listingId={listing.id} initialSaved={isSaved} />
