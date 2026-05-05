@@ -53,15 +53,17 @@ export function ContactSellerButton({ sellerId, listingId, listingTitle }: Props
 
   return (
     <div className="glass-card" style={{ padding: '20px', width: '100%', maxWidth: '500px' }}>
-      <h4 style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 400, marginBottom: '12px' }}>
+      <label htmlFor="contact-seller-message" style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 400, marginBottom: '12px' }}>
         Send a message
-      </h4>
+      </label>
       <textarea
+        id="contact-seller-message"
         className="form-input"
         rows={4}
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         style={{ resize: 'vertical', marginBottom: '12px' }}
+        aria-required="true"
       />
       <div style={{ display: 'flex', gap: '10px' }}>
         <button className="btn btn--gold" disabled={loading || !message.trim()} onClick={send}>

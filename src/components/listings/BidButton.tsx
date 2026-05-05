@@ -89,11 +89,12 @@ export function BidButton({ listingId, existingBid }: Props) {
   const [amount,       setAmount]       = useState('')
   const [noteRate,     setNoteRate]     = useState('')
   const [message,      setMessage]      = useState('')
+  const [amountError,  setAmountError]  = useState('')
   const [confirmedBid, setConfirmedBid] = useState<{ amount: number; submittedAt: string } | null>(null)
 
   const submit = async () => {
     const amt = parseFloat(amount)
-    if (!amt || amt <= 0) { toast.error('Enter a valid bid amount.'); return }
+    if (!amt || amt <= 0) { setAmountError('Enter a valid bid amount.'); return }
 
     setLoading(true)
     const res = await fetch(`/api/listings/${listingId}/bids`, {
@@ -241,7 +242,7 @@ export function BidButton({ listingId, existingBid }: Props) {
   // Default: "Submit Bid" trigger button + slide-out drawer (also used for re-bid after decline)
   return (
     <>
-      <button className="btn btn--gold" onClick={() => setOpen(true)}>
+      <button className="btn btn--gold" onClick={() => { setOpen(true); setAmountError('') }}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M12 5v14M5 12h14" />
         </svg>
@@ -282,28 +283,38 @@ export function BidButton({ listingId, existingBid }: Props) {
 
           {/* Offer amount */}
           <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '8px' }}>
+            <label htmlFor="bid-amount" style={{ display: 'block', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '8px' }}>
               Offer Amount (USD) <span style={{ color: '#f87171' }}>*</span>
             </label>
             <input
+              id="bid-amount"
               type="number"
-              className="form-input"
+              className={`form-input${amountError ? ' form-input--error' : ''}`}
               placeholder="e.g. 500,000"
               value={amount}
-              onChange={(e) => setAmount(e.target.value)}
+              onChange={(e) => { setAmount(e.target.value); if (amountError) setAmountError('') }}
               min="1"
               step="1"
               style={{ fontSize: '1.1rem' }}
               autoFocus
+              aria-required="true"
+              aria-invalid={amountError ? true : undefined}
+              aria-describedby={amountError ? 'bid-amount-error' : undefined}
             />
+            {amountError && (
+              <div id="bid-amount-error" className="form-error" style={{ marginTop: '6px' }}>
+                {amountError}
+              </div>
+            )}
           </div>
 
           {/* Note rate */}
           <div style={{ marginBottom: '20px' }}>
-            <label style={{ display: 'block', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '8px' }}>
+            <label htmlFor="bid-note-rate" style={{ display: 'block', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '8px' }}>
               Note Rate (%) — optional
             </label>
             <input
+              id="bid-note-rate"
               type="number"
               className="form-input"
               placeholder="e.g. 5.5"
@@ -317,10 +328,11 @@ export function BidButton({ listingId, existingBid }: Props) {
 
           {/* Message */}
           <div style={{ marginBottom: '28px' }}>
-            <label style={{ display: 'block', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '8px' }}>
+            <label htmlFor="bid-message" style={{ display: 'block', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '8px' }}>
               Message / Terms — optional
             </label>
             <textarea
+              id="bid-message"
               className="form-input"
               rows={6}
               placeholder="Include any terms, conditions, or notes for the seller…"
