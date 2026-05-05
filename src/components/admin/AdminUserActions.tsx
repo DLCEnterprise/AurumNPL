@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/ui/Toast'
 
 interface AdminUserActionsProps {
   userId: string
@@ -11,6 +12,7 @@ interface AdminUserActionsProps {
 
 export function AdminUserActions({ userId, currentStatus, pendingRoleRequest }: AdminUserActionsProps) {
   const router = useRouter()
+  const toast  = useToast()
   const [loading, setLoading] = useState<'approve' | 'reject' | 'grant-role' | 'deny-role' | null>(null)
   const [done, setDone] = useState<'APPROVED' | 'REJECTED' | null>(null)
   const [roleRequestDone, setRoleRequestDone] = useState<'granted' | 'denied' | null>(null)
@@ -24,6 +26,8 @@ export function AdminUserActions({ userId, currentStatus, pendingRoleRequest }: 
       if (res.ok) {
         setDone(action === 'approve' ? 'APPROVED' : 'REJECTED')
         router.refresh()
+      } else {
+        toast.error(`Failed to ${action} user.`)
       }
     } finally {
       setLoading(null)
@@ -39,6 +43,8 @@ export function AdminUserActions({ userId, currentStatus, pendingRoleRequest }: 
       if (res.ok) {
         setRoleRequestDone(action === 'grant-role' ? 'granted' : 'denied')
         router.refresh()
+      } else {
+        toast.error(`Failed to ${action === 'grant-role' ? 'grant' : 'deny'} role request.`)
       }
     } finally {
       setLoading(null)

@@ -2,19 +2,27 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useToast } from '@/components/ui/Toast'
 
 export function PublishListingButton({ listingId }: { listingId: string }) {
   const router = useRouter()
+  const toast  = useToast()
   const [loading, setLoading] = useState(false)
 
   const publish = async () => {
     setLoading(true)
-    await fetch(`/api/listings/${listingId}`, {
+    const res = await fetch(`/api/listings/${listingId}`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ status: 'ACTIVE' }),
     })
-    router.refresh()
+    setLoading(false)
+    if (res.ok) {
+      toast.success('Listing published successfully.')
+      router.refresh()
+    } else {
+      toast.error('Failed to publish listing.')
+    }
   }
 
   return (

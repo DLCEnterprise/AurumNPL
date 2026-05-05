@@ -569,11 +569,18 @@ export function CreateListingForm() {
 
   const submit = async (status: 'DRAFT' | 'ACTIVE') => {
     setLoading(true)
-    const res = await fetch('/api/listings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(buildPayload(status)),
-    })
+    let res: Response
+    try {
+      res = await fetch('/api/listings', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(buildPayload(status)),
+      })
+    } catch {
+      setLoading(false)
+      toast.error('Network error — please check your connection and try again.')
+      return
+    }
     setLoading(false)
     const data = await res.json()
     if (!res.ok || !data.success) {

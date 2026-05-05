@@ -1,14 +1,16 @@
 'use client'
 
 import { useState } from 'react'
+import { useToast } from '@/components/ui/Toast'
 
 interface Props {
   listingId: string
 }
 
 export function AddToPipelineButton({ listingId }: Props) {
+  const toast = useToast()
   const [loading, setLoading] = useState(false)
-  const [added, setAdded] = useState(false)
+  const [added,   setAdded]   = useState(false)
 
   const handleClick = async () => {
     if (loading || added) return
@@ -21,9 +23,12 @@ export function AddToPipelineButton({ listingId }: Props) {
       })
       if (res.ok) {
         setAdded(true)
+        toast.success('Added to your pipeline.')
+      } else {
+        toast.error('Failed to add to pipeline.')
       }
     } catch {
-      // silently fail
+      toast.error('Failed to add to pipeline.')
     } finally {
       setLoading(false)
     }
