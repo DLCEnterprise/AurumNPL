@@ -203,8 +203,8 @@ export function DealTimeline({
       {/* MLPA modal */}
       {mlpa && (
         <>
-          <div onClick={() => setMlpa(null)} style={{ position: 'fixed', inset: 0, zIndex: 200, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(2px)' }} />
-          <div style={{ position: 'fixed', top: '5vh', left: '50%', transform: 'translateX(-50%)', zIndex: 201, width: '90%', maxWidth: '760px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', background: 'var(--surface-1)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
+          <div onClick={() => setMlpa(null)} style={{ position: 'fixed', inset: 0, zIndex: 400, background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(2px)' }} />
+          <div style={{ position: 'fixed', top: '5vh', left: '50%', transform: 'translateX(-50%)', zIndex: 401, width: '90%', maxWidth: '760px', maxHeight: '90vh', display: 'flex', flexDirection: 'column', background: 'var(--surface-1)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', boxShadow: '0 20px 60px rgba(0,0,0,0.5)' }}>
             <div style={{ padding: '20px 24px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
               <div>
                 <span style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem' }}>MLPA — {mlpa.version}</span>

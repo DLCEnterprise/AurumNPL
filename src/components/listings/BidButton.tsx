@@ -38,17 +38,14 @@ function formatCurrencyLocal(n: number) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
 }
 
-// Slide-out drawer overlay
-function BidDrawer({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
-  // Lock body scroll when open
+// Centered modal overlay
+function BidModal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
   useEffect(() => {
-    if (open) {
-      document.body.style.overflow = 'hidden'
-    } else {
-      document.body.style.overflow = ''
-    }
+    document.body.style.overflow = open ? 'hidden' : ''
     return () => { document.body.style.overflow = '' }
   }, [open])
+
+  if (!open) return null
 
   return (
     <>
@@ -57,23 +54,23 @@ function BidDrawer({ open, onClose, children }: { open: boolean; onClose: () => 
         onClick={onClose}
         style={{
           position: 'fixed', inset: 0, zIndex: 200,
-          background: 'rgba(0,0,0,0.55)',
-          opacity: open ? 1 : 0,
-          pointerEvents: open ? 'auto' : 'none',
-          transition: 'opacity 0.25s ease',
-          backdropFilter: 'blur(2px)',
+          background: 'rgba(0,0,0,0.65)',
+          backdropFilter: 'blur(3px)',
         }}
       />
       {/* Panel */}
       <div
         style={{
-          position: 'fixed', top: 0, right: 0, bottom: 0, zIndex: 201,
-          width: '100%', maxWidth: '480px',
+          position: 'fixed',
+          top: '50%', left: '50%',
+          transform: 'translate(-50%, -50%)',
+          zIndex: 201,
+          width: '90%', maxWidth: '520px',
+          maxHeight: '90vh',
           background: 'var(--surface-1)',
-          borderLeft: '1px solid var(--border)',
-          boxShadow: '-20px 0 60px rgba(0,0,0,0.4)',
-          transform: open ? 'translateX(0)' : 'translateX(100%)',
-          transition: 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
+          border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-lg)',
+          boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
           display: 'flex', flexDirection: 'column',
           overflowY: 'auto',
         }}
@@ -251,7 +248,7 @@ export function BidButton({ listingId, existingBid }: Props) {
         {isRebid ? 'Submit New Bid' : 'Submit Bid / LOI'}
       </button>
 
-      <BidDrawer open={open} onClose={() => setOpen(false)}>
+      <BidModal open={open} onClose={() => setOpen(false)}>
         {/* Drawer header */}
         <div style={{ padding: '28px 28px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
           <div>
@@ -358,7 +355,7 @@ export function BidButton({ listingId, existingBid }: Props) {
             </button>
           </div>
         </div>
-      </BidDrawer>
+      </BidModal>
     </>
   )
 }

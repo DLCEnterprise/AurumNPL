@@ -41,6 +41,8 @@
   --bg-deep:       #09090b;
   --bg-surface:    #111114;
   --bg-elevated:   #18181c;
+  --surface-1:     #111114;
+  --surface-2:     #18181c;
   --bg-card:       rgba(255,255,255,0.03);
   --border:        rgba(255,255,255,0.06);
   --border-light:  rgba(255,255,255,0.10);
@@ -1835,6 +1837,14 @@ a {
 }
 .mobile-bottom-nav__item:active {
   transform: scale(0.92);
+}
+
+/* Toast: lift above mobile bottom nav (60px) */
+@media (max-width: 768px) {
+  .toaster-container {
+    bottom: 84px !important;
+    right: 16px !important;
+  }
 }
 
 /* Respect reduced-motion preference */

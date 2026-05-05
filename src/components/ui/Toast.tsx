@@ -131,6 +131,7 @@ function Toaster({
     <div
       role="region"
       aria-live="polite"
+      className="toaster-container"
       style={{
         position: 'fixed',
         bottom: '24px',
