@@ -1,4 +1,5 @@
 @import "tailwindcss";
+@import "./tokens.css";
 
 /* ═══════════════════════════════════════════════════════════
    AURUM — NPL Marketplace
@@ -29,49 +30,14 @@
   --font-display: 'Cormorant Garamond', Georgia, serif;
   --font-body:    'DM Sans', system-ui, sans-serif;
 
-  /* Border radius */
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
+  /* Border radius — institutional; tight, precise */
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 12px;
 }
 
-/* ── CSS Custom Properties (used by component-level styles) ── */
-:root {
-  --bg-deep:       #09090b;
-  --bg-surface:    #111114;
-  --bg-elevated:   #18181c;
-  --surface-1:     #111114;
-  --surface-2:     #18181c;
-  --bg-card:       rgba(255,255,255,0.03);
-  --border:        rgba(255,255,255,0.06);
-  --border-light:  rgba(255,255,255,0.10);
-
-  --gold-100:      #fef3c7;
-  --gold-200:      #fde68a;
-  --gold-300:      #fcd34d;
-  --gold-400:      #d4a846;
-  --gold-500:      #b8860b;
-  --gold-glow:     rgba(212,168,70,0.15);
-  --gold-gradient: linear-gradient(135deg, #d4a846 0%, #f5d98a 50%, #d4a846 100%);
-
-  --text-primary:  #f4f4f5;
-  --text-secondary:#a1a1aa;
-  --text-muted:    #71717a;
-
-  --success:       #34d399;
-  --warning:       #fbbf24;
-  --info:          #60a5fa;
-
-  --font-display:  'Cormorant Garamond', Georgia, serif;
-  --font-body:     'DM Sans', system-ui, sans-serif;
-
-  --nav-h: 72px;
-  --radius-sm: 6px;
-  --radius-md: 10px;
-  --radius-lg: 16px;
-  --radius-xl: 24px;
-}
+/* CSS custom properties are provided by tokens.css (imported above). */
 
 /* ── Reset ───────────────────────────────────────────────── */
 *,*::before,*::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -112,10 +78,8 @@ img { max-width: 100%; display: block; }
 
 /* ── Glass card ──────────────────────────────────────────── */
 .glass-card {
-  background: var(--bg-card);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  border: 1px solid var(--border);
+  background: var(--surface-panel);
+  border: 1px solid var(--border-default);
   border-radius: var(--radius-lg);
 }
 
@@ -137,10 +101,10 @@ img { max-width: 100%; display: block; }
   background: var(--gold-gradient);
   color: #0a0a0a;
   font-weight: 600;
-  box-shadow: 0 0 20px rgba(212,168,70,0.15);
+  box-shadow: var(--shadow-sm);
 }
 .btn--gold:hover {
-  box-shadow: 0 0 30px rgba(212,168,70,0.3);
+  box-shadow: var(--shadow-md);
   transform: translateY(-1px);
 }
 .btn--ghost {
@@ -205,7 +169,7 @@ img { max-width: 100%; display: block; }
   font-family: var(--font-display);
   font-size: 1.5rem;
   font-weight: 600;
-  letter-spacing: 0.15em;
+  letter-spacing: var(--tracking-logo, 0.06em);
   color: var(--text-primary);
 }
 .nav__links {
@@ -317,8 +281,7 @@ img { max-width: 100%; display: block; }
 .hero__orb {
   position: absolute;
   border-radius: 50%;
-  filter: blur(80px);
-  opacity: 0.4;
+  opacity: 0.5;
 }
 .hero__orb--1 {
   width: 600px; height: 600px;
@@ -369,9 +332,9 @@ img { max-width: 100%; display: block; }
 .hero__title {
   font-family: var(--font-display);
   font-size: clamp(2.8rem, 6vw, 5rem);
-  font-weight: 300;
+  font-weight: 600;
   line-height: 1.1;
-  letter-spacing: -0.01em;
+  letter-spacing: -0.025em;
   margin-bottom: 24px;
 }
 .hero__subtitle {
@@ -1792,18 +1755,29 @@ a:focus-visible {
 .listing-card {
   transition: transform 0.22s cubic-bezier(0.16, 1, 0.3, 1),
               box-shadow 0.22s cubic-bezier(0.16, 1, 0.3, 1),
-              border-color 0.22s ease !important;
+              border-color 0.22s ease;
 }
 .listing-card:hover {
-  transform: translateY(-3px) !important;
-  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4) !important;
-  border-color: rgba(212, 168, 70, 0.25) !important;
+  transform: translateY(-3px);
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4),
+              inset 3px 0 0 rgba(212, 168, 70, 0.55);
+  border-color: rgba(212, 168, 70, 0.3);
+}
+
+/* UPB value on listing cards — gold gradient emphasis */
+.listing-card__upb {
+  font-size: 1.05rem;
+  font-weight: 600;
+  background: var(--gold-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 /* ── Sidebar links — smooth slide indicator ──────────────── */
 .sidebar__link {
   transition: background 0.18s ease, color 0.18s ease,
-              border-color 0.18s ease, padding-left 0.18s ease !important;
+              border-color 0.18s ease, padding-left 0.18s ease;
 }
 
 /* ── Button — more elastic feel ──────────────────────────── */
@@ -1811,7 +1785,7 @@ a:focus-visible {
   transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1),
               box-shadow 0.18s cubic-bezier(0.16, 1, 0.3, 1),
               background 0.2s ease, color 0.2s ease,
-              opacity 0.2s ease !important;
+              opacity 0.2s ease;
 }
 .btn:hover:not(:disabled) {
   transform: translateY(-1px);
@@ -1828,12 +1802,12 @@ a {
 /* ── Input focus — smooth border glow ────────────────────── */
 .form-input {
   transition: border-color 0.2s ease, box-shadow 0.2s ease,
-              background 0.2s ease !important;
+              background 0.2s ease;
 }
 
 /* ── Mobile bottom nav items ─────────────────────────────── */
 .mobile-bottom-nav__item {
-  transition: color 0.18s ease, transform 0.18s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  transition: color 0.18s ease, transform 0.18s cubic-bezier(0.16, 1, 0.3, 1);
 }
 .mobile-bottom-nav__item:active {
   transform: scale(0.92);

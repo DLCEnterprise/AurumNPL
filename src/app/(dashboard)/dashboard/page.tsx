@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { ActionItems } from '@/components/dashboard/ActionItems'
+import { StatCounter } from '@/components/ui/StatCounter'
 
 const DashboardCharts = lazy(() =>
   import('@/components/dashboard/DashboardCharts').then(m => ({ default: m.DashboardCharts }))
@@ -147,11 +148,25 @@ export default async function DashboardPage() {
     <>
       {/* Header */}
       <div style={{ marginBottom: '36px' }}>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 400, marginBottom: '6px' }}>
-          {greeting}, <span className="text-gold">{name}</span>
-        </h1>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px', flexWrap: 'wrap' }}>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 400, margin: 0 }}>
+            {greeting}, <span className="text-gold">{name}</span>
+          </h1>
+          <span style={{
+            fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase',
+            letterSpacing: '0.08em', padding: '4px 12px', borderRadius: '100px',
+            background: role === 'ADMIN'
+              ? 'rgba(239,68,68,0.1)'
+              : 'rgba(212,168,70,0.1)',
+            color: role === 'ADMIN' ? '#f87171' : 'var(--gold-300)',
+            border: `1px solid ${role === 'ADMIN' ? 'rgba(239,68,68,0.2)' : 'rgba(212,168,70,0.2)'}`,
+            alignSelf: 'center',
+          }}>
+            {roleLabel}
+          </span>
+        </div>
         {session!.user.company && (
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem' }}>{session!.user.company}</p>
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>{session!.user.company}</p>
         )}
       </div>
 
@@ -163,7 +178,7 @@ export default async function DashboardPage() {
         {stats.map((stat) => (
           <div key={stat.label} className="stat-card glass-card">
             <div className="stat-card__label">{stat.label}</div>
-            <div className="stat-card__value">{stat.value}</div>
+            <div className="stat-card__value"><StatCounter value={stat.value} /></div>
             <div className="stat-card__sub">{stat.sub}</div>
           </div>
         ))}
@@ -203,23 +218,6 @@ export default async function DashboardPage() {
             </Link>
           ))}
         </div>
-      </div>
-
-      {/* Role badge */}
-      <div className="glass-card" style={{ padding: '20px 24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <div>
-          <div style={{ fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '4px' }}>
-            Account Type
-          </div>
-          <div style={{ fontWeight: 500 }}>{roleLabel}</div>
-        </div>
-        <span style={{
-          fontSize: '0.7rem', fontWeight: 600, textTransform: 'uppercase',
-          letterSpacing: '0.06em', padding: '4px 12px', borderRadius: '100px',
-          background: 'rgba(52,211,153,0.1)', color: 'var(--success)',
-        }}>
-          Approved
-        </span>
       </div>
 
       {/* Recent Activity */}

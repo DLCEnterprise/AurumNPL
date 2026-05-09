@@ -340,6 +340,67 @@ export function ListingsFilters({
         </button>
       </div>
 
+      {/* Active filter chips */}
+      {(() => {
+        const chips: { label: string; onRemove: () => void }[] = []
+        if (initialQ) chips.push({ label: `"${initialQ}"`, onRemove: () => { setSearchText(''); push({ q: undefined }) } })
+        if (initialAssetType) chips.push({ label: initialAssetType === 'RESIDENTIAL' ? 'Residential' : 'Commercial', onRemove: () => push({ assetType: undefined }) })
+        if (initialStatus) chips.push({ label: initialStatus.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase()), onRemove: () => push({ status: undefined }) })
+        if (initialState) chips.push({ label: US_STATES.find(s => s.value === initialState)?.label ?? initialState, onRemove: () => push({ state: undefined }) })
+        if (initialUpbMin !== undefined || initialUpbMax !== undefined) {
+          const rangeLabel = UPB_RANGES.find(r => r.min === initialUpbMin && r.max === initialUpbMax)?.label ?? 'Custom UPB'
+          chips.push({ label: rangeLabel, onRemove: () => push({ upbMin: undefined, upbMax: undefined }) })
+        }
+        if (initialSortBy && initialSortBy !== 'newest') {
+          const sortLabels: Record<string, string> = {
+            upbDesc: 'UPB: High–Low', upbAsc: 'UPB: Low–High',
+            delinquencyDesc: 'Most Delinquent', delinquencyAsc: 'Least Delinquent',
+            firstMortgage: 'First Mortgage', secondMortgage: 'Second Mortgage',
+          }
+          chips.push({ label: sortLabels[initialSortBy] ?? initialSortBy, onRemove: () => push({ sortBy: undefined }) })
+        }
+        if (initialDelinquencyMin !== undefined || initialDelinquencyMax !== undefined) {
+          const dMin = initialDelinquencyMin ?? '0'
+          const dMax = initialDelinquencyMax ?? '∞'
+          chips.push({ label: `Delinquency: ${dMin}–${dMax}mo`, onRemove: () => push({ delinquencyMin: undefined, delinquencyMax: undefined }) })
+        }
+        if (initialLienPosition) chips.push({ label: initialLienPosition === 'SENIOR' ? 'First Lien' : 'Second Lien', onRemove: () => push({ lienPosition: undefined }) })
+
+        if (chips.length === 0) return null
+        return (
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '8px' }}>
+            {chips.map((chip) => (
+              <span
+                key={chip.label}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '6px',
+                  padding: '3px 10px 3px 12px',
+                  borderRadius: '100px',
+                  background: 'rgba(212,168,70,0.1)',
+                  border: '1px solid rgba(212,168,70,0.25)',
+                  color: 'var(--gold-300)',
+                  fontSize: '0.75rem',
+                  fontWeight: 500,
+                }}
+              >
+                {chip.label}
+                <button
+                  onClick={chip.onRemove}
+                  style={{
+                    background: 'none', border: 'none', cursor: 'pointer',
+                    color: 'rgba(212,168,70,0.6)', fontSize: '1rem',
+                    lineHeight: 1, padding: 0, display: 'flex', alignItems: 'center',
+                  }}
+                  aria-label={`Remove filter: ${chip.label}`}
+                >
+                  ×
+                </button>
+              </span>
+            ))}
+          </div>
+        )
+      })()}
+
       {/* Advanced filters toggle + action buttons row */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: advancedOpen ? '8px' : '0' }}>
         <button

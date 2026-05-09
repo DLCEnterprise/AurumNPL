@@ -15,7 +15,7 @@ export async function POST(req: NextRequest) {
     select: { approvalStatus: true },
   })
 
-  if (!user) return NextResponse.json({}, { status: 404 })
+  if (!user) return NextResponse.json({}, { status: 200 })
 
   return NextResponse.json({ approvalStatus: user.approvalStatus })
 }

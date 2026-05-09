@@ -62,7 +62,7 @@ export default async function AdminUsersPage({
 
   const where = statusFilter ? { approvalStatus: statusFilter } : {}
 
-  const [users, total, grouped] = await Promise.all([
+  const [users, total, grouped, pendingRoleCount] = await Promise.all([
     prisma.user.findMany({
       where,
       select: {
@@ -81,6 +81,7 @@ export default async function AdminUsersPage({
     }),
     prisma.user.count({ where }),
     prisma.user.groupBy({ by: ['approvalStatus'], _count: { id: true } }),
+    prisma.user.count({ where: { pendingRoleRequest: { not: null } } }),
   ])
 
   const statusCounts = Object.fromEntries(
@@ -125,6 +126,27 @@ export default async function AdminUsersPage({
           {statusFilter ? ` with status ${statusFilter.toLowerCase()}` : ''}
         </p>
       </div>
+
+      {/* Role upgrade request alert */}
+      {pendingRoleCount > 0 && (
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          gap: '12px', padding: '12px 18px', marginBottom: '16px',
+          background: 'rgba(212,168,70,0.08)', border: '1px solid rgba(212,168,70,0.25)',
+          borderRadius: '10px', fontSize: '0.85rem',
+        }}>
+          <span style={{ color: 'var(--gold-300)' }}>
+            <strong>{pendingRoleCount}</strong> user{pendingRoleCount !== 1 ? 's have' : ' has'} a pending role upgrade request.
+          </span>
+          <Link
+            href={buildTabHref('APPROVED')}
+            className="btn btn--gold btn--sm"
+            style={{ fontSize: '0.75rem', padding: '4px 12px', whiteSpace: 'nowrap' }}
+          >
+            View Approved Users →
+          </Link>
+        </div>
+      )}
 
       {/* Filter tabs */}
       <div style={{ display: 'flex', gap: '4px', marginBottom: '20px' }}>

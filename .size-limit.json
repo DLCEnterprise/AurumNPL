@@ -1,0 +1,38 @@
+[
+  {
+    "name": "Landing page (initial load)",
+    "path": ".next/static/chunks/*.js",
+    "limit": "200 kB",
+    "gzip": true,
+    "ignore": ["*.map"],
+    "comment": "Next.js runtime + React + critical app code. Recharts and XLSX must be dynamically imported."
+  },
+  {
+    "name": "Recharts bundle (dashboard only)",
+    "path": ".next/static/chunks/recharts*.js",
+    "limit": "80 kB",
+    "gzip": true,
+    "comment": "Recharts + D3 deps. Loaded only on /dashboard routes."
+  },
+  {
+    "name": "XLSX/exceljs bundle (import only)",
+    "path": ".next/static/chunks/exceljs*.js",
+    "limit": "90 kB",
+    "gzip": true,
+    "comment": "Spreadsheet parser. Loaded only on /listings/import routes."
+  },
+  {
+    "name": "CSS bundle (all pages)",
+    "path": ".next/static/css/*.css",
+    "limit": "25 kB",
+    "gzip": true,
+    "comment": "Tailwind JIT + component styles. tokens.css + globals.css combined."
+  },
+  {
+    "name": "Font files (combined)",
+    "path": "public/fonts/*.woff2",
+    "limit": "50 kB",
+    "gzip": false,
+    "comment": "Cormorant Garamond (400, 600) + DM Sans (400, 500) — subsetted to Latin."
+  }
+]

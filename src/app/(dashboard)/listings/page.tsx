@@ -287,7 +287,7 @@ export default async function ListingsPage({
                 <div className="listing-card__meta">
                   <div className="listing-card__meta-item">
                     <span className="listing-card__meta-label">UPB</span>
-                    <span className="listing-card__meta-value">{formatCurrency(listing.unpaidBalance)}</span>
+                    <span className="listing-card__upb">{formatCurrency(listing.unpaidBalance)}</span>
                   </div>
                   <div className="listing-card__meta-item">
                     <span className="listing-card__meta-label">Loans</span>

@@ -7,9 +7,9 @@ function requireAdminSecret(): Uint8Array {
 }
 
 function requireResetSecret(): Uint8Array {
-  const secret = process.env.ADMIN_SECRET
-  if (!secret) throw new Error('ADMIN_SECRET environment variable is not set')
-  return new TextEncoder().encode(secret + '-reset')
+  const secret = process.env.RESET_SECRET
+  if (!secret) throw new Error('RESET_SECRET environment variable is not set')
+  return new TextEncoder().encode(secret)
 }
 
 export type AdminTokenPayload = {

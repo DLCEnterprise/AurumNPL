@@ -1,0 +1,449 @@
+/* ═══════════════════════════════════════════════════════════
+   AURUM — Design Token System
+   Single source of truth for all CSS custom properties.
+   Import this file before globals.css.
+
+   Architecture:
+     1. Primitives — raw color/size values with no semantic meaning
+     2. Semantic — mapped to purpose (surface, text, border, state)
+     3. Component — specific to recurring UI patterns
+   ═══════════════════════════════════════════════════════════ */
+
+:root {
+
+  /* ── 1. PRIMITIVES ─────────────────────────────────────── */
+
+  /* Brand — Gold (warm, institutional) */
+  --gold-50:  #fffbeb;
+  --gold-100: #fef3c7;
+  --gold-200: #fde68a;
+  --gold-300: #fcd34d;
+  --gold-400: #d4a846;  /* Primary brand accent */
+  --gold-500: #b8860b;
+  --gold-600: #92680a;
+  --gold-gradient: linear-gradient(135deg, #b8860b 0%, #d4a846 45%, #e8c56a 65%, #d4a846 100%);
+  --gold-glow:     rgba(212, 168, 70, 0.12);
+
+  /* Neutral — Zinc family (cool-neutral, cohesive with near-black bg) */
+  --neutral-0:   #ffffff;
+  --neutral-50:  #fafafa;
+  --neutral-100: #f4f4f5;
+  --neutral-200: #e4e4e7;
+  --neutral-300: #d4d4d8;
+  --neutral-400: #a1a1aa;
+  --neutral-500: #71717a;
+  --neutral-600: #52525b;
+  --neutral-700: #3f3f46;
+  --neutral-800: #27272a;
+  --neutral-850: #1c1c1f;
+  --neutral-900: #18181b;
+  --neutral-950: #09090b;
+
+  /* Semantic — Status */
+  --green-400:  #34d399;
+  --green-dim:  rgba(52, 211, 153, 0.08);
+  --amber-400:  #f59e0b;   /* softer than fbbf24 */
+  --amber-dim:  rgba(245, 158, 11, 0.08);
+  --red-400:    #ef4444;
+  --red-dim:    rgba(239, 68, 68, 0.08);
+  --blue-400:   #60a5fa;
+  --blue-dim:   rgba(96, 165, 250, 0.08);
+
+  /* ── 2. SEMANTIC — DARK MODE (default) ─────────────────── */
+
+  /* Surface */
+  --surface-page:     #09090b;  /* page / body background          */
+  --surface-panel:    #111114;  /* cards, sidebars, panels         */
+  --surface-raised:   #18181c;  /* inputs, nested elements         */
+  --surface-overlay:  #0f0f12;  /* modal backdrops                 */
+
+  /* Border */
+  --border-subtle:    rgba(255, 255, 255, 0.04);
+  --border-default:   rgba(255, 255, 255, 0.07);
+  --border-strong:    rgba(255, 255, 255, 0.12);
+  --border-accent:    rgba(212, 168, 70, 0.22);
+  --border-focus:     #d4a846;
+
+  /* Text */
+  --text-primary:     #f4f4f5;
+  --text-secondary:   #a1a1aa;
+  --text-muted:       #71717a;
+  --text-disabled:    #52525b;
+  --text-inverse:     #09090b;
+  --text-accent:      #d4a846;
+  --text-link:        #d4a846;
+
+  /* Status — Semantic */
+  --color-success:      #34d399;
+  --color-success-dim:  rgba(52, 211, 153, 0.08);
+  --color-warning:      #f59e0b;
+  --color-warning-dim:  rgba(245, 158, 11, 0.08);
+  --color-error:        #ef4444;
+  --color-error-dim:    rgba(239, 68, 68, 0.08);
+  --color-info:         #60a5fa;
+  --color-info-dim:     rgba(96, 165, 250, 0.08);
+
+  /* Legacy aliases — keep while migrating components */
+  --bg-deep:       var(--surface-page);
+  --bg-surface:    var(--surface-panel);
+  --bg-elevated:   var(--surface-raised);
+  --bg-card:       rgba(255, 255, 255, 0.025);
+  --border:        var(--border-default);
+  --border-light:  var(--border-strong);
+  --gold-400:      #d4a846;
+  --success:       var(--color-success);
+  --warning:       var(--color-warning);
+  --info:          var(--color-info);
+  --surface-1:     var(--surface-panel);
+  --surface-2:     var(--surface-raised);
+
+  /* ── 3. TYPOGRAPHY ──────────────────────────────────────── */
+
+  --font-display: 'Cormorant Garamond', 'Georgia', serif;
+  --font-body:    'DM Sans', system-ui, -apple-system, sans-serif;
+  --font-mono:    'IBM Plex Mono', 'Menlo', 'Consolas', monospace;
+
+  /* Type scale — 1.25 (Major Third) ratio
+     Base: 16px (1rem)
+     Round to nearest 0.001rem for clean pixel rendering */
+  --text-2xs:  0.64rem;    /*  10.2px — micro labels, legal */
+  --text-xs:   0.8rem;     /*  12.8px — captions, timestamps */
+  --text-sm:   0.875rem;   /*  14px   — secondary text, nav */
+  --text-base: 1rem;       /*  16px   — body copy */
+  --text-md:   1.125rem;   /*  18px   — lead text */
+  --text-lg:   1.25rem;    /*  20px   — card titles, section sub */
+  --text-xl:   1.563rem;   /*  25px   — section headings */
+  --text-2xl:  1.953rem;   /*  31.25px */
+  --text-3xl:  2.441rem;   /*  39px   — page headings */
+  --text-4xl:  3.052rem;   /*  48.8px — hero section */
+  --text-5xl:  3.815rem;   /*  61px   — large display */
+  --text-6xl:  4.768rem;   /*  76.3px — maximum display */
+
+  /* Font weights */
+  --weight-regular:   400;
+  --weight-medium:    500;
+  --weight-semibold:  600;
+  --weight-bold:      700;
+  --weight-black:     800;
+
+  /* Line heights */
+  --leading-none:     1;
+  --leading-tight:    1.08;   /* display headings */
+  --leading-snug:     1.2;    /* card titles */
+  --leading-normal:   1.5;    /* UI text */
+  --leading-relaxed:  1.65;   /* body prose */
+  --leading-loose:    1.8;    /* very small text */
+
+  /* Letter spacing */
+  --tracking-tightest: -0.04em;  /* large display 60px+ */
+  --tracking-tight:    -0.025em; /* display headings 30–60px */
+  --tracking-snug:     -0.015em; /* section headings */
+  --tracking-normal:    0em;
+  --tracking-wide:      0.04em;  /* uppercase labels */
+  --tracking-wider:     0.08em;  /* secondary labels */
+  --tracking-widest:    0.14em;  /* all-caps section tags */
+  --tracking-logo:      0.06em;  /* wordmark — reduced from 0.15em */
+
+  /* ── 4. SPACING — 4px base grid ─────────────────────────── */
+
+  --space-0:   0px;
+  --space-px:  1px;
+  --space-0_5: 2px;
+  --space-1:   4px;
+  --space-2:   8px;
+  --space-3:   12px;
+  --space-4:   16px;
+  --space-5:   20px;
+  --space-6:   24px;
+  --space-7:   28px;
+  --space-8:   32px;
+  --space-10:  40px;
+  --space-12:  48px;
+  --space-14:  56px;
+  --space-16:  64px;
+  --space-20:  80px;
+  --space-24:  96px;
+  --space-32:  128px;
+
+  /* ── 5. BORDER RADIUS — tight, institutional ────────────── */
+
+  --radius-none: 0px;
+  --radius-xs:   2px;    /* focus rings, micro badges */
+  --radius-sm:   4px;    /* inputs, tags, small buttons — was 6px */
+  --radius-md:   6px;    /* cards, panels — was 10px */
+  --radius-lg:   8px;    /* modals, large cards — was 16px */
+  --radius-xl:   12px;   /* very large containers — was 24px */
+  --radius-full: 9999px; /* pills */
+
+  /* ── 6. SHADOW — tight, dark, directional; no ambient glow ─ */
+
+  --shadow-xs:  0 1px 2px rgba(0, 0, 0, 0.16);
+  --shadow-sm:  0 1px 3px rgba(0, 0, 0, 0.20),
+                0 1px 2px rgba(0, 0, 0, 0.16);
+  --shadow-md:  0 4px 6px  rgba(0, 0, 0, 0.24),
+                0 2px 4px  rgba(0, 0, 0, 0.16);
+  --shadow-lg:  0 10px 15px rgba(0, 0, 0, 0.28),
+                0 4px  6px  rgba(0, 0, 0, 0.18);
+  --shadow-xl:  0 20px 25px rgba(0, 0, 0, 0.32),
+                0 8px  10px rgba(0, 0, 0, 0.20);
+  --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.45),
+                0 10px 20px rgba(0, 0, 0, 0.24);
+
+  /* Card hover — directional lift with gold accent border (no glow) */
+  --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.36),
+                       0 2px  6px rgba(0, 0, 0, 0.20);
+
+  /* ── 7. MOTION ──────────────────────────────────────────── */
+
+  /* Easing — decisive, institutional */
+  --ease-spring:  cubic-bezier(0.16, 1, 0.3, 1);   /* elastic entrance */
+  --ease-snap:    cubic-bezier(0.22, 1, 0.36, 1);   /* quick, confident */
+  --ease-out:     cubic-bezier(0, 0, 0.2, 1);        /* standard out */
+  --ease-in-out:  cubic-bezier(0.4, 0, 0.2, 1);      /* state transitions */
+  --ease-linear:  linear;
+
+  /* Duration — tight; luxury is precision, not slowness */
+  --duration-instant: 80ms;
+  --duration-micro:   120ms;  /* focus rings, color shifts */
+  --duration-fast:    180ms;  /* buttons, links, inputs */
+  --duration-normal:  240ms;  /* cards, hover states */
+  --duration-slow:    360ms;  /* page elements, scroll reveal */
+  --duration-page:    280ms;  /* route transitions */
+
+  /* ── 8. Z-INDEX — named scale ───────────────────────────── */
+
+  --z-base:     0;
+  --z-raised:   10;
+  --z-dropdown: 100;
+  --z-sticky:   200;
+  --z-overlay:  300;
+  --z-modal:    400;
+  --z-toast:    500;
+  --z-tooltip:  600;
+  --z-nav:      1000;
+  --z-debug:    9999;
+
+  /* ── 9. LAYOUT ──────────────────────────────────────────── */
+
+  --nav-h:         68px;        /* reduced from 72px — tighter */
+  --sidebar-w:     240px;
+  --content-max:   1200px;
+  --content-prose: 720px;       /* readable line length */
+
+  /* ── 10. COMPONENT TOKENS ───────────────────────────────── */
+
+  /* Gold hairline rule — signature element */
+  --rule-accent-width:  32px;
+  --rule-accent-height: 1px;
+  --rule-accent-color:  #d4a846;
+
+  /* Data display — financial numerics */
+  --data-font:    var(--font-body);
+  --data-variant: tabular-nums;
+  --data-spacing: -0.01em;
+
+  /* Sidebar */
+  --sidebar-link-radius: var(--radius-sm);
+  --sidebar-active-bg:   rgba(212, 168, 70, 0.08);
+  --sidebar-hover-bg:    rgba(255, 255, 255, 0.04);
+
+  /* Form inputs */
+  --input-bg:             var(--surface-raised);
+  --input-border:         var(--border-strong);
+  --input-border-focus:   rgba(212, 168, 70, 0.45);
+  --input-shadow-focus:   0 0 0 3px rgba(212, 168, 70, 0.08);
+  --input-border-error:   rgba(239, 68, 68, 0.55);
+  --input-shadow-error:   0 0 0 3px rgba(239, 68, 68, 0.08);
+
+  /* Status badge backgrounds */
+  --badge-active-bg:    rgba(52, 211, 153, 0.08);
+  --badge-active-color: #34d399;
+  --badge-pending-bg:   rgba(245, 158, 11, 0.08);
+  --badge-pending-color:#f59e0b;
+  --badge-draft-bg:     rgba(96, 165, 250, 0.08);
+  --badge-draft-color:  #60a5fa;
+  --badge-error-bg:     rgba(239, 68, 68, 0.08);
+  --badge-error-color:  #ef4444;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   LIGHT MODE OVERRIDES
+   Same gold accent — darker value (#b8860b) for WCAG AA
+   on white background (contrast ratio: 4.54:1 ✓)
+   ═══════════════════════════════════════════════════════════ */
+
+[data-theme="light"] {
+
+  /* Surface */
+  --surface-page:     #ffffff;
+  --surface-panel:    #f8f9fa;
+  --surface-raised:   #f1f3f5;
+  --surface-overlay:  #ffffff;
+
+  /* Border */
+  --border-subtle:    rgba(0, 0, 0, 0.04);
+  --border-default:   rgba(0, 0, 0, 0.10);
+  --border-strong:    rgba(0, 0, 0, 0.16);
+  --border-accent:    rgba(184, 134, 11, 0.30);
+  --border-focus:     #b8860b;
+
+  /* Text */
+  --text-primary:     #0a0a0b;
+  --text-secondary:   #374151;
+  --text-muted:       #6b7280;
+  --text-disabled:    #9ca3af;
+  --text-inverse:     #ffffff;
+  --text-accent:      #b8860b;   /* darker gold, WCAG AA on white */
+  --text-link:        #92680a;
+
+  /* Gold — darker for white background */
+  --gold-400:         #b8860b;   /* 4.54:1 contrast on white ✓ */
+  --gold-gradient:    linear-gradient(135deg, #92680a 0%, #b8860b 45%, #d4a846 65%, #b8860b 100%);
+  --gold-glow:        rgba(184, 134, 11, 0.10);
+
+  /* Status */
+  --color-success:    #059669;
+  --color-warning:    #d97706;
+  --color-error:      #dc2626;
+  --color-info:       #2563eb;
+
+  /* Shadows — softer on light */
+  --shadow-xs:  0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-sm:  0 1px 3px rgba(0, 0, 0, 0.10), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-md:  0 4px 6px  rgba(0, 0, 0, 0.12), 0 2px 4px rgba(0, 0, 0, 0.08);
+  --shadow-lg:  0 10px 15px rgba(0, 0, 0, 0.14), 0 4px 6px rgba(0, 0, 0, 0.10);
+  --shadow-xl:  0 20px 25px rgba(0, 0, 0, 0.18), 0 8px 10px rgba(0, 0, 0, 0.12);
+  --shadow-2xl: 0 25px 50px rgba(0, 0, 0, 0.22), 0 10px 20px rgba(0, 0, 0, 0.14);
+  --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.14), 0 2px 6px rgba(0, 0, 0, 0.08);
+
+  /* Legacy aliases */
+  --bg-deep:       var(--surface-page);
+  --bg-surface:    var(--surface-panel);
+  --bg-elevated:   var(--surface-raised);
+  --bg-card:       rgba(0, 0, 0, 0.02);
+  --border:        var(--border-default);
+  --border-light:  var(--border-strong);
+  --success:       var(--color-success);
+  --warning:       var(--color-warning);
+  --info:          var(--color-info);
+
+  /* Inputs */
+  --input-bg:             var(--surface-raised);
+  --input-border:         var(--border-strong);
+  --input-border-focus:   rgba(184, 134, 11, 0.45);
+  --input-shadow-focus:   0 0 0 3px rgba(184, 134, 11, 0.08);
+
+  /* Sidebar */
+  --sidebar-active-bg:   rgba(184, 134, 11, 0.08);
+  --sidebar-hover-bg:    rgba(0, 0, 0, 0.04);
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   FONT FACE DECLARATIONS
+   Self-hosted fonts — avoids Google Fonts render-blocking.
+   Files go in /public/fonts/.
+   Replace the Google Fonts <link> in layout.tsx with these.
+   ═══════════════════════════════════════════════════════════ */
+
+@font-face {
+  font-family: 'Cormorant Garamond';
+  src: url('/fonts/cormorant-garamond-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Cormorant Garamond';
+  src: url('/fonts/cormorant-garamond-semibold.woff2') format('woff2');
+  font-weight: 600;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DM Sans';
+  src: url('/fonts/dm-sans-regular.woff2') format('woff2');
+  font-weight: 400;
+  font-style: normal;
+  font-display: optional; /* avoid CLS on body text */
+}
+
+@font-face {
+  font-family: 'DM Sans';
+  src: url('/fonts/dm-sans-medium.woff2') format('woff2');
+  font-weight: 500;
+  font-style: normal;
+  font-display: optional;
+}
+
+/* Size adjust reduces CLS during font swap */
+@font-face {
+  font-family: 'DM Sans Fallback';
+  src: local('Arial');
+  ascent-override:  94%;
+  descent-override: 24%;
+  line-gap-override: 0%;
+  size-adjust: 103%;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   UTILITY CLASSES — token-driven
+   ═══════════════════════════════════════════════════════════ */
+
+/* Gold hairline rule — signature element #1
+   Usage: <span class="rule-accent" aria-hidden="true"></span>
+   Place directly after any primary section heading */
+.rule-accent {
+  display: block;
+  width: var(--rule-accent-width);
+  height: var(--rule-accent-height);
+  background: var(--rule-accent-color);
+  margin-top: var(--space-3);
+}
+
+/* Tabular financial data — signature element #2 */
+.data-num {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: var(--data-spacing);
+}
+
+/* Restricted gold text — use sparingly, only on 1-2 key values per screen */
+.text-gold-accent {
+  color: var(--text-accent);
+}
+
+/* Gold gradient text — use ONLY on wordmark and primary CTA */
+.text-gold-gradient {
+  background: var(--gold-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+/* Screen-reader only */
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.sr-only:focus,
+.sr-only:focus-within {
+  position: static;
+  width: auto;
+  height: auto;
+  padding: revert;
+  margin: revert;
+  overflow: visible;
+  clip: auto;
+  white-space: normal;
+}

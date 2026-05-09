@@ -1,0 +1,67 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  type-check:
+    name: Type check
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/aurum_ci
+      NEXTAUTH_SECRET: ci-secret-not-real
+      NEXTAUTH_URL: http://localhost:3000
+      ADMIN_SECRET: ci-admin-secret-not-real
+      RESET_SECRET: ci-reset-secret-not-real
+      RESEND_API_KEY: re_ci_placeholder
+      ADMIN_EMAIL: admin@example.com
+      BASE_URL: http://localhost:3000
+      UPSTASH_REDIS_REST_URL: https://ci-placeholder.upstash.io
+      UPSTASH_REDIS_REST_TOKEN: ci-redis-token
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx tsc --noEmit
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/aurum_ci
+      NEXTAUTH_SECRET: ci-secret-not-real
+      NEXTAUTH_URL: http://localhost:3000
+      ADMIN_SECRET: ci-admin-secret-not-real
+      RESET_SECRET: ci-reset-secret-not-real
+      RESEND_API_KEY: re_ci_placeholder
+      ADMIN_EMAIL: admin@example.com
+      BASE_URL: http://localhost:3000
+      UPSTASH_REDIS_REST_URL: https://ci-placeholder.upstash.io
+      UPSTASH_REDIS_REST_TOKEN: ci-redis-token
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npx next lint
+
+  audit:
+    name: Dependency audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm audit --audit-level=high

@@ -37,9 +37,12 @@ export async function POST(
 
   const { id } = await params
 
-  const listing = await prisma.listing.findUnique({ where: { id }, select: { id: true, status: true } })
+  const listing = await prisma.listing.findUnique({ where: { id }, select: { id: true, status: true, ndaRequired: true } })
   if (!listing) {
     return NextResponse.json({ success: false, error: 'Listing not found.' }, { status: 404 })
+  }
+  if (!listing.ndaRequired) {
+    return NextResponse.json({ success: false, error: 'This listing does not require an NDA.' }, { status: 422 })
   }
 
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null

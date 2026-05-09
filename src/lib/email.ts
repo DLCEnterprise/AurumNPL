@@ -1,5 +1,14 @@
 import { Resend } from 'resend'
 
+function h(s: string): string {
+  return s
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;')
+}
+
 let _resend: Resend | null = null
 function getResend() {
   if (!_resend) _resend = new Resend(process.env.RESEND_API_KEY)
@@ -10,7 +19,10 @@ const BASE_URL = process.env.BASE_URL ?? 'http://localhost:3000'
 
 // ─── Shared HTML wrapper ────────────────────────────────────────────────────
 
-function emailWrapper(body: string): string {
+function emailWrapper(body: string, showPrefsLink = true): string {
+  const prefsLink = showPrefsLink
+    ? `<a href="${BASE_URL}/profile" style="color:#71717a;text-decoration:underline;">Manage notification preferences</a> · `
+    : ''
   return `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -50,7 +62,9 @@ function emailWrapper(body: string): string {
   <div class="wrap">
     <div class="logo">◈ <span>AURUM</span></div>
     ${body}
-    <p class="footer-text">© 2026 AURUM. Institutional use only. Not an offer to sell securities.</p>
+    <p class="footer-text">
+      ${prefsLink}© 2026 AURUM. Institutional use only. Not an offer to sell securities.
+    </p>
   </div>
 </body>
 </html>`
@@ -74,7 +88,7 @@ export async function sendRegistrationConfirmationEmail(to: string, userName: st
   const html = emailWrapper(`
     <div class="card">
       <h1>We received your application.</h1>
-      <p>Hi ${userName}, thank you for applying for access to AURUM.</p>
+      <p>Hi ${h(userName)}, thank you for applying for access to AURUM.</p>
       <p>Your application is currently under review. Our team will assess your information and notify you once a decision has been made — typically within 1–2 business days.</p>
       <p>There is nothing further you need to do at this time.</p>
       <hr class="divider" />
@@ -109,23 +123,23 @@ export async function sendAdminNotification(opts: AdminNotificationOptions) {
       <div class="meta">
         <div class="meta-row">
           <span class="meta-label">Name</span>
-          <span class="meta-value">${opts.userName}</span>
+          <span class="meta-value">${h(opts.userName)}</span>
         </div>
         <div class="meta-row">
           <span class="meta-label">Email</span>
-          <span class="meta-value">${opts.userEmail}</span>
+          <span class="meta-value">${h(opts.userEmail)}</span>
         </div>
         <div class="meta-row">
           <span class="meta-label">Company</span>
-          <span class="meta-value">${opts.userCompany}</span>
+          <span class="meta-value">${h(opts.userCompany)}</span>
         </div>
         <div class="meta-row">
           <span class="meta-label">Role</span>
-          <span class="meta-value">${opts.userRole}</span>
+          <span class="meta-value">${h(opts.userRole)}</span>
         </div>
         <div class="meta-row">
           <span class="meta-label">Registered</span>
-          <span class="meta-value">${opts.signupAt}</span>
+          <span class="meta-value">${h(opts.signupAt)}</span>
         </div>
       </div>
       <hr class="divider" />
@@ -134,7 +148,7 @@ export async function sendAdminNotification(opts: AdminNotificationOptions) {
       <a href="${opts.rejectUrl}" class="btn-ghost">✗ Reject Application</a>
       <p style="margin-top:20px;font-size:13px;">These links expire in 7 days and can only be used once.</p>
     </div>
-  `)
+  `, false)
 
   await sendEmail({
     to: process.env.ADMIN_EMAIL ?? '',
@@ -149,7 +163,7 @@ export async function sendWelcomeEmail(to: string, userName: string) {
   const html = emailWrapper(`
     <div class="card">
       <h1>Your AURUM account has been approved.</h1>
-      <p>Welcome, ${userName}. Your application has been reviewed and approved. You now have full access to the AURUM marketplace.</p>
+      <p>Welcome, ${h(userName)}. Your application has been reviewed and approved. You now have full access to the AURUM marketplace.</p>
       <p>You can sign in and begin listing assets or browsing available portfolios immediately.</p>
       <a href="${BASE_URL}/signin" class="btn-gold">Sign In to AURUM →</a>
       <hr class="divider" />
@@ -170,7 +184,7 @@ export async function sendRejectionEmail(to: string, userName: string) {
   const html = emailWrapper(`
     <div class="card">
       <h1>An update on your AURUM application.</h1>
-      <p>Thank you for your interest in AURUM, ${userName}.</p>
+      <p>Thank you for your interest in AURUM, ${h(userName)}.</p>
       <p>After careful review, we are unable to approve your application at this time. This decision may be based on current platform eligibility requirements or capacity constraints.</p>
       <p>If you believe this decision was made in error, or if you would like to discuss your application further, please reach out to our team.</p>
       <a href="mailto:support@aurum.finance" class="btn-gold">Contact Support</a>
@@ -201,11 +215,11 @@ export async function sendBidNotificationEmail(opts: BidNotificationOptions) {
   const html = emailWrapper(`
     <div class="card">
       <h1>New bid on your listing.</h1>
-      <p>You have received a new bid on <strong style="color:#f4f4f5;">${opts.listingTitle}</strong>.</p>
+      <p>You have received a new bid on <strong style="color:#f4f4f5;">${h(opts.listingTitle)}</strong>.</p>
       <div class="meta">
         <div class="meta-row">
           <span class="meta-label">Buyer</span>
-          <span class="meta-value">${opts.buyerCompany}</span>
+          <span class="meta-value">${h(opts.buyerCompany)}</span>
         </div>
         <div class="meta-row">
           <span class="meta-label">Bid Amount</span>
@@ -241,11 +255,11 @@ export async function sendBidAcceptedEmail(opts: BidAcceptedEmailOptions): Promi
   const html = emailWrapper(`
     <div class="card">
       <h1>Your Bid Has Been Accepted.</h1>
-      <p>Congratulations, ${opts.buyerName}! Your bid on <strong style="color:#f4f4f5;">${opts.listingTitle}</strong> has been accepted by the seller.</p>
+      <p>Congratulations, ${h(opts.buyerName)}! Your bid on <strong style="color:#f4f4f5;">${h(opts.listingTitle)}</strong> has been accepted by the seller.</p>
       <div class="meta">
         <div class="meta-row">
           <span class="meta-label">Listing</span>
-          <span class="meta-value">${opts.listingTitle}</span>
+          <span class="meta-value">${h(opts.listingTitle)}</span>
         </div>
         <div class="meta-row">
           <span class="meta-label">Accepted Bid</span>
@@ -279,7 +293,7 @@ export async function sendPasswordResetEmail(to: string, resetUrl: string) {
       <hr class="divider" />
       <p style="font-size:13px;">This link expires in 1 hour. If you did not request a password reset, you can safely ignore this email.</p>
     </div>
-  `)
+  `, false)
 
   await sendEmail({
     to,

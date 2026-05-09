@@ -22,8 +22,16 @@ export function EmptyState({
       className="glass-card"
       style={{ padding, textAlign: 'center' }}
     >
-      <div style={{ color: 'var(--text-muted)', marginBottom: '16px', display: 'flex', justifyContent: 'center' }}>
-        {icon}
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '20px' }}>
+        <div style={{
+          width: '80px', height: '80px', borderRadius: '50%',
+          background: 'rgba(212,168,70,0.06)',
+          border: '1px solid rgba(212,168,70,0.15)',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: 'rgba(212,168,70,0.5)',
+        }}>
+          {icon}
+        </div>
       </div>
       <h3
         style={{
