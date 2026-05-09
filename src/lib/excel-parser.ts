@@ -9,7 +9,7 @@
  *   const { data, warnings } = parseListingSheet(workbook)
  */
 
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -379,12 +379,14 @@ function coercePercent(raw: unknown): number | undefined {
   return n > 1 ? n / 100 : n
 }
 
+function excelSerialToDate(serial: number): Date {
+  return new Date(Math.round((serial - 25569) * 86400 * 1000))
+}
+
 function coerceDate(raw: unknown): Date | undefined {
   if (raw === null || raw === undefined || raw === '') return undefined
-  // Excel serial date (number)
-  if (typeof raw === 'number') {
-    return new Date(XLSX.SSF.parse_date_code(raw, {}).y || 0, (XLSX.SSF.parse_date_code(raw, {}).m || 1) - 1, XLSX.SSF.parse_date_code(raw, {}).d || 1)
-  }
+  if (raw instanceof Date) return isNaN(raw.getTime()) ? undefined : raw
+  if (typeof raw === 'number') return excelSerialToDate(raw)
   const d = new Date(String(raw))
   return isNaN(d.getTime()) ? undefined : d
 }
@@ -422,32 +424,39 @@ function coerce(raw: unknown, type: FieldType): unknown {
 
 // ── Sheet reader ──────────────────────────────────────────────────────────────
 
-function getCellValue(sheet: XLSX.WorkSheet, col: number, row: number): unknown {
-  const addr = XLSX.utils.encode_cell({ c: col, r: row })
-  const cell = sheet[addr]
-  if (!cell) return undefined
-  // Use 'v' (raw value) for numbers/dates, 'w' (formatted) for strings
-  return cell.v !== undefined ? cell.v : cell.w
+function getCellValue(sheet: ExcelJS.Worksheet, col: number, row: number): unknown {
+  const cell = sheet.getCell(row + 1, col + 1)
+  const val = cell.value
+  if (val === null || val === undefined) return undefined
+  if (val instanceof Date) return val
+  if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') return val
+  const obj = val as unknown as Record<string, unknown>
+  if (Array.isArray(obj.richText)) return (obj.richText as Array<{ text: string }>).map(r => r.text).join('')
+  if ('formula' in obj || 'sharedFormula' in obj) return obj.result
+  if ('text' in obj) return obj.text
+  if ('error' in obj) return undefined
+  return undefined
 }
 
 // ── Main listing sheet parser ─────────────────────────────────────────────────
 
-export function parseListingSheet(wb: XLSX.WorkBook): ParseResult<ParsedAsset> {
-  const sheetName = wb.SheetNames.find(
+export function parseListingSheet(wb: ExcelJS.Workbook): ParseResult<ParsedAsset> {
+  const sheetNames = wb.worksheets.map(ws => ws.name)
+  const sheetName = sheetNames.find(
     (n) => !n.toLowerCase().includes('investor') && !n.toLowerCase().includes('buyer')
-  ) ?? wb.SheetNames[0]
+  ) ?? sheetNames[0]
 
-  const sheet = wb.Sheets[sheetName]
+  const sheet = wb.getWorksheet(sheetName)
   if (!sheet) {
     return { data: {}, warnings: [`Sheet "${sheetName}" not found`], criticalMissing: [] }
   }
 
-  const range = XLSX.utils.decode_range(sheet['!ref'] ?? 'A1:A1')
+  const rowCount = sheet.rowCount
   const data: ParsedAsset = {}
   const warnings: string[] = []
   let inSecondMtg = false
 
-  for (let r = range.s.r; r <= range.e.r; r++) {
+  for (let r = 0; r < rowCount; r++) {
     // Check both label columns: C (2)/D (3) and F (5)/G (6)
     const pairs: Array<[number, number]> = [[2, 3], [5, 6]]
 

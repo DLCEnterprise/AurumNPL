@@ -4,7 +4,7 @@
  * Labels are in column D (index 3), values in column E (index 4).
  */
 
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 import type { ParseResult } from './excel-parser'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -86,33 +86,41 @@ const INVESTOR_LABEL_MAP: Record<string, InvFieldMapping> = {
 
 // ── Parser ────────────────────────────────────────────────────────────────────
 
-function getCellValue(sheet: XLSX.WorkSheet, col: number, row: number): unknown {
-  const addr = XLSX.utils.encode_cell({ c: col, r: row })
-  const cell = sheet[addr]
-  if (!cell) return undefined
-  return cell.v !== undefined ? cell.v : cell.w
+function getCellValue(sheet: ExcelJS.Worksheet, col: number, row: number): unknown {
+  const cell = sheet.getCell(row + 1, col + 1)
+  const val = cell.value
+  if (val === null || val === undefined) return undefined
+  if (val instanceof Date) return val
+  if (typeof val === 'string' || typeof val === 'number' || typeof val === 'boolean') return val
+  const obj = val as unknown as Record<string, unknown>
+  if (Array.isArray(obj.richText)) return (obj.richText as Array<{ text: string }>).map(r => r.text).join('')
+  if ('formula' in obj || 'sharedFormula' in obj) return obj.result
+  if ('text' in obj) return obj.text
+  if ('error' in obj) return undefined
+  return undefined
 }
 
-export function parseInvestorSheet(wb: XLSX.WorkBook): ParseResult<ParsedInvestor> {
-  const sheetName = wb.SheetNames.find(
+export function parseInvestorSheet(wb: ExcelJS.Workbook): ParseResult<ParsedInvestor> {
+  const sheetNames = wb.worksheets.map(ws => ws.name)
+  const sheetName = sheetNames.find(
     (n) => n.toLowerCase().includes('investor') || n.toLowerCase().includes('buyer')
-  ) ?? wb.SheetNames[1]
+  ) ?? sheetNames[1]
 
   if (!sheetName) {
     return { data: {}, warnings: ['No investor sheet found'], criticalMissing: [] }
   }
 
-  const sheet = wb.Sheets[sheetName]
+  const sheet = wb.getWorksheet(sheetName)
   if (!sheet) {
     return { data: {}, warnings: [`Sheet "${sheetName}" not found`], criticalMissing: [] }
   }
 
-  const range = XLSX.utils.decode_range(sheet['!ref'] ?? 'A1:A1')
+  const rowCount = sheet.rowCount
   const data: ParsedInvestor = {}
   const warnings: string[] = []
 
-  for (let r = range.s.r; r <= range.e.r; r++) {
-    const rawLabel = getCellValue(sheet, 3, r) // column D
+  for (let r = 0; r < rowCount; r++) {
+    const rawLabel = getCellValue(sheet, 3, r) // column D (0-indexed)
     if (!rawLabel) continue
 
     const norm = normaliseLabel(String(rawLabel))
