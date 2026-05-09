@@ -134,7 +134,7 @@ export default async function ListingsPage({
       {/* Header */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '28px' }}>
         <div>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 400, marginBottom: '4px' }}>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 600, marginBottom: '4px' }}>
             {mine ? 'My Listings' : 'Browse Listings'}
           </h1>
           <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>

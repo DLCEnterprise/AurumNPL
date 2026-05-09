@@ -149,7 +149,7 @@ export default async function DashboardPage() {
       {/* Header */}
       <div style={{ marginBottom: '36px' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '6px', flexWrap: 'wrap' }}>
-          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 400, margin: 0 }}>
+          <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 600, margin: 0 }}>
             {greeting}, <span className="text-gold">{name}</span>
           </h1>
           <span style={{
@@ -191,9 +191,9 @@ export default async function DashboardPage() {
 
       {/* Quick actions */}
       <div style={{ marginBottom: '40px' }}>
-        <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.3rem', fontWeight: 400, marginBottom: '16px' }}>
-          Quick Actions
-        </h2>
+        <h2 className="section-heading">Quick Actions</h2>
+        <div className="rule-accent" />
+
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '16px' }}>
           {quickActions.map((action) => (
             <Link key={action.href} href={action.href} className="glass-card" style={{

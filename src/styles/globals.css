@@ -445,8 +445,27 @@ img { max-width: 100%; display: block; }
 .section-title {
   font-family: var(--font-display);
   font-size: clamp(2rem, 4vw, 3rem);
-  font-weight: 400;
+  font-weight: 600;
   line-height: 1.15;
+}
+
+/* ── Section heading — dashboard page headings ───────────── */
+.section-heading {
+  font-family: var(--font-display);
+  font-size: 1.3rem;
+  font-weight: 600;
+  letter-spacing: -0.01em;
+  color: var(--text-primary);
+  margin: 0 0 8px;
+}
+
+/* ── Gold rule accent — placed after section headings ─────── */
+.rule-accent {
+  width: 32px;
+  height: 2px;
+  background: var(--gold-gradient);
+  border-radius: 1px;
+  margin-bottom: 20px;
 }
 
 /* ── About ───────────────────────────────────────────────── */

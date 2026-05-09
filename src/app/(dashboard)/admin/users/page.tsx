@@ -118,7 +118,7 @@ export default async function AdminUsersPage({
       <Breadcrumbs items={[{ label: 'Admin', href: '/admin' }, { label: 'Users' }]} />
       {/* Header */}
       <div style={{ marginBottom: '24px' }}>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 400, marginBottom: '4px' }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2rem', fontWeight: 600, marginBottom: '4px' }}>
           User Management
         </h1>
         <p style={{ color: 'var(--text-muted)', fontSize: '0.85rem' }}>
