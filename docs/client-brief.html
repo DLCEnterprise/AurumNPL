@@ -1,0 +1,1027 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>AURUM — Platform Development Brief | May 2026</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg:      #09090b;
+    --panel:   #111114;
+    --raised:  #18181c;
+    --border:  rgba(255,255,255,0.07);
+    --gold:    #d4a846;
+    --gold-dk: #b8860b;
+    --gold-lt: #f5d98a;
+    --t1:      #f4f4f5;
+    --t2:      #a1a1aa;
+    --t3:      #71717a;
+    --green:   #34d399;
+    --amber:   #f59e0b;
+    --red:     #ef4444;
+    --blue:    #60a5fa;
+    --font-d:  'Georgia', serif;
+    --font-b:  system-ui, -apple-system, sans-serif;
+  }
+
+  html { -webkit-font-smoothing: antialiased; }
+
+  body {
+    font-family: var(--font-b);
+    background: var(--bg);
+    color: var(--t1);
+    line-height: 1.5;
+    min-height: 100vh;
+    padding: 0 0 80px;
+  }
+
+  /* ── Header ── */
+  .header {
+    border-bottom: 1px solid var(--border);
+    padding: 32px 48px 28px;
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 24px;
+    flex-wrap: wrap;
+  }
+  .wordmark {
+    font-family: var(--font-d);
+    font-size: 28px;
+    font-weight: 600;
+    letter-spacing: 0.06em;
+    background: linear-gradient(135deg, #b8860b 0%, #d4a846 45%, #f5d98a 65%, #d4a846 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .doc-meta {
+    font-size: 11px;
+    color: var(--t3);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    text-align: right;
+    line-height: 1.7;
+  }
+  .rule-gold {
+    display: block;
+    width: 32px;
+    height: 1px;
+    background: var(--gold);
+    margin: 6px 0;
+  }
+
+  /* ── Layout ── */
+  .page { max-width: 1080px; margin: 0 auto; padding: 0 48px; }
+
+  /* ── Section ── */
+  .section { margin-top: 56px; }
+  .section-label {
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 6px;
+  }
+  .section-title {
+    font-family: var(--font-d);
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.015em;
+    line-height: 1.15;
+    margin-bottom: 24px;
+  }
+  h2.section-title + .rule-gold { margin-top: -18px; margin-bottom: 28px; }
+
+  /* ── Executive headline ── */
+  .hero-summary {
+    margin-top: 40px;
+    padding: 36px 40px;
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-left: 3px solid var(--gold);
+    border-radius: 4px;
+  }
+  .hero-summary p {
+    font-size: 16px;
+    color: var(--t2);
+    line-height: 1.7;
+    max-width: 780px;
+  }
+  .hero-summary strong { color: var(--t1); }
+
+  /* ── Scorecard ── */
+  .scorecard {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 12px;
+    margin-top: 24px;
+  }
+  .score-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 20px 16px;
+    text-align: center;
+  }
+  .score-domain {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--t3);
+    margin-bottom: 12px;
+  }
+  .score-grade {
+    font-family: var(--font-d);
+    font-size: 42px;
+    font-weight: 600;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .score-grade--now  { color: #f59e0b; }
+  .score-grade--target { color: var(--green); }
+  .score-arrow { font-size: 13px; color: var(--t3); margin: 2px 0; }
+  .score-label { font-size: 10px; color: var(--t3); }
+
+  .overall-score {
+    display: flex;
+    align-items: center;
+    gap: 32px;
+    background: var(--panel);
+    border: 1px solid rgba(212,168,70,0.2);
+    border-radius: 4px;
+    padding: 24px 32px;
+    margin-top: 24px;
+  }
+  .overall-grade {
+    font-family: var(--font-d);
+    font-size: 72px;
+    font-weight: 600;
+    line-height: 1;
+    color: #f59e0b;
+    flex-shrink: 0;
+  }
+  .overall-info { flex: 1; }
+  .overall-title { font-size: 13px; color: var(--t2); margin-bottom: 4px; }
+  .overall-verdict { font-size: 15px; color: var(--t1); font-weight: 500; line-height: 1.5; }
+  .overall-arrow {
+    font-size: 28px;
+    color: var(--t3);
+    flex-shrink: 0;
+    align-self: center;
+  }
+  .overall-grade--target {
+    font-family: var(--font-d);
+    font-size: 72px;
+    font-weight: 600;
+    line-height: 1;
+    color: var(--green);
+    flex-shrink: 0;
+  }
+
+  /* ── Bar metric ── */
+  .metrics-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-top: 24px;
+  }
+  .metric-row {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px 20px;
+  }
+  .metric-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    margin-bottom: 10px;
+  }
+  .metric-name { font-size: 12px; color: var(--t2); letter-spacing: 0.02em; }
+  .metric-values { font-size: 11px; color: var(--t3); font-variant-numeric: tabular-nums; }
+  .metric-bar-track {
+    height: 4px;
+    background: var(--raised);
+    border-radius: 2px;
+    position: relative;
+    overflow: visible;
+  }
+  .metric-bar-now {
+    position: absolute;
+    left: 0; top: 0;
+    height: 100%;
+    border-radius: 2px;
+    background: #f59e0b;
+    transition: width 0.4s ease;
+  }
+  .metric-bar-target {
+    position: absolute;
+    top: -3px;
+    height: 10px;
+    width: 2px;
+    background: var(--green);
+    border-radius: 1px;
+  }
+
+  /* ── Timeline ── */
+  .timeline { position: relative; margin-top: 24px; }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 15px;
+    top: 0; bottom: 0;
+    width: 1px;
+    background: var(--border);
+  }
+  .timeline-item {
+    display: flex;
+    gap: 20px;
+    padding: 0 0 28px 0;
+    position: relative;
+  }
+  .timeline-dot {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 11px;
+    font-weight: 700;
+    position: relative;
+    z-index: 1;
+  }
+  .timeline-dot--done     { background: rgba(52,211,153,0.15); border: 1px solid #34d399; color: #34d399; }
+  .timeline-dot--current  { background: rgba(212,168,70,0.15); border: 2px solid var(--gold); color: var(--gold); }
+  .timeline-dot--upcoming { background: var(--raised); border: 1px solid var(--border); color: var(--t3); }
+  .timeline-body { flex: 1; padding-top: 4px; }
+  .timeline-phase {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--t3);
+    margin-bottom: 2px;
+  }
+  .timeline-phase--current { color: var(--gold); }
+  .timeline-title { font-size: 14px; font-weight: 500; color: var(--t1); margin-bottom: 6px; }
+  .timeline-items { display: flex; flex-wrap: wrap; gap: 6px; }
+  .tag {
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 2px;
+    letter-spacing: 0.04em;
+    white-space: nowrap;
+  }
+  .tag--done     { background: rgba(52,211,153,0.08); color: #34d399; border: 1px solid rgba(52,211,153,0.2); }
+  .tag--current  { background: rgba(212,168,70,0.08); color: var(--gold); border: 1px solid rgba(212,168,70,0.2); }
+  .tag--upcoming { background: var(--raised); color: var(--t3); border: 1px solid var(--border); }
+
+  /* ── Two-column ── */
+  .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; }
+  .panel {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 24px;
+  }
+  .panel-title {
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--t3);
+    margin-bottom: 16px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  /* ── Item list ── */
+  .item-list { display: flex; flex-direction: column; gap: 10px; }
+  .item {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+  }
+  .item-icon {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 9px;
+    margin-top: 1px;
+  }
+  .item-icon--check { background: rgba(52,211,153,0.12); color: #34d399; }
+  .item-icon--warn  { background: rgba(239,68,68,0.12);  color: #ef4444; }
+  .item-icon--up    { background: rgba(96,165,250,0.12); color: #60a5fa; }
+  .item-text { color: var(--t2); line-height: 1.5; }
+  .item-text strong { color: var(--t1); font-weight: 500; }
+
+  /* ── Performance table ── */
+  .perf-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+    font-variant-numeric: tabular-nums;
+    margin-top: 24px;
+  }
+  .perf-table th {
+    text-align: left;
+    font-size: 10px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--t3);
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    font-weight: 500;
+  }
+  .perf-table td {
+    padding: 10px 12px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    color: var(--t2);
+    vertical-align: middle;
+  }
+  .perf-table tr:last-child td { border-bottom: none; }
+  .perf-table .metric-cell { color: var(--t1); font-weight: 500; font-size: 13px; }
+  .chip {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 2px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+  }
+  .chip--red    { background: rgba(239,68,68,0.10); color: #ef4444; }
+  .chip--amber  { background: rgba(245,158,11,0.10); color: #f59e0b; }
+  .chip--green  { background: rgba(52,211,153,0.10); color: #34d399; }
+
+  /* ── 30-day wins ── */
+  .wins-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 10px;
+    margin-top: 24px;
+  }
+  .win-card {
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 4px;
+    padding: 16px 14px;
+  }
+  .win-num {
+    font-family: var(--font-d);
+    font-size: 28px;
+    font-weight: 600;
+    color: var(--gold);
+    line-height: 1;
+    margin-bottom: 8px;
+    font-variant-numeric: tabular-nums;
+  }
+  .win-label { font-size: 11px; color: var(--t2); line-height: 1.5; }
+
+  /* ── Design before/after ── */
+  .design-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-top: 24px; }
+  .design-col-label {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 8px 14px;
+    border-radius: 2px;
+    display: inline-block;
+    margin-bottom: 16px;
+    font-weight: 600;
+  }
+  .design-col-label--now    { background: rgba(245,158,11,0.08); color: #f59e0b; border: 1px solid rgba(245,158,11,0.2); }
+  .design-col-label--after  { background: rgba(52,211,153,0.08); color: #34d399; border: 1px solid rgba(52,211,153,0.2); }
+  .design-item {
+    font-size: 12px;
+    color: var(--t2);
+    padding: 8px 0;
+    border-bottom: 1px solid rgba(255,255,255,0.04);
+    line-height: 1.5;
+    display: flex;
+    gap: 8px;
+  }
+  .design-item:last-child { border-bottom: none; }
+  .design-item::before { content: '—'; color: var(--t3); flex-shrink: 0; }
+  .design-item--before::before { color: #f59e0b; content: '✕'; }
+  .design-item--after::before  { color: #34d399; content: '✓'; }
+
+  /* ── Footer ── */
+  .brief-footer {
+    margin-top: 72px;
+    padding-top: 24px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+  .brief-footer p { font-size: 11px; color: var(--t3); line-height: 1.6; }
+  .brief-footer strong { color: var(--t2); }
+
+  /* ── Responsive ── */
+  @media (max-width: 900px) {
+    .header        { padding: 24px; }
+    .page          { padding: 0 24px; }
+    .scorecard     { grid-template-columns: repeat(3, 1fr); }
+    .wins-grid     { grid-template-columns: repeat(3, 1fr); }
+    .metrics-grid  { grid-template-columns: 1fr; }
+    .two-col       { grid-template-columns: 1fr; }
+    .design-grid   { grid-template-columns: 1fr; }
+    .overall-score { flex-wrap: wrap; gap: 16px; }
+  }
+  @media (max-width: 600px) {
+    .scorecard { grid-template-columns: repeat(2, 1fr); }
+    .wins-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<!-- ── HEADER ─────────────────────────────────────────────── -->
+<div class="header">
+  <div>
+    <div class="wordmark">◈ AURUM</div>
+    <div style="font-size:12px;color:var(--t3);margin-top:4px;letter-spacing:0.02em;">
+      Non-Performing Loan Marketplace
+    </div>
+  </div>
+  <div class="doc-meta">
+    Platform Development Brief<br>
+    <strong style="color:var(--t2);">May 2026</strong><br>
+    Confidential — For Client Review
+  </div>
+</div>
+
+<div class="page">
+
+<!-- ── EXECUTIVE STATEMENT ───────────────────────────────── -->
+<div class="section">
+  <div class="section-label">Executive Summary</div>
+  <h2 class="section-title">Aurum has a strong foundation.<br>Now we make it institutional-grade.</h2>
+  <span class="rule-gold"></span>
+  <div class="hero-summary">
+    <p>
+      Aurum's platform was built in <strong>14 focused development sprints</strong>, delivering
+      a fully functional NPL marketplace with multi-role authentication, admin approval gates,
+      NDA-signed document access, bid management, due diligence workflows, and a real-time
+      messaging system. The domain logic is sound. The auth architecture is unusually mature.
+      <br><br>
+      The next phase closes a small number of <strong>high-leverage security gaps</strong>,
+      reduces the first-load bundle by an estimated <strong>~147KB</strong>, and elevates the
+      visual language from "fintech startup" to <strong>institutional-grade marketplace</strong>
+      — the register that serious counterparties expect before they sign an NDA.
+    </p>
+  </div>
+</div>
+
+<!-- ── OVERALL HEALTH ─────────────────────────────────────── -->
+<div class="section">
+  <div class="section-label">Platform Health</div>
+  <h2 class="section-title">Current Status → 30-Day Target</h2>
+  <span class="rule-gold"></span>
+
+  <div class="overall-score">
+    <div>
+      <div class="overall-title">Current Grade</div>
+      <div class="overall-grade">B−</div>
+    </div>
+    <div class="overall-info">
+      <div style="font-size:11px;color:var(--t3);margin-bottom:4px;">JUSTIFICATION</div>
+      <div class="overall-verdict">
+        Strong domain logic and auth architecture. Critical token storage
+        inconsistency, no CI/CD, and no tests prevent production deployment
+        for real transactions in current state.
+      </div>
+    </div>
+    <div class="overall-arrow">→</div>
+    <div>
+      <div class="overall-title">30-Day Target</div>
+      <div class="overall-grade--target">A−</div>
+    </div>
+    <div class="overall-info">
+      <div style="font-size:11px;color:var(--t3);margin-bottom:4px;">HOW WE GET THERE</div>
+      <div class="overall-verdict">
+        4-week sprint: security hardening, CI pipeline, performance optimization,
+        design system elevation, and accessibility pass.
+      </div>
+    </div>
+  </div>
+
+  <!-- Per-domain scores -->
+  <div class="scorecard">
+    <div class="score-card">
+      <div class="score-domain">Security</div>
+      <div class="score-grade score-grade--now">C+</div>
+      <div class="score-arrow">↓</div>
+      <div class="score-grade score-grade--target">A</div>
+      <div class="score-label">After Week 1</div>
+    </div>
+    <div class="score-card">
+      <div class="score-domain">Performance</div>
+      <div class="score-grade score-grade--now">C</div>
+      <div class="score-arrow">↓</div>
+      <div class="score-grade score-grade--target">A−</div>
+      <div class="score-label">After Week 2</div>
+    </div>
+    <div class="score-card">
+      <div class="score-domain">Design</div>
+      <div class="score-grade score-grade--now">B</div>
+      <div class="score-arrow">↓</div>
+      <div class="score-grade score-grade--target">A</div>
+      <div class="score-label">After Week 3</div>
+    </div>
+    <div class="score-card">
+      <div class="score-domain">Code Quality</div>
+      <div class="score-grade score-grade--now">C+</div>
+      <div class="score-arrow">↓</div>
+      <div class="score-grade score-grade--target">B+</div>
+      <div class="score-label">After Week 4</div>
+    </div>
+    <div class="score-card">
+      <div class="score-domain">Infrastructure</div>
+      <div class="score-grade score-grade--now">D</div>
+      <div class="score-arrow">↓</div>
+      <div class="score-grade score-grade--target">B+</div>
+      <div class="score-label">After Week 1–4</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── DEVELOPMENT TIMELINE ───────────────────────────────── -->
+<div class="section">
+  <div class="section-label">Development Timeline</div>
+  <h2 class="section-title">Progress: Inception → Production</h2>
+  <span class="rule-gold"></span>
+
+  <div class="timeline">
+
+    <div class="timeline-item">
+      <div class="timeline-dot timeline-dot--done">✓</div>
+      <div class="timeline-body">
+        <div class="timeline-phase">Sprints 1–6 · Complete</div>
+        <div class="timeline-title">Core Platform Foundation</div>
+        <div class="timeline-items">
+          <span class="tag tag--done">Next.js 15 App Router</span>
+          <span class="tag tag--done">PostgreSQL + Prisma ORM</span>
+          <span class="tag tag--done">Auth.js Authentication</span>
+          <span class="tag tag--done">User Registration Flow</span>
+          <span class="tag tag--done">Dashboard Layout</span>
+          <span class="tag tag--done">Listing CRUD</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot timeline-dot--done">✓</div>
+      <div class="timeline-body">
+        <div class="timeline-phase">Sprints 7–11 · Complete</div>
+        <div class="timeline-title">Institutional Workflow Layer</div>
+        <div class="timeline-items">
+          <span class="tag tag--done">Admin Approval Gate</span>
+          <span class="tag tag--done">Single-Use JWT Tokens</span>
+          <span class="tag tag--done">NDA Signing with IP Capture</span>
+          <span class="tag tag--done">Bid Management System</span>
+          <span class="tag tag--done">Due Diligence Timeline</span>
+          <span class="tag tag--done">Role-Based Access (4 roles)</span>
+          <span class="tag tag--done">Upstash Rate Limiting</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot timeline-dot--done">✓</div>
+      <div class="timeline-body">
+        <div class="timeline-phase">Sprints 12–14 + QA Sprints 1–3 · Complete</div>
+        <div class="timeline-title">Production Readiness Hardening</div>
+        <div class="timeline-items">
+          <span class="tag tag--done">CSP + HSTS Security Headers</span>
+          <span class="tag tag--done">Audit Logging System</span>
+          <span class="tag tag--done">Password Reset Flow</span>
+          <span class="tag tag--done">Messaging System</span>
+          <span class="tag tag--done">Deal Pipeline</span>
+          <span class="tag tag--done">Mobile Responsive</span>
+          <span class="tag tag--done">Light / Dark Theme</span>
+          <span class="tag tag--done">Toast + Error Handling</span>
+          <span class="tag tag--done">Accessibility Focus States</span>
+          <span class="tag tag--done">Page Transitions</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot timeline-dot--current">●</div>
+      <div class="timeline-body">
+        <div class="timeline-phase timeline-phase--current">Week 1 · In Progress — Security + CI</div>
+        <div class="timeline-title">Security Hardening & Pipeline</div>
+        <div class="timeline-items">
+          <span class="tag tag--current">Hash Admin Tokens</span>
+          <span class="tag tag--current">Fix Email XSS</span>
+          <span class="tag tag--current">IP Extraction Fix</span>
+          <span class="tag tag--current">Rate Limit Hardening</span>
+          <span class="tag tag--current">Replace XLSX Package</span>
+          <span class="tag tag--current">GitHub Actions CI</span>
+          <span class="tag tag--current">Dependabot</span>
+          <span class="tag tag--current">Design Token System</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot timeline-dot--upcoming">2</div>
+      <div class="timeline-body">
+        <div class="timeline-phase">Week 2 · Upcoming</div>
+        <div class="timeline-title">Performance + Visual Foundation</div>
+        <div class="timeline-items">
+          <span class="tag tag--upcoming">Self-Host Fonts</span>
+          <span class="tag tag--upcoming">Dynamic Import Recharts</span>
+          <span class="tag tag--upcoming">Dynamic Import XLSX</span>
+          <span class="tag tag--upcoming">Remove Glassmorphism</span>
+          <span class="tag tag--upcoming">Typography Upgrade</span>
+          <span class="tag tag--upcoming">Color Discipline</span>
+          <span class="tag tag--upcoming">Radius Tightening</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="timeline-item">
+      <div class="timeline-dot timeline-dot--upcoming">3</div>
+      <div class="timeline-body">
+        <div class="timeline-phase">Week 3 · Upcoming</div>
+        <div class="timeline-title">Component Refinement + Motion</div>
+        <div class="timeline-items">
+          <span class="tag tag--upcoming">Signature Gold Rule</span>
+          <span class="tag tag--upcoming">Tabular Numerics</span>
+          <span class="tag tag--upcoming">Motion Discipline</span>
+          <span class="tag tag--upcoming">WCAG Accessibility Pass</span>
+          <span class="tag tag--upcoming">Sentry Error Monitoring</span>
+          <span class="tag tag--upcoming">Permissions Layer</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="timeline-item" style="padding-bottom:0;">
+      <div class="timeline-dot timeline-dot--upcoming">4</div>
+      <div class="timeline-body">
+        <div class="timeline-phase">Week 4 · Upcoming</div>
+        <div class="timeline-title">Measurement + Budget Enforcement</div>
+        <div class="timeline-items">
+          <span class="tag tag--upcoming">Lighthouse CI Baseline</span>
+          <span class="tag tag--upcoming">Bundle Size Enforcement</span>
+          <span class="tag tag--upcoming">Axe Accessibility Audit</span>
+          <span class="tag tag--upcoming">Runbook Documentation</span>
+          <span class="tag tag--upcoming">First Test Suite (Vitest)</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ── PERFORMANCE ────────────────────────────────────────── -->
+<div class="section">
+  <div class="section-label">Track A — Performance</div>
+  <h2 class="section-title">Core Web Vitals & Bundle</h2>
+  <span class="rule-gold"></span>
+
+  <table class="perf-table">
+    <thead>
+      <tr>
+        <th>Metric</th>
+        <th>Estimated Current</th>
+        <th>30-Day Target</th>
+        <th>Status</th>
+        <th>Primary Fix</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td class="metric-cell">LCP</td>
+        <td>~3.0–3.5s</td>
+        <td>&lt; 2.5s</td>
+        <td><span class="chip chip--red">At Risk</span></td>
+        <td style="color:var(--t3)">Self-host fonts; dynamic imports</td>
+      </tr>
+      <tr>
+        <td class="metric-cell">FCP</td>
+        <td>~2.0–2.5s</td>
+        <td>&lt; 1.8s</td>
+        <td><span class="chip chip--amber">At Risk</span></td>
+        <td style="color:var(--t3)">Eliminate Google Fonts blocking</td>
+      </tr>
+      <tr>
+        <td class="metric-cell">CLS</td>
+        <td>~0.08–0.18</td>
+        <td>&lt; 0.1</td>
+        <td><span class="chip chip--amber">At Risk</span></td>
+        <td style="color:var(--t3)">font-display: optional; size-adjust</td>
+      </tr>
+      <tr>
+        <td class="metric-cell">INP</td>
+        <td>~150–200ms</td>
+        <td>&lt; 200ms</td>
+        <td><span class="chip chip--green">On Track</span></td>
+        <td style="color:var(--t3)">Remove backdrop-filter; CSS contain</td>
+      </tr>
+      <tr>
+        <td class="metric-cell">TTFB</td>
+        <td>~150–300ms</td>
+        <td>&lt; 800ms</td>
+        <td><span class="chip chip--green">Passing</span></td>
+        <td style="color:var(--t3)">Vercel Edge — already effective</td>
+      </tr>
+      <tr>
+        <td class="metric-cell">Total JS (gzip)</td>
+        <td>~350–380KB</td>
+        <td>&lt; 200KB</td>
+        <td><span class="chip chip--red">Over Budget</span></td>
+        <td style="color:var(--t3)">Dynamic import Recharts (~72KB) + XLSX (~75KB)</td>
+      </tr>
+      <tr>
+        <td class="metric-cell">Total CSS (gzip)</td>
+        <td>~35–40KB</td>
+        <td>&lt; 25KB</td>
+        <td><span class="chip chip--amber">At Risk</span></td>
+        <td style="color:var(--t3)">Remove duplicate :root / @theme variables</td>
+      </tr>
+      <tr>
+        <td class="metric-cell">Font weight</td>
+        <td>~70–90KB</td>
+        <td>&lt; 50KB</td>
+        <td><span class="chip chip--amber">At Risk</span></td>
+        <td style="color:var(--t3)">Self-host + subset to Latin only</td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ── SECURITY ────────────────────────────────────────────── -->
+<div class="section">
+  <div class="section-label">Track B — Security</div>
+  <h2 class="section-title">What's Already Working vs. What Needs Fixing</h2>
+  <span class="rule-gold"></span>
+
+  <div class="two-col">
+    <div class="panel">
+      <div class="panel-title">Already Secure ✓</div>
+      <div class="item-list">
+        <div class="item">
+          <div class="item-icon item-icon--check">✓</div>
+          <div class="item-text"><strong>bcrypt password hashing</strong> — 12 salt rounds, industry standard</div>
+        </div>
+        <div class="item">
+          <div class="item-icon item-icon--check">✓</div>
+          <div class="item-text"><strong>Admin approval gate</strong> — single-use JWT tokens, 7-day expiry</div>
+        </div>
+        <div class="item">
+          <div class="item-icon item-icon--check">✓</div>
+          <div class="item-text"><strong>Rate limiting on all auth endpoints</strong> — Upstash Redis</div>
+        </div>
+        <div class="item">
+          <div class="item-icon item-icon--check">✓</div>
+          <div class="item-text"><strong>CSP + HSTS + X-Frame headers</strong> — 2-year HSTS preload</div>
+        </div>
+        <div class="item">
+          <div class="item-icon item-icon--check">✓</div>
+          <div class="item-text"><strong>Real-time session re-validation</strong> — catches suspensions immediately</div>
+        </div>
+        <div class="item">
+          <div class="item-icon item-icon--check">✓</div>
+          <div class="item-text"><strong>Password reset token hashing</strong> — SHA-256 before storage</div>
+        </div>
+        <div class="item">
+          <div class="item-icon item-icon--check">✓</div>
+          <div class="item-text"><strong>Zod validation</strong> — enforced at all API boundaries</div>
+        </div>
+        <div class="item">
+          <div class="item-icon item-icon--check">✓</div>
+          <div class="item-text"><strong>Atomic transactions</strong> — bid acceptance, token invalidation</div>
+        </div>
+        <div class="item">
+          <div class="item-icon item-icon--check">✓</div>
+          <div class="item-text"><strong>Sellers blocked from bidding on own listings</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Requires Immediate Action !</div>
+      <div class="item-list">
+        <div class="item">
+          <div class="item-icon item-icon--warn">!</div>
+          <div class="item-text"><strong>Admin approval tokens stored as plaintext JWT</strong> — DB breach exposes live approval links. Fix: SHA-256 hash before storage (same pattern as password reset).</div>
+        </div>
+        <div class="item">
+          <div class="item-icon item-icon--warn">!</div>
+          <div class="item-text"><strong>User data in admin emails not HTML-escaped</strong> — malicious company name can inject HTML into admin inbox.</div>
+        </div>
+        <div class="item">
+          <div class="item-icon item-icon--warn">!</div>
+          <div class="item-text"><strong>Rate limiting bypassed via IP spoofing</strong> — X-Forwarded-For taken at face value without validation.</div>
+        </div>
+        <div class="item">
+          <div class="item-icon item-icon--warn">!</div>
+          <div class="item-text"><strong>Rate limiter fails open on Redis downtime</strong> — auth endpoints unprotected during outage.</div>
+        </div>
+        <div class="item">
+          <div class="item-icon item-icon--warn">!</div>
+          <div class="item-text"><strong>XLSX package abandoned + CVEs</strong> — spreadsheet import uses unmaintained library with known vulnerabilities.</div>
+        </div>
+        <div class="item">
+          <div class="item-icon item-icon--warn">!</div>
+          <div class="item-text"><strong>No CI/CD pipeline</strong> — every push to production has zero automated gates: no type-check, no lint, no security scan.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── DESIGN DIRECTION ───────────────────────────────────── -->
+<div class="section">
+  <div class="section-label">Track C — Design Elevation</div>
+  <h2 class="section-title">From Fintech Startup → Institutional Marketplace</h2>
+  <span class="rule-gold"></span>
+
+  <div class="design-grid">
+    <div>
+      <span class="design-col-label design-col-label--now">Current State</span>
+      <div>
+        <div class="design-item design-item--before">Card surfaces use glassmorphism (backdrop-filter) — 2021–2022 consumer fintech language</div>
+        <div class="design-item design-item--before">Border radius 16–24px on cards — signals "friendly app," not institutional platform</div>
+        <div class="design-item design-item--before">Gold gradient applied to 15+ elements — accent diluted, no visual hierarchy</div>
+        <div class="design-item design-item--before">Hero headline at font-weight 300 — editorial fashion, not financial authority</div>
+        <div class="design-item design-item--before">Glow box-shadows on buttons — web3/crypto visual language</div>
+        <div class="design-item design-item--before">Arbitrary 28 font sizes — no modular scale, hard to maintain</div>
+        <div class="design-item design-item--before">Logo letter-spacing 0.15em — too loose, feels casual</div>
+        <div class="design-item design-item--before">Financial numbers without tabular-nums — columns don't align</div>
+      </div>
+    </div>
+    <div>
+      <span class="design-col-label design-col-label--after">After Elevation</span>
+      <div>
+        <div class="design-item design-item--after">Hard opaque surfaces — defined edges, border-based depth. Bloomberg / ICE register.</div>
+        <div class="design-item design-item--after">Border radius 4–8px — authority and precision at every edge</div>
+        <div class="design-item design-item--after">Gold reserved for 3 moments: wordmark, primary CTA, one key metric per screen</div>
+        <div class="design-item design-item--after">Display headings at font-weight 600 — Cormorant Garamond becomes commanding</div>
+        <div class="design-item design-item--after">Directional shadows — tight, dark, no glow. Precision over decoration.</div>
+        <div class="design-item design-item--after">10-step Major Third type scale — consistent, maintainable, readable</div>
+        <div class="design-item design-item--after">Logo letter-spacing 0.06em — solid, confident wordmark</div>
+        <div class="design-item design-item--after">tabular-nums on all financial data — tables align, credibility increases</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:20px;padding:16px 20px;background:var(--panel);border:1px solid var(--border);border-radius:4px;border-left:3px solid var(--gold);">
+    <div style="font-size:11px;letter-spacing:0.08em;text-transform:uppercase;color:var(--gold);margin-bottom:8px;">Signature Elements Added</div>
+    <div style="display:flex;gap:24px;flex-wrap:wrap;">
+      <div style="font-size:12px;color:var(--t2);">
+        <strong style="color:var(--t1);">① Gold hairline rule</strong><br>
+        32×1px gold underline below every section header.<br>
+        Costs 0KB. Reads as deliberate craft.
+      </div>
+      <div style="font-size:12px;color:var(--t2);">
+        <strong style="color:var(--t1);">② Tabular financial numerics</strong><br>
+        font-variant-numeric: tabular-nums on all data values.<br>
+        Numbers align. Credibility is in the details.
+      </div>
+      <div style="font-size:12px;color:var(--t2);">
+        <strong style="color:var(--t1);">③ Gold focus ring</strong><br>
+        2px gold outline, sharp corners, on keyboard focus.<br>
+        Brand as accessibility. Already partially in place.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── 30-DAY WINS ─────────────────────────────────────────── -->
+<div class="section">
+  <div class="section-label">Impact</div>
+  <h2 class="section-title">Measurable Gains in 30 Days</h2>
+  <span class="rule-gold"></span>
+
+  <div class="wins-grid">
+    <div class="win-card">
+      <div class="win-num">−147</div>
+      <div class="win-label">Kilobytes removed from initial page load via dynamic imports</div>
+    </div>
+    <div class="win-card">
+      <div class="win-num">−1.5s</div>
+      <div class="win-label">Estimated LCP improvement after font + bundle optimization</div>
+    </div>
+    <div class="win-card">
+      <div class="win-num">6</div>
+      <div class="win-label">Critical security vulnerabilities closed in Week 1</div>
+    </div>
+    <div class="win-card">
+      <div class="win-num">0</div>
+      <div class="win-label">Known WCAG Level A failures remaining after Week 3</div>
+    </div>
+    <div class="win-card">
+      <div class="win-num">100%</div>
+      <div class="win-label">Commits gated by type-check + lint + security audit in CI</div>
+    </div>
+  </div>
+</div>
+
+<!-- ── EFFORT ESTIMATE ────────────────────────────────────── -->
+<div class="section">
+  <div class="section-label">Scope & Effort</div>
+  <h2 class="section-title">Investment to Reach Production-Grade</h2>
+  <span class="rule-gold"></span>
+
+  <div class="two-col">
+    <div class="panel">
+      <div class="panel-title">4-Week Sprint Breakdown</div>
+      <div class="item-list">
+        <div class="item">
+          <div class="item-icon item-icon--up" style="font-size:10px;font-weight:700;">W1</div>
+          <div class="item-text"><strong>Security + CI:</strong> ~3 days. Hash tokens, email escaping, rate limit hardening, pipeline setup, design token foundation.</div>
+        </div>
+        <div class="item">
+          <div class="item-icon item-icon--up" style="font-size:10px;font-weight:700;">W2</div>
+          <div class="item-text"><strong>Performance + Visual:</strong> ~4 days. Font self-hosting, dynamic imports, card surfaces, color discipline, typography.</div>
+        </div>
+        <div class="item">
+          <div class="item-icon item-icon--up" style="font-size:10px;font-weight:700;">W3</div>
+          <div class="item-text"><strong>Refinement + Motion:</strong> ~4 days. Signature elements, accessibility pass, motion polish, Sentry integration.</div>
+        </div>
+        <div class="item">
+          <div class="item-icon item-icon--up" style="font-size:10px;font-weight:700;">W4</div>
+          <div class="item-text"><strong>Measurement + Hardening:</strong> ~3 days. Lighthouse CI, bundle budgets, docs, first test suite.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-title">Post-Sprint Roadmap (6 months)</div>
+      <div class="item-list">
+        <div class="item">
+          <div class="item-icon item-icon--up">→</div>
+          <div class="item-text"><strong>2FA / TOTP</strong> — schema already in place, implementation pending</div>
+        </div>
+        <div class="item">
+          <div class="item-icon item-icon--up">→</div>
+          <div class="item-text"><strong>Comprehensive E2E test suite</strong> — Playwright, critical user journeys</div>
+        </div>
+        <div class="item">
+          <div class="item-icon item-icon--up">→</div>
+          <div class="item-text"><strong>Auth.js stable v5 migration</strong> — when stable release ships</div>
+        </div>
+        <div class="item">
+          <div class="item-icon item-icon--up">→</div>
+          <div class="item-text"><strong>PII field-level encryption</strong> — email, phone, SSN at rest</div>
+        </div>
+        <div class="item">
+          <div class="item-icon item-icon--up">→</div>
+          <div class="item-text"><strong>Structured logging</strong> — Pino + Sentry, replace all console.error</div>
+        </div>
+        <div class="item">
+          <div class="item-icon item-icon--up">→</div>
+          <div class="item-text"><strong>DB connection pooling</strong> — PgBouncer or Neon native pooler</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── ONE THING ──────────────────────────────────────────── -->
+<div class="section">
+  <div style="background:var(--panel);border:1px solid rgba(212,168,70,0.25);border-radius:4px;padding:32px 36px;">
+    <div style="font-size:10px;letter-spacing:0.14em;text-transform:uppercase;color:var(--gold);margin-bottom:12px;">The Single Most Important Action</div>
+    <div style="font-family:var(--font-d);font-size:22px;font-weight:600;letter-spacing:-0.015em;line-height:1.3;color:var(--t1);max-width:680px;">
+      Hash the admin approval tokens before storing them in the database.
+      Everything else is optimization. This one closes a breach-to-takeover path with two hours of work.
+    </div>
+    <span class="rule-gold" style="margin-top:20px;"></span>
+    <div style="margin-top:16px;font-size:13px;color:var(--t2);">
+      Location: <code style="background:var(--raised);padding:2px 6px;border-radius:2px;font-size:11px;color:var(--gold);">src/app/api/auth/signup/route.ts</code> and <code style="background:var(--raised);padding:2px 6px;border-radius:2px;font-size:11px;color:var(--gold);">src/app/api/admin/approve-user/route.ts:88</code><br>
+      <span style="color:var(--t3);font-size:12px;margin-top:4px;display:block;">The pattern is already implemented correctly for password reset tokens — apply the same SHA-256 hash before storage.</span>
+    </div>
+  </div>
+</div>
+
+<!-- ── FOOTER ─────────────────────────────────────────────── -->
+<div class="brief-footer">
+  <p>
+    <strong>AURUM Platform Development Brief</strong><br>
+    Generated May 9, 2026 · Confidential<br>
+    This document reflects findings from a comprehensive security, performance, and design audit<br>
+    conducted against the current codebase at commit <code style="font-size:10px;">f1a87cc</code>.
+  </p>
+  <div style="text-align:right;">
+    <div style="font-family:var(--font-d);font-size:20px;font-weight:600;letter-spacing:0.06em;background:linear-gradient(135deg,#b8860b,#d4a846,#f5d98a,#d4a846);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;">◈ AURUM</div>
+    <div style="font-size:10px;color:var(--t3);margin-top:4px;">Institutional NPL Marketplace</div>
+  </div>
+</div>
+
+</div><!-- /page -->
+</body>
+</html>

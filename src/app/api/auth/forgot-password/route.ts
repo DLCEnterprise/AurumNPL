@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createHash } from 'crypto'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { sendPasswordResetEmail } from '@/lib/email'
@@ -36,11 +37,12 @@ export async function POST(req: NextRequest) {
     // Generate reset token
     const nonce = generateNonce()
     const token = await signResetToken({ userId: user.id, nonce })
+    const tokenHash = createHash('sha256').update(token).digest('hex')
     const expiresAt = new Date(Date.now() + 60 * 60 * 1000) // 1 hour
 
-    // Persist token
+    // Store the hash — the raw JWT is only ever sent in the email URL
     await prisma.passwordResetToken.create({
-      data: { token, userId: user.id, expiresAt },
+      data: { token: tokenHash, userId: user.id, expiresAt },
     })
 
     // Build reset URL and send email (non-blocking)

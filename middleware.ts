@@ -2,7 +2,7 @@ import { auth } from '@/lib/auth'
 import { NextResponse } from 'next/server'
 
 const PUBLIC_PATHS = ['/', '/signin', '/signup', '/pending-approval', '/forgot-password', '/reset-password']
-const PUBLIC_PREFIXES = ['/api/auth', '/api/admin', '/api/public', '/_next', '/favicon', '/tools']
+const PUBLIC_PREFIXES = ['/api/auth', '/api/admin/approve-user', '/api/public', '/_next', '/favicon', '/tools']
 
 export default auth((req) => {
   const { pathname } = req.nextUrl
@@ -43,6 +43,12 @@ export default auth((req) => {
       const url = req.nextUrl.clone()
       url.pathname = '/signin'
       url.searchParams.set('error', 'rejected')
+      return NextResponse.redirect(url)
+    }
+
+    if (session.user.approvalStatus === 'SUSPENDED') {
+      const url = req.nextUrl.clone()
+      url.pathname = '/pending-approval'
       return NextResponse.redirect(url)
     }
   }

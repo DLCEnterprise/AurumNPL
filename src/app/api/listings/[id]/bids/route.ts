@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { generateOfferNumber } from '@/lib/listing-number'
 import { createNotification } from '@/lib/notifications'
 import { sendBidNotificationEmail } from '@/lib/email'
+import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -54,6 +55,9 @@ export async function POST(req: NextRequest, { params: paramsPromise }: Params) 
   if (session.user.role !== 'BUYER' && session.user.role !== 'SELLER_BUYER' && session.user.role !== 'ADMIN') {
     return NextResponse.json({ success: false, error: 'Only buyers may submit bids.' }, { status: 403 })
   }
+
+  const rl = await rateLimit('bid', session.user.id)
+  if (!rl.success) return rateLimitResponse(rl)
 
   const listing = await prisma.listing.findUnique({
     where: { id: listingId },

@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { createHash } from 'crypto'
 import { z } from 'zod'
 import { hash } from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
@@ -27,7 +28,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ valid: false })
   }
 
-  const record = await prisma.passwordResetToken.findUnique({ where: { token } })
+  const tokenHash = createHash('sha256').update(token).digest('hex')
+  const record = await prisma.passwordResetToken.findUnique({ where: { token: tokenHash } })
   if (!record || record.usedAt !== null || record.expiresAt < new Date()) {
     return NextResponse.json({ valid: false })
   }
@@ -65,8 +67,9 @@ export async function POST(req: NextRequest) {
       )
     }
 
-    // Look up DB record — check not used and not expired
-    const record = await prisma.passwordResetToken.findUnique({ where: { token } })
+    // Look up DB record by hash — check not used and not expired
+    const tokenHash = createHash('sha256').update(token).digest('hex')
+    const record = await prisma.passwordResetToken.findUnique({ where: { token: tokenHash } })
     if (!record || record.usedAt !== null || record.expiresAt < new Date()) {
       return NextResponse.json(
         { success: false, error: 'This reset link is invalid or has already been used.' },

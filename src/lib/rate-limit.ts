@@ -64,7 +64,8 @@ function inMemoryLimit(
 async function upstashLimit(
   key: string,
   limit: number,
-  windowMs: number
+  windowMs: number,
+  failClosed: boolean
 ): Promise<RateLimitResult> {
   const url   = process.env.UPSTASH_REDIS_REST_URL!
   const token = process.env.UPSTASH_REDIS_REST_TOKEN!
@@ -81,7 +82,10 @@ async function upstashLimit(
   })
 
   if (!res.ok) {
-    // Redis unavailable — fail open (don't block legitimate traffic)
+    if (failClosed) {
+      // Auth-sensitive: fail closed so a Redis outage cannot bypass brute-force protection
+      return { success: false, limit, remaining: 0, reset: now + windowMs }
+    }
     return { success: true, limit, remaining: limit, reset: now + windowMs }
   }
 
@@ -105,7 +109,12 @@ const LIMITS: Record<string, { limit: number; windowMs: number }> = {
   reset:   { limit: 3,   windowMs: 60 * 60 * 1000 },       // 3 / hour
   api:     { limit: 100, windowMs: 60 * 1000 },             // 100 / min
   admin:   { limit: 20,  windowMs: 60 * 1000 },             // 20 / min
+  bid:     { limit: 10,  windowMs: 60 * 60 * 1000 },        // 10 bids / hour per user
 }
+
+// Auth-sensitive types must fail closed when Redis is unavailable so a Redis
+// outage cannot be exploited to bypass brute-force protection.
+const AUTH_LIMITS = new Set(['signup', 'signin', 'reset'])
 
 /* ── Public API ──────────────────────────────────────────────────────────── */
 
@@ -113,31 +122,37 @@ export async function rateLimit(
   type: keyof typeof LIMITS,
   identifier: string
 ): Promise<RateLimitResult> {
-  const cfg = LIMITS[type] ?? LIMITS.api
-  const key = `rl:${type}:${identifier}`
+  const cfg        = LIMITS[type] ?? LIMITS.api
+  const key        = `rl:${type}:${identifier}`
+  const failClosed = AUTH_LIMITS.has(type as string)
 
   const useUpstash =
     typeof process.env.UPSTASH_REDIS_REST_URL === 'string' &&
     process.env.UPSTASH_REDIS_REST_URL.length > 0
 
   if (useUpstash) {
-    return upstashLimit(key, cfg.limit, cfg.windowMs)
+    return upstashLimit(key, cfg.limit, cfg.windowMs, failClosed)
   }
+
   if (process.env.NODE_ENV === 'production') {
-    console.warn(
-      '[rate-limit] UPSTASH_REDIS_REST_URL is not set — falling back to in-memory rate limiter. ' +
-      'Limits will NOT persist across serverless invocations. Set UPSTASH_REDIS_REST_URL and ' +
-      'UPSTASH_REDIS_REST_TOKEN in your environment to enable persistent rate limiting.'
-    )
+    const msg = failClosed
+      ? `[rate-limit] CRITICAL: UPSTASH_REDIS_REST_URL not set. Auth rate limit "${type}" is per-instance — brute-force protection is NOT effective across serverless instances. Set UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN in Vercel.`
+      : '[rate-limit] UPSTASH_REDIS_REST_URL not set — falling back to per-instance in-memory limiter.'
+    console.error(msg)
   }
   return inMemoryLimit(key, cfg.limit, cfg.windowMs)
 }
 
-/** Extract IP from Next.js request headers */
+/** Extract IP from Next.js request headers.
+ *  Prefers x-vercel-forwarded-for (single trusted IP set by Vercel's edge)
+ *  over x-forwarded-for (whose leftmost value is client-controlled). */
 export function getIp(req: Request): string {
-  const forwarded = req.headers.get('x-forwarded-for')
-  if (forwarded) return forwarded.split(',')[0].trim()
-  return req.headers.get('x-real-ip') ?? 'unknown'
+  return (
+    req.headers.get('x-vercel-forwarded-for') ??
+    req.headers.get('x-real-ip') ??
+    req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ??
+    'unknown'
+  )
 }
 
 /** Return a 429 JSON response with Retry-After header */

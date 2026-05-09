@@ -1,5 +1,30 @@
 import type { NextConfig } from 'next'
 
+// ─── Required environment variable validation ────────────────────────────────
+// Fail fast at boot rather than at runtime when a secret is missing.
+const REQUIRED_ENV: string[] = [
+  'DATABASE_URL',
+  'NEXTAUTH_SECRET',
+  'NEXTAUTH_URL',
+  'ADMIN_SECRET',
+  'RESET_SECRET',
+  'RESEND_API_KEY',
+  'ADMIN_EMAIL',
+  'BASE_URL',
+  // UPSTASH_REDIS_REST_URL + UPSTASH_REDIS_REST_TOKEN: add when Upstash is provisioned.
+  // Without these, auth rate limits fall back to per-instance in-memory (ineffective at scale).
+]
+
+if (process.env.NODE_ENV !== 'test') {
+  const missing = REQUIRED_ENV.filter((k) => !process.env[k])
+  if (missing.length > 0) {
+    throw new Error(
+      `[env] Missing required environment variables: ${missing.join(', ')}. ` +
+      'Add them to your .env.local (dev) or Vercel environment settings (prod).'
+    )
+  }
+}
+
 const isDev = process.env.NODE_ENV === 'development'
 const BASE_URL = process.env.BASE_URL ?? 'http://localhost:3000'
 

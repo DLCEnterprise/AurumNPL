@@ -1,0 +1,3 @@
+Contact: mailto:security@aurum.finance
+Preferred-Languages: en
+Policy: https://aurum.finance/security

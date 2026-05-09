@@ -22,12 +22,13 @@ export default async function DashboardLayout({ children }: { children: React.Re
   const approvalStatus = dbUser?.approvalStatus ?? session.user.approvalStatus
   if (approvalStatus === 'PENDING') redirect('/pending-approval')
   if (approvalStatus === 'REJECTED') redirect('/signin?error=rejected')
-  if (approvalStatus === 'SUSPENDED') redirect('/signin?error=suspended')
+  if (approvalStatus === 'SUSPENDED') redirect('/pending-approval')
 
   if (dbUser?.termsVersion !== CURRENT_TERMS_VERSION) redirect('/terms-update')
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--bg-deep)' }}>
+      <a href="#main-content" className="skip-to-main">Skip to main content</a>
       <DashboardNav user={session.user} />
       <div className="dashboard-layout">
         <aside className="sidebar">

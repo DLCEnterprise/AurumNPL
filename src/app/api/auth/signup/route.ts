@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { hash } from 'bcryptjs'
+import { createHash } from 'crypto'
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { sendAdminNotification, sendRegistrationConfirmationEmail } from '@/lib/email'
@@ -57,7 +58,7 @@ export async function POST(req: NextRequest) {
             entityName, signerTitle, yearsExperience, investorType,
             lienPosition, loanStatusPref, mainObjective } = parsed.data
 
-    const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null
+    const ip = getIp(req) === 'unknown' ? null : getIp(req)
     const userAgent = req.headers.get('user-agent') ?? null
 
     // Check for existing user
@@ -110,12 +111,14 @@ export async function POST(req: NextRequest) {
     const approveUrl = `${base}/api/admin/approve-user?token=${approveToken}`
     const rejectUrl  = `${base}/api/admin/approve-user?token=${rejectToken}`
 
-    // Persist tokens for replay-prevention
+    // Persist hashed tokens for replay-prevention (raw JWTs never touch the DB)
     const sevenDays = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+    const approveHash = createHash('sha256').update(approveToken).digest('hex')
+    const rejectHash  = createHash('sha256').update(rejectToken).digest('hex')
     await prisma.adminToken.createMany({
       data: [
-        { token: approveToken, userId: user.id, expiresAt: sevenDays },
-        { token: rejectToken,  userId: user.id, expiresAt: sevenDays },
+        { token: approveHash, userId: user.id, expiresAt: sevenDays },
+        { token: rejectHash,  userId: user.id, expiresAt: sevenDays },
       ],
     })
 

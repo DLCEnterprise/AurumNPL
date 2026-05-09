@@ -1,0 +1,20 @@
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    groups:
+      dev-dependencies:
+        dependency-type: development
+      production-dependencies:
+        dependency-type: production
+    ignore:
+      - dependency-name: xlsx
+        reason: Intentionally pinned pending exceljs migration
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly

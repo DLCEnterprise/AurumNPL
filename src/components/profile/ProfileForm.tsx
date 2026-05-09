@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { signOut } from 'next-auth/react'
 import { useToast } from '@/components/ui/Toast'
 import { Spinner } from '@/components/ui/Skeleton'
 
@@ -278,8 +279,9 @@ export function ProfileForm({ user }: { user: User }) {
     const data = await res.json()
 
     if (res.ok && data.success) {
-      toast.success('Password changed successfully.')
+      toast.success('Password changed. Signing you out for security…')
       setCurrentPw(''); setNewPw(''); setConfirmPw('')
+      setTimeout(() => signOut({ callbackUrl: '/signin' }), 1500)
     } else {
       toast.error(data.error ?? 'Failed to change password.')
     }

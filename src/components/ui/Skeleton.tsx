@@ -50,6 +50,8 @@ export function Skeleton({
 export function ListingCardSkeleton() {
   return (
     <div
+      role="status"
+      aria-label="Loading listing"
       className="glass-card"
       style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '16px' }}
     >
@@ -93,7 +95,7 @@ export function ListingsGridSkeleton({ count = 4 }: { count?: number }) {
 /** Skeleton for the dashboard stats row */
 export function DashboardStatsSkeleton() {
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '40px' }}>
+    <div role="status" aria-label="Loading dashboard statistics" style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px', marginBottom: '40px' }}>
       {[...Array(4)].map((_, i) => (
         <div key={i} className="stat-card glass-card" style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
           <Skeleton width="60%" height="11px" />
@@ -108,7 +110,7 @@ export function DashboardStatsSkeleton() {
 /** Skeleton for conversation list item */
 export function ConversationSkeleton() {
   return (
-    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 20px', borderBottom: '1px solid var(--border)' }}>
+    <div role="status" aria-label="Loading conversation" style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '14px 20px', borderBottom: '1px solid var(--border)' }}>
       <Skeleton width="38px" height="38px" borderRadius="50%" style={{ flexShrink: 0 }} />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '6px' }}>
         <Skeleton width="60%" height="14px" />

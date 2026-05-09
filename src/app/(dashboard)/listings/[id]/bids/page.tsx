@@ -157,17 +157,51 @@ export default async function BidsPage({ params }: { params: Promise<{ id: strin
                       </div>
                     )}
 
-                    {/* Counter offer details */}
+                    {/* Counter offer — show full original → counter progression */}
                     {bid.counterAmount != null && (
-                      <div style={{ marginTop: '12px', padding: '12px 14px', background: 'rgba(251,146,60,0.06)', border: '1px solid rgba(251,146,60,0.2)', borderRadius: '8px' }}>
-                        <div style={{ fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#fb923c', marginBottom: '6px' }}>Counter Offer</div>
-                        <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 500, color: '#fb923c', marginBottom: bid.counterNote ? '6px' : '0' }}>
-                          {formatCurrency(bid.counterAmount)}
+                      <div style={{ marginTop: '12px', padding: '14px 16px', background: 'rgba(251,146,60,0.06)', border: '1px solid rgba(251,146,60,0.2)', borderRadius: '8px' }}>
+                        <div style={{ fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#fb923c', marginBottom: '10px' }}>
+                          Counter Offer · {timeAgo(bid.updatedAt)}
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginBottom: bid.counterNote ? '10px' : '0' }}>
+                          <div>
+                            <div style={{ fontSize: '0.65rem', color: 'var(--text-muted)', marginBottom: '2px' }}>Original</div>
+                            <div style={{ fontFamily: 'var(--font-display)', fontSize: '1rem', color: 'var(--text-muted)', textDecoration: 'line-through' }}>
+                              {formatCurrency(bid.amount)}
+                            </div>
+                          </div>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#fb923c" strokeWidth="2" style={{ flexShrink: 0 }}>
+                            <path d="M5 12h14M13 6l6 6-6 6" />
+                          </svg>
+                          <div>
+                            <div style={{ fontSize: '0.65rem', color: '#fb923c', marginBottom: '2px' }}>Counter</div>
+                            <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.15rem', fontWeight: 500, color: '#fb923c' }}>
+                              {formatCurrency(bid.counterAmount)}
+                            </div>
+                          </div>
+                          {bid.counterAmount !== bid.amount && (
+                            <div style={{ marginLeft: 'auto' }}>
+                              <span style={{
+                                fontSize: '0.72rem', padding: '3px 8px', borderRadius: '6px', fontWeight: 600,
+                                background: bid.counterAmount > bid.amount ? 'rgba(34,197,94,0.1)' : 'rgba(239,68,68,0.1)',
+                                color: bid.counterAmount > bid.amount ? '#4ade80' : '#f87171',
+                                border: `1px solid ${bid.counterAmount > bid.amount ? 'rgba(34,197,94,0.2)' : 'rgba(239,68,68,0.2)'}`,
+                              }}>
+                                {bid.counterAmount > bid.amount ? '+' : ''}
+                                {formatCurrency(bid.counterAmount - bid.amount)}
+                              </span>
+                            </div>
+                          )}
                         </div>
                         {bid.counterNote && (
                           <p style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.7, margin: 0 }}>
                             {bid.counterNote}
                           </p>
+                        )}
+                        {bid.status === 'COUNTERED' && (
+                          <div style={{ marginTop: '10px', fontSize: '0.75rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                            Awaiting buyer response
+                          </div>
                         )}
                       </div>
                     )}
