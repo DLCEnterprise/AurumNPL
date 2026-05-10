@@ -222,6 +222,7 @@ export function MessagingApp({ userId, initialConvoId }: Props) {
           </svg>
           <input
             type="text"
+            aria-label="Search conversations"
             placeholder="Search conversations…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -239,8 +240,13 @@ export function MessagingApp({ userId, initialConvoId }: Props) {
             return (
               <div
                 key={convo.id}
+                role="button"
+                tabIndex={0}
                 className={`messaging__conversation${activeId === convo.id ? ' active' : ''}`}
                 onClick={() => setActiveId(convo.id)}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); setActiveId(convo.id) } }}
+                aria-label={`${name}${(convo.unreadCount ?? 0) > 0 ? `, ${convo.unreadCount} unread` : ''}`}
+                aria-pressed={activeId === convo.id}
               >
                 <div className="messaging__avatar">{getInitials(name)}</div>
                 <div className="messaging__convo-info">
@@ -285,7 +291,7 @@ export function MessagingApp({ userId, initialConvoId }: Props) {
               </div>
             </div>
             <div className="messaging__chat-actions">
-              <button title="More options">
+              <button aria-label="More options" title="More options">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                   <circle cx="12" cy="12" r="1" /><circle cx="12" cy="5" r="1" /><circle cx="12" cy="19" r="1" />
                 </svg>
@@ -328,6 +334,7 @@ export function MessagingApp({ userId, initialConvoId }: Props) {
             />
             <button
               className="messaging__send-btn"
+              aria-label="Send message"
               disabled={sending || !input.trim()}
               onClick={sendMessage}
               title="Send"

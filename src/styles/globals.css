@@ -489,7 +489,7 @@ img { max-width: 100%; display: block; }
 .about__card h3 {
   font-family: var(--font-display);
   font-size: 1.5rem;
-  font-weight: 500;
+  font-weight: 600;
   margin-bottom: 12px;
 }
 .about__card p {
@@ -529,7 +529,7 @@ img { max-width: 100%; display: block; }
 .feature-card__title {
   font-family: var(--font-display);
   font-size: 1.35rem;
-  font-weight: 500;
+  font-weight: 600;
   margin-bottom: 10px;
 }
 .feature-card__desc {
@@ -958,7 +958,7 @@ img { max-width: 100%; display: block; }
 .cta__title {
   font-family: var(--font-display);
   font-size: clamp(2rem, 4vw, 3.2rem);
-  font-weight: 400;
+  font-weight: 600;
   line-height: 1.2;
   margin: 14px 0 16px;
 }
@@ -1842,16 +1842,13 @@ a {
 
 /* Respect reduced-motion preference */
 @media (prefers-reduced-motion: reduce) {
-  .page-enter,
-  .page-enter > * {
-    animation: none;
-  }
-  .glass-card,
-  .listing-card,
-  .btn,
-  .sidebar__link,
-  .mobile-bottom-nav__item {
-    transition: none !important;
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 

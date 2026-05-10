@@ -17,6 +17,7 @@
   "dependencies": {
     "@googlemaps/js-api-loader": "^2.0.2",
     "@prisma/client": "^5.22.0",
+    "@sentry/nextjs": "^10.52.0",
     "bcryptjs": "^2.4.3",
     "exceljs": "^4.4.0",
     "jose": "^5.9.6",

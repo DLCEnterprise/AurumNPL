@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next'
+import { withSentryConfig } from '@sentry/nextjs'
 
 // ─── Required environment variable validation ────────────────────────────────
 // Fail fast at boot rather than at runtime when a secret is missing.
@@ -49,7 +50,7 @@ const csp = [
   `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://maps.googleapis.com https://maps.gstatic.com`,
   `font-src 'self' https://fonts.gstatic.com`,
   `img-src 'self' data: blob: https://maps.googleapis.com https://maps.gstatic.com https://*.googleapis.com https://*.ggpht.com`,
-  `connect-src 'self' https://maps.googleapis.com https://maps.gstatic.com`,
+  `connect-src 'self' https://maps.googleapis.com https://maps.gstatic.com https://o*.ingest.sentry.io`,
   `frame-ancestors 'none'`,
   `base-uri 'self'`,
   `form-action 'self'`,
@@ -95,4 +96,11 @@ const nextConfig: NextConfig = {
   },
 }
 
-export default nextConfig
+export default withSentryConfig(nextConfig, {
+  // Suppress output when SENTRY_AUTH_TOKEN is absent (no source map upload)
+  silent: !process.env.SENTRY_AUTH_TOKEN,
+  // Upload source maps only when SENTRY_AUTH_TOKEN is present
+  sourcemaps: {
+    disable: !process.env.SENTRY_AUTH_TOKEN,
+  },
+})
