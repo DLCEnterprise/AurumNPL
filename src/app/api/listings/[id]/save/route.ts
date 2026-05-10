@@ -12,6 +12,10 @@ export async function POST(_req: NextRequest, { params: paramsPromise }: Params)
   if (!session || session.user.approvalStatus !== 'APPROVED') {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
   }
+  const { role } = session.user
+  if (role !== 'BUYER' && role !== 'SELLER_BUYER' && role !== 'ADMIN') {
+    return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 })
+  }
 
   await prisma.savedListing.upsert({
     where: { userId_listingId: { userId: session.user.id, listingId } },
@@ -29,6 +33,10 @@ export async function DELETE(_req: NextRequest, { params: paramsPromise }: Param
   const session = await auth()
   if (!session || session.user.approvalStatus !== 'APPROVED') {
     return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 })
+  }
+  const { role } = session.user
+  if (role !== 'BUYER' && role !== 'SELLER_BUYER' && role !== 'ADMIN') {
+    return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 })
   }
 
   await prisma.savedListing.deleteMany({
