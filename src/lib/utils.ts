@@ -1,4 +1,5 @@
 import { SignJWT, jwtVerify } from 'jose'
+import { randomBytes } from 'crypto'
 
 function requireAdminSecret(): Uint8Array {
   const secret = process.env.ADMIN_SECRET
@@ -74,9 +75,8 @@ export function formatCurrency(amount: number): string {
   return `$${amount.toLocaleString()}`
 }
 
-/** Simple random nonce for token replay prevention */
 export function generateNonce(): string {
-  return Math.random().toString(36).slice(2) + Date.now().toString(36)
+  return randomBytes(32).toString('hex')
 }
 
 /** Initials from a name or company string */
