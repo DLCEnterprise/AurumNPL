@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ui/Toast'
 
@@ -202,31 +203,41 @@ export function AdminUserEditor({ user: initial }: { user: User }) {
         </div>
 
         {/* Suspend reason input */}
-        {showSuspendInput && (
-          <div style={{ marginTop: '16px', padding: '16px', background: 'rgba(251,146,60,0.05)', border: '1px solid rgba(251,146,60,0.15)', borderRadius: '8px' }}>
-            <label style={{ display: 'block', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: '8px' }}>
-              Suspension reason (optional, admin-only)
-            </label>
-            <input
-              type="text"
-              className="form-input"
-              placeholder="e.g. Violated terms of service"
-              value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              maxLength={1000}
-              style={{ marginBottom: '10px' }}
-            />
-            <div style={{ display: 'flex', gap: '8px' }}>
-              <button className="btn btn--sm" onClick={handleSuspend} disabled={saving}
-                style={{ background: 'rgba(251,146,60,0.15)', color: '#fb923c', border: '1px solid rgba(251,146,60,0.3)' }}>
-                Confirm Suspend
-              </button>
-              <button className="btn btn--ghost btn--sm" onClick={() => setShowSuspendInput(false)}>
-                Cancel
-              </button>
-            </div>
-          </div>
-        )}
+        <AnimatePresence initial={false}>
+          {showSuspendInput && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 32, mass: 0.8 }}
+              style={{ overflow: 'hidden' }}
+            >
+              <div style={{ marginTop: '16px', padding: '16px', background: 'rgba(251,146,60,0.05)', border: '1px solid rgba(251,146,60,0.15)', borderRadius: '8px' }}>
+                <label style={{ display: 'block', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.06em', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                  Suspension reason (optional, admin-only)
+                </label>
+                <input
+                  type="text"
+                  className="form-input"
+                  placeholder="e.g. Violated terms of service"
+                  value={reason}
+                  onChange={(e) => setReason(e.target.value)}
+                  maxLength={1000}
+                  style={{ marginBottom: '10px' }}
+                />
+                <div style={{ display: 'flex', gap: '8px' }}>
+                  <button className="btn btn--sm" onClick={handleSuspend} disabled={saving}
+                    style={{ background: 'rgba(251,146,60,0.15)', color: '#fb923c', border: '1px solid rgba(251,146,60,0.3)' }}>
+                    Confirm Suspend
+                  </button>
+                  <button className="btn btn--ghost btn--sm" onClick={() => setShowSuspendInput(false)}>
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Show suspension info if suspended */}
         {status === 'SUSPENDED' && suspendedAt && (

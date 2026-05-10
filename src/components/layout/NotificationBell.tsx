@@ -1,6 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
@@ -134,9 +135,14 @@ export function NotificationBell() {
       </button>
 
       {/* Dropdown */}
-      {open && (
-        <div
+      <AnimatePresence>
+        {open && (
+        <motion.div
           className="notification-dropdown"
+          initial={{ opacity: 0, y: -6, scale: 0.97 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -4, scale: 0.98 }}
+          transition={{ type: 'spring', stiffness: 420, damping: 28 }}
           style={{
             position: 'absolute',
             top: 'calc(100% + 8px)',
@@ -150,6 +156,7 @@ export function NotificationBell() {
             WebkitBackdropFilter: 'blur(20px)',
             zIndex: 1000,
             overflow: 'hidden',
+            transformOrigin: 'top right',
           }}
         >
           {/* Header */}
@@ -239,8 +246,9 @@ export function NotificationBell() {
               View all notifications →
             </Link>
           </div>
-        </div>
-      )}
+        </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

@@ -2,6 +2,7 @@
 
 import { useRouter, usePathname } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import type { AssetType, ListingStatus, LienPosition } from '@prisma/client'
 import { usePreferences } from '@/lib/preferences'
 
@@ -469,9 +470,14 @@ export function ListingsFilters({
             Saved Searches
           </button>
 
-          {savedSearchesOpen && (
-            <div
+          <AnimatePresence>
+            {savedSearchesOpen && (
+            <motion.div
               className="glass-card"
+              initial={{ opacity: 0, y: -6, scale: 0.97 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={{ opacity: 0, y: -4, scale: 0.98 }}
+              transition={{ type: 'spring', stiffness: 420, damping: 28 }}
               style={{
                 position: 'absolute',
                 top: 'calc(100% + 6px)',
@@ -480,6 +486,7 @@ export function ListingsFilters({
                 zIndex: 50,
                 padding: '8px 0',
                 border: '1px solid rgba(212,168,70,0.2)',
+                transformOrigin: 'top left',
               }}
             >
               {loadingSaved ? (
@@ -526,13 +533,22 @@ export function ListingsFilters({
                   </div>
                 ))
               )}
-            </div>
-          )}
+            </motion.div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
 
       {/* Advanced filters panel */}
-      {advancedOpen && (
+      <AnimatePresence initial={false}>
+        {advancedOpen && (
+        <motion.div
+          initial={{ height: 0, opacity: 0 }}
+          animate={{ height: 'auto', opacity: 1 }}
+          exit={{ height: 0, opacity: 0 }}
+          transition={{ type: 'spring', stiffness: 380, damping: 32, mass: 0.85 }}
+          style={{ overflow: 'hidden' }}
+        >
         <div
           className="glass-card"
           style={{ padding: '16px 20px', display: 'flex', flexWrap: 'wrap', gap: '20px', alignItems: 'flex-end' }}
@@ -601,7 +617,9 @@ export function ListingsFilters({
             </select>
           </div>
         </div>
-      )}
+        </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* Save Search inline modal */}
       {saveModalOpen && (

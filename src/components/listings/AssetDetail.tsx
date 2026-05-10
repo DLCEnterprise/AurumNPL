@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
 import type { Asset } from '@prisma/client'
 import { StreetViewPanorama } from './StreetViewPanorama'
 
@@ -95,12 +96,22 @@ function CollapsibleSection({
           <polyline points="6 9 12 15 18 9" />
         </svg>
       </button>
-      {open && (
-        <div style={{ padding: '0 24px 24px' }}>
-          <div style={{ height: '1px', background: 'var(--border)', marginBottom: '20px' }} />
-          {children}
-        </div>
-      )}
+      <AnimatePresence initial={false}>
+        {open && (
+          <motion.div
+            initial={{ height: 0, opacity: 0 }}
+            animate={{ height: 'auto', opacity: 1 }}
+            exit={{ height: 0, opacity: 0 }}
+            transition={{ type: 'spring', stiffness: 380, damping: 32, mass: 0.85 }}
+            style={{ overflow: 'hidden' }}
+          >
+            <div style={{ padding: '0 24px 24px' }}>
+              <div style={{ height: '1px', background: 'var(--border)', marginBottom: '20px' }} />
+              {children}
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }
