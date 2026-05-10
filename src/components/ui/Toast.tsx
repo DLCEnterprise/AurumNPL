@@ -9,6 +9,8 @@ import {
   useState,
   type ReactNode,
 } from 'react'
+import { AnimatePresence, motion } from 'framer-motion'
+import { toastVariants } from '@/lib/motion'
 
 /* ── Types ──────────────────────────────────────────────────────────────── */
 
@@ -131,7 +133,6 @@ function Toaster({
     <div
       role="region"
       aria-live="polite"
-      className="toaster-container"
       style={{
         position: 'fixed',
         bottom: '24px',
@@ -143,57 +144,57 @@ function Toaster({
         pointerEvents: 'none',
       }}
     >
-      {toasts.map((t) => {
-        const c = COLORS[t.type]
-        return (
-          <div
-            key={t.id}
-            role="alert"
-            style={{
-              display: 'flex',
-              alignItems: 'flex-start',
-              gap: '10px',
-              padding: '12px 16px',
-              borderRadius: '10px',
-              background: c.bg,
-              border: `1px solid ${c.border}`,
-              backdropFilter: 'blur(12px)',
-              WebkitBackdropFilter: 'blur(12px)',
-              boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
-              minWidth: '280px',
-              maxWidth: '360px',
-              pointerEvents: 'all',
-              animation: 'toastIn 0.3s cubic-bezier(0.16,1,0.3,1)',
-            }}
-          >
-            <span style={{ color: c.icon, flexShrink: 0, marginTop: '1px' }}>
-              {ICONS[t.type]}
-            </span>
-            <span style={{ fontSize: '0.875rem', lineHeight: 1.5, flex: 1, color: 'var(--text-primary)' }}>
-              {t.message}
-            </span>
-            <button
-              onClick={() => onDismiss(t.id)}
+      <AnimatePresence mode="popLayout">
+        {toasts.map((t) => {
+          const c = COLORS[t.type]
+          return (
+            <motion.div
+              key={t.id}
+              variants={toastVariants}
+              initial="hidden"
+              animate="visible"
+              exit="exit"
+              layout
+              role="alert"
               style={{
-                background: 'none', border: 'none', padding: '2px',
-                color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0,
-                lineHeight: 1,
+                display: 'flex',
+                alignItems: 'flex-start',
+                gap: '10px',
+                padding: '12px 16px',
+                borderRadius: '10px',
+                background: c.bg,
+                border: `1px solid ${c.border}`,
+                backdropFilter: 'blur(12px)',
+                WebkitBackdropFilter: 'blur(12px)',
+                boxShadow: '0 4px 24px rgba(0,0,0,0.4)',
+                minWidth: '280px',
+                maxWidth: '360px',
+                pointerEvents: 'all',
               }}
-              aria-label="Dismiss"
             >
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                <path d="M18 6L6 18M6 6l12 12" />
-              </svg>
-            </button>
-          </div>
-        )
-      })}
-      <style>{`
-        @keyframes toastIn {
-          from { opacity: 0; transform: translateY(12px) scale(0.96); }
-          to   { opacity: 1; transform: translateY(0) scale(1); }
-        }
-      `}</style>
+              <span style={{ color: c.icon, flexShrink: 0, marginTop: '1px' }}>
+                {ICONS[t.type]}
+              </span>
+              <span style={{ fontSize: '0.875rem', lineHeight: 1.5, flex: 1, color: 'var(--text-primary)' }}>
+                {t.message}
+              </span>
+              <button
+                onClick={() => onDismiss(t.id)}
+                style={{
+                  background: 'none', border: 'none', padding: '2px',
+                  color: 'var(--text-muted)', cursor: 'pointer', flexShrink: 0,
+                  lineHeight: 1,
+                }}
+                aria-label="Dismiss"
+              >
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M18 6L6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </motion.div>
+          )
+        })}
+      </AnimatePresence>
     </div>
   )
 }

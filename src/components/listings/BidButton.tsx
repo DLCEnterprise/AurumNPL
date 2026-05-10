@@ -1,9 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useToast } from '@/components/ui/Toast'
 import { Spinner } from '@/components/ui/Skeleton'
+import { motion, useAnimationControls } from 'framer-motion'
+import { AnimatedModal } from '@/components/ui/AnimatedModal'
+import { successPopVariants } from '@/lib/motion'
 
 interface ExistingBid {
   id: string
@@ -38,49 +41,6 @@ function formatCurrencyLocal(n: number) {
   return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(n)
 }
 
-// Centered modal overlay
-function BidModal({ open, onClose, children }: { open: boolean; onClose: () => void; children: React.ReactNode }) {
-  useEffect(() => {
-    document.body.style.overflow = open ? 'hidden' : ''
-    return () => { document.body.style.overflow = '' }
-  }, [open])
-
-  if (!open) return null
-
-  return (
-    <>
-      {/* Backdrop */}
-      <div
-        onClick={onClose}
-        style={{
-          position: 'fixed', inset: 0, zIndex: 200,
-          background: 'rgba(0,0,0,0.65)',
-          backdropFilter: 'blur(3px)',
-        }}
-      />
-      {/* Panel */}
-      <div
-        style={{
-          position: 'fixed',
-          top: '50%', left: '50%',
-          transform: 'translate(-50%, -50%)',
-          zIndex: 201,
-          width: '90%', maxWidth: '520px',
-          maxHeight: '90vh',
-          background: 'var(--surface-1)',
-          border: '1px solid var(--border)',
-          borderRadius: 'var(--radius-lg)',
-          boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
-          display: 'flex', flexDirection: 'column',
-          overflowY: 'auto',
-        }}
-      >
-        {children}
-      </div>
-    </>
-  )
-}
-
 export function BidButton({ listingId, existingBid }: Props) {
   const router = useRouter()
   const toast  = useToast()
@@ -92,9 +52,19 @@ export function BidButton({ listingId, existingBid }: Props) {
   const [amountError,  setAmountError]  = useState('')
   const [confirmedBid, setConfirmedBid] = useState<{ amount: number; submittedAt: string } | null>(null)
 
+  // Animation controls for the shake-on-error effect
+  const shakeControls = useAnimationControls()
+
   const submit = async () => {
     const amt = parseFloat(amount)
-    if (!amt || amt <= 0) { setAmountError('Enter a valid bid amount.'); return }
+    if (!amt || amt <= 0) {
+      setAmountError('Enter a valid bid amount.')
+      shakeControls.start({
+        x: [0, -10, 10, -8, 8, -4, 4, 0],
+        transition: { duration: 0.45, ease: 'easeInOut' },
+      })
+      return
+    }
 
     setLoading(true)
     const res = await fetch(`/api/listings/${listingId}/bids`, {
@@ -148,26 +118,41 @@ export function BidButton({ listingId, existingBid }: Props) {
     router.refresh()
   }
 
-  // Optimistic confirmation shown immediately after submit (including after re-bid on a declined bid)
+  // Animated confirmation card shown after successful bid submission
   if (confirmedBid && (!existingBid || existingBid.status === 'REJECTED')) {
     return (
-      <div className="glass-card" style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '14px' }}>
-        <div style={{
-          width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
-          display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: 'rgba(52,211,153,0.12)', color: '#34d399',
-        }}>
+      <motion.div
+        variants={successPopVariants}
+        initial="hidden"
+        animate="visible"
+        className="glass-card"
+        style={{ padding: '16px 20px', display: 'flex', alignItems: 'center', gap: '14px' }}
+      >
+        <motion.div
+          initial={{ scale: 0, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ type: 'spring', stiffness: 600, damping: 22, delay: 0.1 }}
+          style={{
+            width: '36px', height: '36px', borderRadius: '50%', flexShrink: 0,
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'rgba(52,211,153,0.12)', color: '#34d399',
+          }}
+        >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
             <polyline points="20 6 9 17 4 12" />
           </svg>
-        </div>
-        <div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, x: -8 }}
+          animate={{ opacity: 1, x: 0 }}
+          transition={{ delay: 0.15, type: 'spring', stiffness: 380, damping: 28 }}
+        >
           <div style={{ fontSize: '0.78rem', fontWeight: 600, color: '#34d399', marginBottom: '2px' }}>Bid Submitted</div>
           <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>
             {formatCurrencyLocal(confirmedBid.amount)} · Pending seller review
           </div>
-        </div>
-      </div>
+        </motion.div>
+      </motion.div>
     )
   }
 
@@ -202,25 +187,33 @@ export function BidButton({ listingId, existingBid }: Props) {
           </div>
         )}
         <div style={{ display: 'flex', gap: '8px' }}>
-          <button className="btn btn--gold btn--sm" disabled={loading !== false} onClick={() => respondToCounter('accept-counter')}>
+          <motion.button
+            className="btn btn--gold btn--sm"
+            disabled={loading !== false}
+            onClick={() => respondToCounter('accept-counter')}
+            whileTap={{ scale: 0.96 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+          >
             {loading === 'accept-counter' && <Spinner size={13} color="#0a0a0a" />}
             Accept Counter
-          </button>
-          <button
+          </motion.button>
+          <motion.button
             className="btn btn--ghost btn--sm"
             disabled={loading !== false}
             onClick={() => respondToCounter('decline-counter')}
+            whileTap={{ scale: 0.96 }}
+            transition={{ type: 'spring', stiffness: 500, damping: 25 }}
             style={{ color: '#f87171', borderColor: 'rgba(248,113,113,0.2)' }}
           >
             {loading === 'decline-counter' && <Spinner size={13} />}
             Decline Counter
-          </button>
+          </motion.button>
         </div>
       </div>
     )
   }
 
-  // Show existing bid status (PENDING, ACCEPTED, WITHDRAWN — not REJECTED, which allows re-bid)
+  // Existing bid status (PENDING, ACCEPTED, WITHDRAWN)
   if (existingBid && existingBid.status !== 'REJECTED') {
     return (
       <div className="glass-card" style={{ padding: '10px 16px', display: 'inline-flex', alignItems: 'center', gap: '10px' }}>
@@ -239,19 +232,28 @@ export function BidButton({ listingId, existingBid }: Props) {
 
   const isRebid = existingBid?.status === 'REJECTED'
 
-  // Default: "Submit Bid" trigger button + slide-out drawer (also used for re-bid after decline)
   return (
     <>
-      <button className="btn btn--gold" onClick={() => { setOpen(true); setAmountError('') }}>
+      <motion.button
+        className="btn btn--gold"
+        onClick={() => { setOpen(true); setAmountError('') }}
+        whileTap={{ scale: 0.96 }}
+        transition={{ type: 'spring', stiffness: 500, damping: 25 }}
+      >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M12 5v14M5 12h14" />
         </svg>
         {isRebid ? 'Submit New Bid' : 'Submit Bid / LOI'}
-      </button>
+      </motion.button>
 
-      <BidModal open={open} onClose={() => setOpen(false)}>
-        {/* Drawer header */}
-        <div style={{ padding: '28px 28px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+      <AnimatedModal open={open} onClose={() => setOpen(false)} maxWidth="520px">
+        {/* Header */}
+        <div style={{
+          padding: '28px 28px 20px',
+          borderBottom: '1px solid var(--border)',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          flexShrink: 0,
+        }}>
           <div>
             <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.4rem', fontWeight: 400, margin: 0, lineHeight: 1.2 }}>
               Submit Bid / LOI
@@ -271,18 +273,17 @@ export function BidButton({ listingId, existingBid }: Props) {
           </button>
         </div>
 
-        {/* Drawer body */}
-        <div style={{ padding: '28px', flex: 1 }}>
+        {/* Scrollable body */}
+        <div style={{ padding: '28px', flex: 1, overflowY: 'auto' }}>
 
-          {/* Re-bid notice */}
           {isRebid && existingBid && (
             <div style={{ padding: '10px 14px', background: 'rgba(248,113,113,0.06)', border: '1px solid rgba(248,113,113,0.15)', borderRadius: 'var(--radius-sm)', marginBottom: '20px', fontSize: '0.8rem', color: 'var(--text-muted)', lineHeight: 1.5 }}>
               Your previous bid of <strong style={{ color: 'var(--text-secondary)' }}>{formatCurrencyLocal(existingBid.amount)}</strong> was declined. Submit a revised offer below.
             </div>
           )}
 
-          {/* Offer amount */}
-          <div style={{ marginBottom: '20px' }}>
+          {/* Offer amount with shake-on-error */}
+          <motion.div animate={shakeControls} style={{ marginBottom: '20px' }}>
             <label htmlFor="bid-amount" style={{ display: 'block', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '8px' }}>
               Offer Amount (USD) <span style={{ color: '#f87171' }}>*</span>
             </label>
@@ -306,9 +307,8 @@ export function BidButton({ listingId, existingBid }: Props) {
                 {amountError}
               </div>
             )}
-          </div>
+          </motion.div>
 
-          {/* Note rate */}
           <div style={{ marginBottom: '20px' }}>
             <label htmlFor="bid-note-rate" style={{ display: 'block', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '8px' }}>
               Note Rate (%) — optional
@@ -326,7 +326,6 @@ export function BidButton({ listingId, existingBid }: Props) {
             />
           </div>
 
-          {/* Message */}
           <div style={{ marginBottom: '28px' }}>
             <label htmlFor="bid-message" style={{ display: 'block', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '8px' }}>
               Message / Terms — optional
@@ -346,28 +345,28 @@ export function BidButton({ listingId, existingBid }: Props) {
             </div>
           </div>
 
-          {/* Disclaimer */}
           <div style={{ padding: '12px 14px', background: 'rgba(212,168,70,0.06)', border: '1px solid rgba(212,168,70,0.15)', borderRadius: 'var(--radius-sm)', marginBottom: '24px', fontSize: '0.78rem', color: 'var(--text-muted)', lineHeight: 1.6 }}>
             By submitting this bid you acknowledge that this is a letter of intent only. A binding agreement requires execution of a purchase and sale agreement.
           </div>
 
-          {/* Actions */}
           <div style={{ display: 'flex', gap: '10px' }}>
-            <button
+            <motion.button
               className="btn btn--gold"
               disabled={loading !== false || !amount}
               onClick={submit}
+              whileTap={{ scale: 0.96 }}
+              transition={{ type: 'spring', stiffness: 500, damping: 25 }}
               style={{ flex: 1 }}
             >
               {loading === true && <Spinner size={15} color="#0a0a0a" />}
               {loading === true ? 'Submitting…' : 'Submit Bid'}
-            </button>
+            </motion.button>
             <button className="btn btn--ghost" onClick={() => setOpen(false)}>
               Cancel
             </button>
           </div>
         </div>
-      </BidModal>
+      </AnimatedModal>
     </>
   )
 }
