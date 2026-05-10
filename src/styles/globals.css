@@ -2015,6 +2015,29 @@ html[data-nav="topbar"] .dashboard-main   { max-width: 1200px; margin: 0 auto; p
   }
 }
 
+/* ── Listing detail two-column layout ───────────────────── */
+.listing-detail-layout {
+  display: grid;
+  grid-template-columns: 1fr 320px;
+  gap: 24px;
+  align-items: start;
+}
+.listing-detail-sticky {
+  position: sticky;
+  top: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+@media (max-width: 900px) {
+  .listing-detail-layout {
+    grid-template-columns: 1fr;
+  }
+  .listing-detail-sticky {
+    position: static;
+  }
+}
+
 /* Respect reduced-motion preference */
 @media (prefers-reduced-motion: reduce) {
   *,
