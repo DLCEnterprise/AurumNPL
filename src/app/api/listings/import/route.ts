@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import * as XLSX from 'xlsx'
+import ExcelJS from 'exceljs'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { parseListingSheet } from '@/lib/excel-parser'
@@ -24,8 +24,8 @@ export async function POST(req: NextRequest) {
   }
 
   const fileName = file.name.toLowerCase()
-  if (!fileName.endsWith('.xlsx') && !fileName.endsWith('.xls')) {
-    return NextResponse.json({ success: false, error: 'Only .xlsx and .xls files are accepted.' }, { status: 400 })
+  if (!fileName.endsWith('.xlsx')) {
+    return NextResponse.json({ success: false, error: 'Only .xlsx files are accepted.' }, { status: 400 })
   }
 
   if (file.size > MAX_FILE_SIZE) {
@@ -34,9 +34,11 @@ export async function POST(req: NextRequest) {
 
   // Parse workbook
   const buffer = Buffer.from(await file.arrayBuffer())
-  let wb: XLSX.WorkBook
+  let wb: ExcelJS.Workbook
   try {
-    wb = XLSX.read(buffer, { type: 'buffer', cellDates: true })
+    wb = new ExcelJS.Workbook()
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    await wb.xlsx.load(buffer as any)
   } catch {
     return NextResponse.json({ success: false, error: 'Could not parse the Excel file. Please ensure it is a valid .xlsx file.' }, { status: 422 })
   }
