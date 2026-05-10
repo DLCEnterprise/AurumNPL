@@ -51,9 +51,12 @@ export function ContactSellerButton({ sellerId, listingId, listingTitle }: Props
     )
   }
 
+  const MAX = 1000
+  const remaining = MAX - message.length
+
   return (
-    <div className="glass-card" style={{ padding: '20px', width: '100%', maxWidth: '500px' }}>
-      <label htmlFor="contact-seller-message" style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 400, marginBottom: '12px' }}>
+    <div className="glass-card" style={{ padding: '20px', minWidth: '280px', maxWidth: '500px' }}>
+      <label htmlFor="contact-seller-message" style={{ display: 'block', fontFamily: 'var(--font-display)', fontSize: '1.1rem', fontWeight: 600, marginBottom: '12px' }}>
         Send a message
       </label>
       <textarea
@@ -61,10 +64,13 @@ export function ContactSellerButton({ sellerId, listingId, listingTitle }: Props
         className="form-input"
         rows={4}
         value={message}
-        onChange={(e) => setMessage(e.target.value)}
-        style={{ resize: 'vertical', marginBottom: '12px' }}
+        onChange={(e) => setMessage(e.target.value.slice(0, MAX))}
+        style={{ resize: 'vertical', marginBottom: '6px' }}
         aria-required="true"
       />
+      <div style={{ textAlign: 'right', fontSize: '0.72rem', color: remaining < 100 ? 'var(--color-warning, #fbbf24)' : 'var(--text-muted)', marginBottom: '12px' }}>
+        {remaining} characters remaining
+      </div>
       <div style={{ display: 'flex', gap: '10px' }}>
         <button className="btn btn--gold" disabled={loading || !message.trim()} onClick={send}>
           {loading && <Spinner size={15} color="#0a0a0a" />}

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useToast } from '@/components/ui/Toast'
 
 interface Props {
   listingId: string
@@ -8,21 +9,24 @@ interface Props {
 }
 
 export function SaveListingButton({ listingId, initialSaved }: Props) {
+  const toast = useToast()
   const [saved, setSaved] = useState(initialSaved)
   const [loading, setLoading] = useState(false)
 
   const toggle = async () => {
     if (loading) return
     setLoading(true)
-    // Optimistic update
-    setSaved((prev) => !prev)
+    const wasSaved = saved
+    setSaved(!wasSaved)
     try {
-      await fetch(`/api/listings/${listingId}/save`, {
-        method: saved ? 'DELETE' : 'POST',
+      const res = await fetch(`/api/listings/${listingId}/save`, {
+        method: wasSaved ? 'DELETE' : 'POST',
       })
+      if (!res.ok) throw new Error()
+      toast.success(wasSaved ? 'Removed from watchlist.' : 'Saved to watchlist.')
     } catch {
-      // Revert on error
-      setSaved((prev) => !prev)
+      setSaved(wasSaved)
+      toast.error('Could not update watchlist. Please try again.')
     } finally {
       setLoading(false)
     }

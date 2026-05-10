@@ -39,11 +39,25 @@ const STATUS_LABEL: Partial<Record<ListingStatus, string>> = {
 }
 
 const BID_STATUS_COLOR: Record<string, string> = {
-  PENDING:   'rgba(212,168,70,0.8)',
+  PENDING:   '#d4a846',
   ACCEPTED:  '#34d399',
   REJECTED:  '#f87171',
-  WITHDRAWN: 'var(--text-muted)',
+  WITHDRAWN: '#71717a',
   COUNTERED: '#fb923c',
+}
+const BID_STATUS_BG: Record<string, string> = {
+  PENDING:   'rgba(212,168,70,0.1)',
+  ACCEPTED:  'rgba(52,211,153,0.1)',
+  REJECTED:  'rgba(248,113,113,0.1)',
+  WITHDRAWN: 'rgba(255,255,255,0.04)',
+  COUNTERED: 'rgba(251,146,60,0.1)',
+}
+const BID_STATUS_BORDER: Record<string, string> = {
+  PENDING:   'rgba(212,168,70,0.25)',
+  ACCEPTED:  'rgba(52,211,153,0.25)',
+  REJECTED:  'rgba(248,113,113,0.25)',
+  WITHDRAWN: 'rgba(255,255,255,0.06)',
+  COUNTERED: 'rgba(251,146,60,0.25)',
 }
 const BID_STATUS_LABEL: Record<string, string> = {
   PENDING:   'Pending',
@@ -160,7 +174,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
             </span>
           )}
         </div>
-        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2.2rem', fontWeight: 400, marginBottom: '8px', lineHeight: 1.2 }}>
+        <h1 style={{ fontFamily: 'var(--font-display)', fontSize: '2.2rem', fontWeight: 600, marginBottom: '8px', lineHeight: 1.2 }}>
           {listing.title}
         </h1>
         {asset?.propertyStreet && (
@@ -199,6 +213,22 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
             </span>
           )}
         </div>
+      </div>
+
+      {/* Key metrics strip */}
+      <div style={{ display: 'flex', gap: '0', marginBottom: '20px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-light)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
+        {[
+          { label: 'Unpaid Balance', value: formatCurrency(listing.unpaidBalance) },
+          ...(((listing as { askingPrice?: number | null }).askingPrice) ? [{ label: 'Asking Price', value: formatCurrency((listing as { askingPrice?: number | null }).askingPrice!) }] : []),
+          { label: 'Loan Count', value: listing.loanCount.toLocaleString() },
+          ...(listing.lienPosition ? [{ label: 'Lien Position', value: listing.lienPosition === 'SENIOR' ? '1st Mortgage' : '2nd Mortgage' }] : []),
+          ...(listing.avgDelinquency ? [{ label: 'Avg. Delinquency', value: `${listing.avgDelinquency} mo.` }] : []),
+        ].map(({ label, value }, i, arr) => (
+          <div key={label} style={{ flex: 1, padding: '14px 20px', borderRight: i < arr.length - 1 ? '1px solid var(--border-light)' : 'none', minWidth: '100px' }}>
+            <div style={{ fontSize: '0.63rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '4px' }}>{label}</div>
+            <div style={{ fontSize: '1rem', fontFamily: 'var(--font-display)', fontWeight: 500, background: 'var(--gold-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent' }}>{value}</div>
+          </div>
+        ))}
       </div>
 
       {/* Actions row */}
@@ -268,7 +298,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
       {(isOwner || isAdmin) && bidHistory.length > 0 && (
         <div className="glass-card" style={{ padding: '24px', marginBottom: '20px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-            <h3 style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', margin: 0 }}>
+            <h3 style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gold-400)', margin: 0 }}>
               Bid Activity
             </h3>
             {bidCount > 10 && (
@@ -308,7 +338,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                 </div>
 
                 {/* Amount */}
-                <div style={{ fontSize: '0.88rem', fontFamily: 'var(--font-display)', fontWeight: 500, color: 'var(--text-primary)', flexShrink: 0 }}>
+                <div style={{ fontSize: '0.88rem', fontFamily: 'var(--font-display)', fontWeight: 500, color: 'var(--text-primary)', flexShrink: 0, fontVariantNumeric: 'tabular-nums', marginLeft: 'auto' }}>
                   {formatCurrency(bid.amount)}
                 </div>
 
@@ -317,8 +347,8 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   fontSize: '0.68rem',
                   padding: '2px 8px',
                   borderRadius: '100px',
-                  background: 'rgba(255,255,255,0.04)',
-                  border: '1px solid rgba(255,255,255,0.06)',
+                  background: BID_STATUS_BG[bid.status] ?? 'rgba(255,255,255,0.04)',
+                  border: `1px solid ${BID_STATUS_BORDER[bid.status] ?? 'rgba(255,255,255,0.06)'}`,
                   color: BID_STATUS_COLOR[bid.status] ?? 'var(--text-muted)',
                   flexShrink: 0,
                 }}>
@@ -368,8 +398,8 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
       {asset && <AssetDetail asset={asset} />}
 
       {/* Seller info */}
-      <div className="glass-card" style={{ padding: '28px', marginTop: asset ? '0' : '0', marginBottom: '8px' }}>
-        <h3 style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '16px' }}>Seller</h3>
+      <div className="glass-card" style={{ padding: '28px', marginBottom: '20px' }}>
+        <h3 style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--gold-400)', marginBottom: '16px' }}>Seller</h3>
         <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
           <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'rgba(212,168,70,0.12)', border: '1px solid rgba(212,168,70,0.2)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.85rem', fontWeight: 600, color: 'var(--gold-300)', flexShrink: 0 }}>
             {(listing.seller.company ?? listing.seller.name ?? '?').slice(0, 2).toUpperCase()}

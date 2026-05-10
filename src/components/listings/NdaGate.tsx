@@ -81,13 +81,33 @@ export function NdaGate({ listingId, dropboxLink }: NdaGateProps) {
 
   return (
     <div className="glass-card" style={{ padding: '24px' }}>
-      <h3 style={{ fontSize: '1rem', fontWeight: 500, marginBottom: '8px' }}>
+      <h3 style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '4px' }}>
         Collateral Documents
       </h3>
-      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginBottom: '20px', lineHeight: 1.6 }}>
-        To access the full collateral package for this listing, you must acknowledge our standard Non-Disclosure Agreement.
-        By signing, you agree to keep all materials confidential and use them solely for evaluating this transaction.
+      <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', marginBottom: '20px', lineHeight: 1.6 }}>
+        Sign the NDA below to unlock immediate access to the full collateral package for this listing.
       </p>
+
+      {/* 3-step indicator */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0', marginBottom: '24px' }}>
+        {[
+          { n: '1', label: 'Review NDA' },
+          { n: '2', label: 'Acknowledge' },
+          { n: '3', label: 'Access Documents' },
+        ].map((step, i) => (
+          <div key={step.n} style={{ display: 'flex', alignItems: 'center', flex: 1 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px', flex: 1 }}>
+              <div style={{
+                width: '24px', height: '24px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontSize: '0.7rem', fontWeight: 700,
+                background: 'rgba(212,168,70,0.12)', border: '1px solid rgba(212,168,70,0.3)', color: 'var(--gold-400)',
+              }}>{step.n}</div>
+              <span style={{ fontSize: '0.65rem', color: 'var(--text-muted)', textAlign: 'center', whiteSpace: 'nowrap' }}>{step.label}</span>
+            </div>
+            {i < 2 && <div style={{ height: '1px', flex: 1, background: 'rgba(212,168,70,0.2)', margin: '0 4px 18px' }} />}
+          </div>
+        ))}
+      </div>
 
       <div
         style={{
@@ -99,7 +119,7 @@ export function NdaGate({ listingId, dropboxLink }: NdaGateProps) {
           fontSize: '0.78rem',
           color: 'var(--text-muted)',
           lineHeight: 1.7,
-          maxHeight: '140px',
+          maxHeight: '160px',
           overflowY: 'auto',
         }}
       >
@@ -118,20 +138,26 @@ export function NdaGate({ listingId, dropboxLink }: NdaGateProps) {
           checked={agreed}
           onChange={e => setAgreed(e.target.checked)}
           style={{ marginTop: '2px', accentColor: 'var(--gold-400)' }}
+          aria-label="I agree to the Non-Disclosure Agreement"
         />
         <span style={{ fontSize: '0.82rem', color: 'var(--text-secondary)', lineHeight: 1.5 }}>
           I have read and agree to the Non-Disclosure Agreement above. I understand this is a legally binding commitment.
         </span>
       </label>
 
-      <button
-        onClick={handleSign}
-        disabled={!agreed || signing}
-        className="btn btn--gold btn--sm"
-        style={{ opacity: !agreed || signing ? 0.5 : 1 }}
-      >
-        {signing ? 'Signing...' : 'Sign NDA & Access Documents'}
-      </button>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
+        <button
+          onClick={handleSign}
+          disabled={!agreed || signing}
+          className="btn btn--gold btn--sm"
+          style={{ opacity: !agreed || signing ? 0.5 : 1 }}
+        >
+          {signing ? 'Signing...' : 'Sign NDA & Access Documents'}
+        </button>
+        <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+          Access is granted immediately after signing.
+        </span>
+      </div>
     </div>
   )
 }
