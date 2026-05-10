@@ -202,7 +202,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
       </div>
 
       {/* Actions row */}
-      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '28px' }}>
+      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '28px', alignItems: 'flex-start' }}>
         {!isOwner && (
           <ContactSellerButton sellerId={listing.seller.id} listingId={listing.id} listingTitle={listing.title} />
         )}

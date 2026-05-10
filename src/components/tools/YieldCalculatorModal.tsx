@@ -51,24 +51,22 @@ export function YieldCalculatorModal({ prefill }: Props) {
               width: '100%',
               maxWidth: '580px',
               maxHeight: '90vh',
-              overflowY: 'auto',
+              display: 'flex',
+              flexDirection: 'column',
               background: 'var(--surface-1)',
               border: '1px solid var(--border)',
               borderRadius: 'var(--radius-lg)',
               boxShadow: '0 24px 80px rgba(0,0,0,0.5)',
             }}
           >
-            {/* Header */}
+            {/* Header — fixed, never scrolls */}
             <div style={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'space-between',
               padding: '20px 24px',
               borderBottom: '1px solid var(--border)',
-              position: 'sticky',
-              top: 0,
-              background: 'var(--surface-1)',
-              zIndex: 1,
+              flexShrink: 0,
             }}>
               <div>
                 <h2 style={{ fontFamily: 'var(--font-display)', fontSize: '1.3rem', fontWeight: 400, margin: 0, lineHeight: 1.2 }}>
@@ -89,8 +87,8 @@ export function YieldCalculatorModal({ prefill }: Props) {
               </button>
             </div>
 
-            {/* Calculator */}
-            <div style={{ padding: '24px' }}>
+            {/* Scrollable body */}
+            <div style={{ overflowY: 'auto', flex: 1, padding: '24px' }}>
               <YieldCalculator prefill={prefill} />
             </div>
           </div>
