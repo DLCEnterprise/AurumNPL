@@ -5,22 +5,32 @@ on:
     branches: [main]
   pull_request:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      url:
+        description: 'URL to audit (Vercel preview or production)'
+        required: false
+        type: string
+
+# Common env stubs — satisfy next.config.ts required-env check in CI.
+# These are not real secrets; the build never talks to these services.
+env:
+  DATABASE_URL: postgresql://postgres:postgres@localhost:5432/aurum_ci
+  NEXTAUTH_SECRET: ci-secret-not-real
+  NEXTAUTH_URL: http://localhost:3000
+  ADMIN_SECRET: ci-admin-secret-not-real
+  RESET_SECRET: ci-reset-secret-not-real
+  RESEND_API_KEY: re_ci_placeholder
+  ADMIN_EMAIL: admin@example.com
+  BASE_URL: http://localhost:3000
+  UPSTASH_REDIS_REST_URL: https://ci-placeholder.upstash.io
+  UPSTASH_REDIS_REST_TOKEN: ci-redis-token
 
 jobs:
+  # ── 1. Type safety ────────────────────────────────────────────────────────
   type-check:
     name: Type check
     runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/aurum_ci
-      NEXTAUTH_SECRET: ci-secret-not-real
-      NEXTAUTH_URL: http://localhost:3000
-      ADMIN_SECRET: ci-admin-secret-not-real
-      RESET_SECRET: ci-reset-secret-not-real
-      RESEND_API_KEY: re_ci_placeholder
-      ADMIN_EMAIL: admin@example.com
-      BASE_URL: http://localhost:3000
-      UPSTASH_REDIS_REST_URL: https://ci-placeholder.upstash.io
-      UPSTASH_REDIS_REST_TOKEN: ci-redis-token
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -31,20 +41,10 @@ jobs:
       - run: npx prisma generate
       - run: npx tsc --noEmit
 
+  # ── 2. Lint ───────────────────────────────────────────────────────────────
   lint:
     name: Lint
     runs-on: ubuntu-latest
-    env:
-      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/aurum_ci
-      NEXTAUTH_SECRET: ci-secret-not-real
-      NEXTAUTH_URL: http://localhost:3000
-      ADMIN_SECRET: ci-admin-secret-not-real
-      RESET_SECRET: ci-reset-secret-not-real
-      RESEND_API_KEY: re_ci_placeholder
-      ADMIN_EMAIL: admin@example.com
-      BASE_URL: http://localhost:3000
-      UPSTASH_REDIS_REST_URL: https://ci-placeholder.upstash.io
-      UPSTASH_REDIS_REST_TOKEN: ci-redis-token
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -55,6 +55,28 @@ jobs:
       - run: npx prisma generate
       - run: npx next lint
 
+  # ── 3. Unit tests ─────────────────────────────────────────────────────────
+  test:
+    name: Unit tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm test
+      - name: Upload coverage summary
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-summary
+          path: coverage/coverage-summary.json
+          if-no-files-found: ignore
+
+  # ── 4. Dependency audit ───────────────────────────────────────────────────
   audit:
     name: Dependency audit
     runs-on: ubuntu-latest
@@ -65,3 +87,26 @@ jobs:
           node-version: 20
           cache: npm
       - run: npm audit --audit-level=high
+
+  # ── 5. Lighthouse CI (manual + PR trigger against Vercel preview) ─────────
+  # Runs only when LHCI_URL is provided via workflow_dispatch or a repository
+  # secret named VERCEL_PREVIEW_URL is set. Skipped automatically otherwise.
+  lighthouse:
+    name: Lighthouse CI
+    runs-on: ubuntu-latest
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' && vars.LHCI_URL != '')
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: Run Lighthouse CI
+        run: npx @lhci/cli@0.14.x autorun
+        env:
+          LHCI_URL: ${{ inputs.url || vars.LHCI_URL }}
+          LHCI_TOKEN: ${{ secrets.LHCI_TOKEN }}
+          LHCI_GITHUB_APP_TOKEN: ${{ secrets.GITHUB_TOKEN }}
