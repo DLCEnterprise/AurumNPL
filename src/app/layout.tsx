@@ -2,6 +2,7 @@ import type { Metadata } from 'next'
 import '../styles/globals.css'
 import { ToastProvider } from '@/components/ui/Toast'
 import { ThemeProvider } from '@/components/providers/ThemeProvider'
+import { PreferencesProvider } from '@/lib/preferences'
 
 export const metadata: Metadata = {
   title: {
@@ -37,7 +38,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <a href="#main-content" className="skip-to-main">Skip to main content</a>
         <ThemeProvider>
-          <ToastProvider>{children}</ToastProvider>
+          <PreferencesProvider>
+            <ToastProvider>{children}</ToastProvider>
+          </PreferencesProvider>
         </ThemeProvider>
       </body>
     </html>

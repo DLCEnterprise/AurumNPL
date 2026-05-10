@@ -1818,6 +1818,181 @@ a {
   transition: color 0.18s ease, opacity 0.18s ease;
 }
 
+/* ═══════════════════════════════════════════════════════════
+   PREFERENCE SYSTEM — theme overrides, density, nav layout
+   Applied via data attributes on <html>
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Accent: Sapphire (institutional blue) ─────────────── */
+html[data-accent="sapphire"] {
+  --gold-300: #93c5fd;
+  --gold-400: #3b82f6;
+  --gold-500: #2563eb;
+  --gold-gradient: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 50%, #93c5fd 100%);
+  --gold-glow: rgba(59,130,246,0.12);
+  --border-accent: rgba(59,130,246,0.22);
+  --border-focus:  #3b82f6;
+  --text-accent:   #3b82f6;
+  --text-link:     #3b82f6;
+}
+
+/* ── Accent: Obsidian (monochrome silver) ──────────────── */
+html[data-accent="obsidian"] {
+  --gold-300: #e4e4e7;
+  --gold-400: #d4d4d8;
+  --gold-500: #a1a1aa;
+  --gold-gradient: linear-gradient(135deg, #71717a 0%, #d4d4d8 50%, #f4f4f5 100%);
+  --gold-glow: rgba(212,212,216,0.10);
+  --border-accent: rgba(212,212,216,0.20);
+  --border-focus:  #d4d4d8;
+  --text-accent:   #d4d4d8;
+  --text-link:     #e4e4e7;
+}
+
+/* ── Accent: Emerald (growth / returns) ────────────────── */
+html[data-accent="emerald"] {
+  --gold-300: #6ee7b7;
+  --gold-400: #34d399;
+  --gold-500: #10b981;
+  --gold-gradient: linear-gradient(135deg, #059669 0%, #34d399 50%, #6ee7b7 100%);
+  --gold-glow: rgba(52,211,153,0.10);
+  --border-accent: rgba(52,211,153,0.22);
+  --border-focus:  #34d399;
+  --text-accent:   #34d399;
+  --text-link:     #34d399;
+}
+
+/* ── Density: compact ──────────────────────────────────── */
+html[data-density="compact"] .dashboard-main { padding: 28px 28px; font-size: 0.91rem; }
+html[data-density="compact"] .sidebar { padding: 16px 0; }
+html[data-density="compact"] .sidebar__link { padding: 7px 12px; font-size: 0.8rem; gap: 8px; }
+html[data-density="compact"] .sidebar__label { font-size: 0.58rem; padding: 6px 12px 4px; }
+html[data-density="compact"] .glass-card { border-radius: var(--radius-sm); }
+
+/* ── Density: spacious ─────────────────────────────────── */
+html[data-density="spacious"] .dashboard-main { padding: 56px 64px; font-size: 1.04rem; }
+html[data-density="spacious"] .sidebar__link { padding: 12px 16px; font-size: 0.9rem; }
+html[data-density="spacious"] .glass-card { border-radius: var(--radius-xl); }
+
+/* ── Top-bar nav layout ────────────────────────────────── */
+html[data-nav="topbar"] .sidebar          { display: none; }
+html[data-nav="topbar"] .dashboard-layout { padding-left: 0; }
+html[data-nav="topbar"] .dashboard-main   { max-width: 1200px; margin: 0 auto; padding: 32px 24px; }
+
+/* ── Top nav items ─────────────────────────────────────── */
+.topnav__items {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex: 1;
+  padding: 0 24px;
+}
+.topnav__trigger {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 7px 14px;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--text-secondary);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+  white-space: nowrap;
+}
+.topnav__trigger:hover,
+.topnav__trigger.active { color: var(--text-primary); background: rgba(255,255,255,0.05); }
+.topnav__trigger.active { color: var(--gold-400); }
+.topnav__caret { opacity: 0.5; transition: transform 0.18s ease; }
+.topnav__trigger[data-open="true"] .topnav__caret { transform: rotate(180deg); }
+
+.topnav__dropdown {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  min-width: 200px;
+  background: var(--surface-panel);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 16px 48px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.03);
+  padding: 6px;
+  z-index: 200;
+}
+.topnav__dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: var(--radius-sm);
+  font-size: 0.875rem;
+  color: var(--text-secondary);
+  transition: color 0.13s ease, background 0.13s ease;
+}
+.topnav__dropdown-item:hover  { color: var(--text-primary); background: rgba(255,255,255,0.05); }
+.topnav__dropdown-item.active { color: var(--gold-400); background: rgba(212,168,70,0.06); }
+.topnav__dropdown-item svg    { opacity: 0.65; flex-shrink: 0; }
+.topnav__dropdown-item.active svg { opacity: 1; }
+.topnav__divider { height: 1px; background: var(--border-subtle); margin: 4px 6px; }
+
+/* ── Preferences panel ─────────────────────────────────── */
+.prefs-panel { display: flex; flex-direction: column; height: 100%; }
+.prefs-section { margin-bottom: 28px; }
+.prefs-section__label {
+  font-size: 0.62rem;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  margin-bottom: 12px;
+}
+.prefs-segment {
+  display: flex;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 3px;
+  gap: 2px;
+}
+.prefs-segment__btn {
+  flex: 1;
+  padding: 7px 10px;
+  border-radius: calc(var(--radius-sm) - 1px);
+  font-size: 0.78rem;
+  font-weight: 500;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: color 0.15s, background 0.15s;
+  white-space: nowrap;
+  text-align: center;
+}
+.prefs-segment__btn.active {
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+}
+
+/* Theme swatches */
+.prefs-swatches { display: flex; gap: 10px; flex-wrap: wrap; }
+.prefs-swatch {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  cursor: pointer;
+}
+.prefs-swatch__dot {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: 2px solid transparent;
+  transition: border-color 0.15s, transform 0.15s;
+}
+.prefs-swatch.active .prefs-swatch__dot { border-color: var(--text-primary); transform: scale(1.1); }
+.prefs-swatch__name { font-size: 0.65rem; color: var(--text-muted); letter-spacing: 0.04em; }
+
 /* ── Input focus — smooth border glow ────────────────────── */
 .form-input {
   transition: border-color 0.2s ease, box-shadow 0.2s ease,

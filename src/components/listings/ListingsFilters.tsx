@@ -3,6 +3,7 @@
 import { useRouter, usePathname } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import type { AssetType, ListingStatus, LienPosition } from '@prisma/client'
+import { usePreferences } from '@/lib/preferences'
 
 interface SavedSearch {
   id: string
@@ -75,6 +76,7 @@ export function ListingsFilters({
 }: Props) {
   const router = useRouter()
   const pathname = usePathname()
+  const { listingsView, set: setPrefs } = usePreferences()
 
   // ── Local state ────────────────────────────────────────────────────────────
   const [searchText, setSearchText] = useState(initialQ)
@@ -338,6 +340,38 @@ export function ListingsFilters({
         >
           Clear
         </button>
+
+        {/* View toggle */}
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: '2px', background: 'rgba(255,255,255,0.03)', border: '1px solid var(--border-subtle)', borderRadius: 'var(--radius-sm)', padding: '3px' }}>
+          {(['grid', 'list'] as const).map((v) => (
+            <button
+              key={v}
+              onClick={() => setPrefs('listingsView', v)}
+              title={v === 'grid' ? 'Grid view' : 'List view'}
+              style={{
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                padding: '5px 8px',
+                borderRadius: 'calc(var(--radius-sm) - 1px)',
+                background: listingsView === v ? 'var(--surface-raised)' : 'none',
+                border: 'none', cursor: 'pointer',
+                color: listingsView === v ? 'var(--text-primary)' : 'var(--text-muted)',
+                transition: 'all 0.15s',
+                boxShadow: listingsView === v ? '0 1px 4px rgba(0,0,0,0.3)' : 'none',
+              }}
+            >
+              {v === 'grid' ? (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/>
+                  <rect x="3" y="14" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/>
+                </svg>
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+                </svg>
+              )}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Active filter chips */}
