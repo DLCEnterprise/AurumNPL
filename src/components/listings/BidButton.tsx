@@ -47,7 +47,6 @@ export function BidButton({ listingId, existingBid }: Props) {
   const [open,         setOpen]         = useState(false)
   const [loading,      setLoading]      = useState<boolean | 'accept-counter' | 'decline-counter'>(false)
   const [amount,       setAmount]       = useState('')
-  const [noteRate,     setNoteRate]     = useState('')
   const [message,      setMessage]      = useState('')
   const [amountError,  setAmountError]  = useState('')
   const [confirmedBid, setConfirmedBid] = useState<{ amount: number; submittedAt: string } | null>(null)
@@ -71,9 +70,8 @@ export function BidButton({ listingId, existingBid }: Props) {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        amount:   amt,
-        noteRate: noteRate ? parseFloat(noteRate) : undefined,
-        message:  message || undefined,
+        amount:  amt,
+        message: message || undefined,
       }),
     })
     setLoading(false)
@@ -87,7 +85,6 @@ export function BidButton({ listingId, existingBid }: Props) {
     toast.success('Bid submitted successfully.')
     setOpen(false)
     setAmount('')
-    setNoteRate('')
     setMessage('')
     setConfirmedBid({ amount: amt, submittedAt: new Date().toISOString() })
     router.refresh()
@@ -308,23 +305,6 @@ export function BidButton({ listingId, existingBid }: Props) {
               </div>
             )}
           </motion.div>
-
-          <div style={{ marginBottom: '20px' }}>
-            <label htmlFor="bid-note-rate" style={{ display: 'block', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '8px' }}>
-              Note Rate (%) — optional
-            </label>
-            <input
-              id="bid-note-rate"
-              type="number"
-              className="form-input"
-              placeholder="e.g. 5.5"
-              value={noteRate}
-              onChange={(e) => setNoteRate(e.target.value)}
-              min="0"
-              max="100"
-              step="0.01"
-            />
-          </div>
 
           <div style={{ marginBottom: '28px' }}>
             <label htmlFor="bid-message" style={{ display: 'block', fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '8px' }}>
