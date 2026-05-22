@@ -330,17 +330,20 @@ export default function EditListingPage() {
         body: JSON.stringify(body),
         signal: AbortSignal.timeout(30_000),
       })
-      const data = await res.json()
-      if (data.success) {
+      let data: { success: boolean; error?: string } | null = null
+      try { data = await res.json() } catch { /* non-JSON response */ }
+      if (data?.success) {
         router.push(`/listings/${id}`)
         router.refresh()
       } else {
-        setError(data.error ?? 'Save failed. Please try again.')
+        setError(data?.error ?? `Save failed (HTTP ${res.status}). Please try again.`)
       }
     } catch (err) {
       const msg = err instanceof DOMException && err.name === 'TimeoutError'
         ? 'Save timed out. Please check your connection and try again.'
-        : 'Save failed. Please try again.'
+        : err instanceof Error
+          ? `Save failed: ${err.message}`
+          : 'Save failed. Please try again.'
       setError(msg)
     } finally {
       setSaving(false)

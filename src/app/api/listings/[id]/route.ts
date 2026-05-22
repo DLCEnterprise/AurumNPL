@@ -158,18 +158,24 @@ export async function PUT(req: NextRequest, { params: paramsPromise }: Params) {
     if (upb != null) listingFields.unpaidBalance = upb
   }
 
-  await prisma.$transaction(async (tx) => {
-    if (Object.keys(listingFields).length > 0) {
-      await tx.listing.update({ where: { id }, data: listingFields })
-    }
-    if (Object.keys(assetUpdate).length > 0) {
-      if (listing.asset) {
-        await tx.asset.update({ where: { listingId: id }, data: assetUpdate })
-      } else {
-        await tx.asset.create({ data: { listingId: id, ...assetUpdate } })
+  try {
+    await prisma.$transaction(async (tx) => {
+      if (Object.keys(listingFields).length > 0) {
+        await tx.listing.update({ where: { id }, data: listingFields })
       }
-    }
-  })
+      if (Object.keys(assetUpdate).length > 0) {
+        if (listing.asset) {
+          await tx.asset.update({ where: { listingId: id }, data: assetUpdate })
+        } else {
+          await tx.asset.create({ data: { listingId: id, ...assetUpdate } })
+        }
+      }
+    })
+  } catch (err) {
+    console.error('[PUT /api/listings/[id]] transaction error:', err)
+    const message = err instanceof Error ? err.message : 'Database error.'
+    return NextResponse.json({ success: false, error: message }, { status: 500 })
+  }
 
   const updated = await prisma.listing.findUnique({
     where: { id },
