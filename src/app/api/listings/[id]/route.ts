@@ -125,6 +125,16 @@ export async function PUT(req: NextRequest, { params: paramsPromise }: Params) {
     'secondMtg_monthlyPI', 'secondMtg_monthlyEscrow', 'secondMtg_loanTermMonths',
     'secondMtg_totalMonthsPaid', 'secondMtg_monthsRemaining',
   ])
+  const dateFields = new Set([
+    'homePurchaseDate',
+    'firstMtg_originationDate', 'firstMtg_maturityDate', 'firstMtg_firstPaymentDate',
+    'firstMtg_nextDueDate', 'firstMtg_interestPaidToDate', 'firstMtg_balloonDate',
+    'firstMtg_modDate', 'firstMtg_modMaturityDate', 'firstMtg_modFirstPayDate',
+    'firstMtg_modInterestPaidTo', 'firstMtg_foreclosureDefaultDate', 'firstMtg_foreclosureSaleDate',
+    'secondMtg_originationDate', 'secondMtg_maturityDate', 'secondMtg_nextDueDate',
+    'bkFilingDate', 'ch13PocFilingDate', 'bkConfirmationDate', 'bkDismissalDate',
+    'ch13DischargedDate',
+  ])
 
   for (const [k, v] of Object.entries(rawAssetFields)) {
     if (v === undefined) continue
@@ -133,6 +143,9 @@ export async function PUT(req: NextRequest, { params: paramsPromise }: Params) {
     } else if (numFields.has(k)) {
       const n = parseFloat(String(v).replace(/[$,%\s]/g, ''))
       assetUpdate[k] = isNaN(n) ? null : n
+    } else if (dateFields.has(k)) {
+      const d = new Date(v as string)
+      assetUpdate[k] = isNaN(d.getTime()) ? null : d
     } else {
       assetUpdate[k] = v
     }
