@@ -29,7 +29,14 @@ export async function PATCH(req: NextRequest, { params: paramsPromise }: Params)
     return NextResponse.json({ success: false, error: 'Validation failed.' }, { status: 422 })
   }
 
-  const template = await prisma.mlpaTemplate.update({ where: { id }, data: parsed.data })
+  let template
+  try {
+    template = await prisma.mlpaTemplate.update({ where: { id }, data: parsed.data })
+  } catch (err) {
+    console.error('[PATCH /api/admin/mlpa/[id]] db error:', err)
+    const message = err instanceof Error ? err.message : 'Database error.'
+    return NextResponse.json({ success: false, error: message }, { status: 500 })
+  }
   return NextResponse.json({ success: true, data: template })
 }
 
@@ -38,6 +45,12 @@ export async function DELETE(_req: NextRequest, { params: paramsPromise }: Param
   const session = await requireAdmin()
   if (!session) return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 })
 
-  await prisma.mlpaTemplate.delete({ where: { id } })
+  try {
+    await prisma.mlpaTemplate.delete({ where: { id } })
+  } catch (err) {
+    console.error('[DELETE /api/admin/mlpa/[id]] db error:', err)
+    const message = err instanceof Error ? err.message : 'Database error.'
+    return NextResponse.json({ success: false, error: message }, { status: 500 })
+  }
   return NextResponse.json({ success: true })
 }

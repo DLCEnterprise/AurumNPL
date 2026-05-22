@@ -37,7 +37,14 @@ export async function PATCH(req: NextRequest, { params: paramsPromise }: Params)
     return NextResponse.json({ success: false, error: 'Validation failed.', fieldErrors: parsed.error.flatten().fieldErrors }, { status: 422 })
   }
 
-  const vendor = await prisma.vendor.update({ where: { id }, data: parsed.data })
+  let vendor
+  try {
+    vendor = await prisma.vendor.update({ where: { id }, data: parsed.data })
+  } catch (err) {
+    console.error('[PATCH /api/admin/vendors/[id]] db error:', err)
+    const message = err instanceof Error ? err.message : 'Database error.'
+    return NextResponse.json({ success: false, error: message }, { status: 500 })
+  }
   return NextResponse.json({ success: true, data: vendor })
 }
 
@@ -46,6 +53,12 @@ export async function DELETE(_req: NextRequest, { params: paramsPromise }: Param
   const session = await requireAdmin()
   if (!session) return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 })
 
-  await prisma.vendor.delete({ where: { id } })
+  try {
+    await prisma.vendor.delete({ where: { id } })
+  } catch (err) {
+    console.error('[DELETE /api/admin/vendors/[id]] db error:', err)
+    const message = err instanceof Error ? err.message : 'Database error.'
+    return NextResponse.json({ success: false, error: message }, { status: 500 })
+  }
   return NextResponse.json({ success: true })
 }

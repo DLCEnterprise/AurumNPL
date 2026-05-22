@@ -19,14 +19,20 @@ export async function POST(
     return NextResponse.json({ error: 'User not found' }, { status: 404 })
   }
 
-  await prisma.user.update({
-    where: { id },
-    data: {
-      approvalStatus: 'APPROVED',
-      approvedAt: new Date(),
-      approvedBy: 'admin',
-    },
-  })
+  try {
+    await prisma.user.update({
+      where: { id },
+      data: {
+        approvalStatus: 'APPROVED',
+        approvedAt: new Date(),
+        approvedBy: 'admin',
+      },
+    })
+  } catch (err) {
+    console.error('[POST /api/admin/users/[id]/approve] db error:', err)
+    const message = err instanceof Error ? err.message : 'Database error.'
+    return NextResponse.json({ error: message }, { status: 500 })
+  }
 
   // Non-blocking welcome email
   sendWelcomeEmail(user.email, user.name ?? 'there').catch(() => {})

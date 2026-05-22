@@ -17,11 +17,17 @@ export async function POST(_req: NextRequest, { params: paramsPromise }: Params)
     return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 })
   }
 
-  await prisma.savedListing.upsert({
-    where: { userId_listingId: { userId: session.user.id, listingId } },
-    create: { userId: session.user.id, listingId },
-    update: {},
-  })
+  try {
+    await prisma.savedListing.upsert({
+      where: { userId_listingId: { userId: session.user.id, listingId } },
+      create: { userId: session.user.id, listingId },
+      update: {},
+    })
+  } catch (err) {
+    console.error('[POST /api/listings/[id]/save] db error:', err)
+    const message = err instanceof Error ? err.message : 'Database error.'
+    return NextResponse.json({ success: false, error: message }, { status: 500 })
+  }
 
   return NextResponse.json({ success: true, data: { saved: true } })
 }
@@ -39,9 +45,15 @@ export async function DELETE(_req: NextRequest, { params: paramsPromise }: Param
     return NextResponse.json({ success: false, error: 'Forbidden' }, { status: 403 })
   }
 
-  await prisma.savedListing.deleteMany({
-    where: { userId: session.user.id, listingId },
-  })
+  try {
+    await prisma.savedListing.deleteMany({
+      where: { userId: session.user.id, listingId },
+    })
+  } catch (err) {
+    console.error('[DELETE /api/listings/[id]/save] db error:', err)
+    const message = err instanceof Error ? err.message : 'Database error.'
+    return NextResponse.json({ success: false, error: message }, { status: 500 })
+  }
 
   return NextResponse.json({ success: true, data: { saved: false } })
 }

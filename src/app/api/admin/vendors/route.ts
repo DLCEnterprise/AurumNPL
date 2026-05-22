@@ -42,6 +42,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: 'Validation failed.', fieldErrors: parsed.error.flatten().fieldErrors }, { status: 422 })
   }
 
-  const vendor = await prisma.vendor.create({ data: parsed.data })
+  let vendor
+  try {
+    vendor = await prisma.vendor.create({ data: parsed.data })
+  } catch (err) {
+    console.error('[POST /api/admin/vendors] db error:', err)
+    const message = err instanceof Error ? err.message : 'Database error.'
+    return NextResponse.json({ success: false, error: message }, { status: 500 })
+  }
   return NextResponse.json({ success: true, data: vendor }, { status: 201 })
 }

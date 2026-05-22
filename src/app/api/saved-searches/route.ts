@@ -44,14 +44,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: 'Validation failed.', fieldErrors }, { status: 422 })
   }
 
-  const savedSearch = await prisma.savedSearch.create({
-    data: {
-      userId:       session.user.id,
-      name:         parsed.data.name,
-      filters:      parsed.data.filters as Record<string, string>,
-      alertEnabled: parsed.data.alertEnabled ?? true,
-    },
-  })
+  let savedSearch
+  try {
+    savedSearch = await prisma.savedSearch.create({
+      data: {
+        userId:       session.user.id,
+        name:         parsed.data.name,
+        filters:      parsed.data.filters as Record<string, string>,
+        alertEnabled: parsed.data.alertEnabled ?? true,
+      },
+    })
+  } catch (err) {
+    console.error('[POST /api/saved-searches] db error:', err)
+    const message = err instanceof Error ? err.message : 'Database error.'
+    return NextResponse.json({ success: false, error: message }, { status: 500 })
+  }
 
   return NextResponse.json({ success: true, data: savedSearch }, { status: 201 })
 }
@@ -74,7 +81,13 @@ export async function DELETE(req: NextRequest) {
     return NextResponse.json({ success: false, error: 'Not found.' }, { status: 404 })
   }
 
-  await prisma.savedSearch.delete({ where: { id } })
+  try {
+    await prisma.savedSearch.delete({ where: { id } })
+  } catch (err) {
+    console.error('[DELETE /api/saved-searches] db error:', err)
+    const message = err instanceof Error ? err.message : 'Database error.'
+    return NextResponse.json({ success: false, error: message }, { status: 500 })
+  }
 
   return NextResponse.json({ success: true })
 }

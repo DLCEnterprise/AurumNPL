@@ -27,35 +27,64 @@ export async function POST(req: NextRequest) {
     + (assetFields.propertyZip ? ` ${assetFields.propertyZip}` : '')
   const autoTitle = [assetFields.propertyStreet, cityStateZip].filter(Boolean).join(', ') || location
 
-  // Strip nulls from assetFields so Prisma doesn't reject undefined keys
+  const dateFields = new Set([
+    'homePurchaseDate',
+    'firstMtg_originationDate', 'firstMtg_maturityDate', 'firstMtg_firstPaymentDate',
+    'firstMtg_nextDueDate', 'firstMtg_interestPaidToDate', 'firstMtg_balloonDate',
+    'firstMtg_modDate', 'firstMtg_modMaturityDate', 'firstMtg_modFirstPayDate',
+    'firstMtg_modInterestPaidTo', 'firstMtg_foreclosureDefaultDate', 'firstMtg_foreclosureSaleDate',
+    'secondMtg_originationDate', 'secondMtg_maturityDate', 'secondMtg_nextDueDate',
+    'secondMtg_balloonDate', 'secondMtg_modDate', 'secondMtg_modMaturityDate', 'secondMtg_modFirstPayDate',
+    'secondMtg_foreclosureDefaultDate', 'secondMtg_foreclosureSaleDate',
+    'bkFilingDate', 'ch13PocFilingDate', 'bkConfirmationDate', 'bkDismissalDate', 'ch13DischargedDate',
+    'ch7PetitionDate', 'ch7DateFiled', 'ch7DismissalDate', 'ch7DischargeDate',
+    'prevCh13PetitionDate', 'prevCh13DateFiled', 'prevCh13DismissalDate', 'prevCh13DischargeDate',
+    'lastPaymentReceivedDate',
+  ])
+
   const cleanAsset: Record<string, unknown> = {}
   for (const [k, v] of Object.entries(assetFields)) {
-    if (v !== undefined) cleanAsset[k] = v
+    if (v === undefined) continue
+    if (v === null || v === '') {
+      cleanAsset[k] = null
+    } else if (dateFields.has(k)) {
+      const d = new Date(v as string)
+      cleanAsset[k] = isNaN(d.getTime()) ? null : d
+    } else {
+      cleanAsset[k] = v
+    }
   }
 
-  const listing = await prisma.$transaction(async (tx) => {
-    const newListing = await tx.listing.create({
-      data: {
-        title: title || autoTitle || 'Manual Entry',
-        assetType: assetType || 'RESIDENTIAL',
-        lienPosition: lienPosition ?? null,
-        unpaidBalance,
-        loanCount: 1,
-        location,
-        zip: assetFields.propertyZip ?? null,
-        region: assetFields.propertyState ?? null,
-        status: 'DRAFT',
-        documents: [],
-        sellerId: session.user.id,
-      },
-    })
+  let listing
+  try {
+    listing = await prisma.$transaction(async (tx) => {
+      const newListing = await tx.listing.create({
+        data: {
+          title: title || autoTitle || 'Manual Entry',
+          assetType: assetType || 'RESIDENTIAL',
+          lienPosition: lienPosition ?? null,
+          unpaidBalance,
+          loanCount: 1,
+          location,
+          zip: assetFields.propertyZip ?? null,
+          region: assetFields.propertyState ?? null,
+          status: 'DRAFT',
+          documents: [],
+          sellerId: session.user.id,
+        },
+      })
 
-    await tx.asset.create({
-      data: { listingId: newListing.id, ...cleanAsset },
-    })
+      await tx.asset.create({
+        data: { listingId: newListing.id, ...cleanAsset },
+      })
 
-    return newListing
-  })
+      return newListing
+    })
+  } catch (err) {
+    console.error('[POST /api/listings/manual] transaction error:', err)
+    const message = err instanceof Error ? err.message : 'Database error.'
+    return NextResponse.json({ success: false, error: message }, { status: 500 })
+  }
 
   return NextResponse.json({ success: true, data: { listingId: listing.id } }, { status: 201 })
 }

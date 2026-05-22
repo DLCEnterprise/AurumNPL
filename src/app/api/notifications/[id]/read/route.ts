@@ -18,10 +18,17 @@ export async function PATCH(_req: NextRequest, { params: paramsPromise }: Params
     return NextResponse.json({ success: false, error: 'Not found.' }, { status: 404 })
   }
 
-  const updated = await prisma.notification.update({
-    where: { id },
-    data:  { readAt: new Date() },
-  })
+  let updated
+  try {
+    updated = await prisma.notification.update({
+      where: { id },
+      data:  { readAt: new Date() },
+    })
+  } catch (err) {
+    console.error('[PATCH /api/notifications/[id]/read] db error:', err)
+    const message = err instanceof Error ? err.message : 'Database error.'
+    return NextResponse.json({ success: false, error: message }, { status: 500 })
+  }
 
   return NextResponse.json({ success: true, data: updated })
 }

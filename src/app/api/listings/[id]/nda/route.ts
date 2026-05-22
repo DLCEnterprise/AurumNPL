@@ -48,11 +48,18 @@ export async function POST(
   const ip = req.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? null
   const ua = req.headers.get('user-agent') ?? null
 
-  const nda = await prisma.ndaAgreement.upsert({
-    where: { listingId_buyerId: { listingId: id, buyerId: session.user.id } },
-    create: { listingId: id, buyerId: session.user.id, ipAddress: ip, userAgent: ua },
-    update: {},
-  })
+  let nda
+  try {
+    nda = await prisma.ndaAgreement.upsert({
+      where: { listingId_buyerId: { listingId: id, buyerId: session.user.id } },
+      create: { listingId: id, buyerId: session.user.id, ipAddress: ip, userAgent: ua },
+      update: {},
+    })
+  } catch (err) {
+    console.error('[POST /api/listings/[id]/nda] db error:', err)
+    const message = err instanceof Error ? err.message : 'Database error.'
+    return NextResponse.json({ success: false, error: message }, { status: 500 })
+  }
 
   return NextResponse.json({ success: true, signedAt: nda.signedAt }, { status: 201 })
 }

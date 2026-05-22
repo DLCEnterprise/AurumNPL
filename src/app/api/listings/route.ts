@@ -255,7 +255,9 @@ export async function POST(req: NextRequest) {
 
   const { asset: assetData, bidDeadline: bidDeadlineStr, ...listingData } = parsed.data
 
-  const listing = await prisma.$transaction(async (tx) => {
+  let listing
+  try {
+  listing = await prisma.$transaction(async (tx) => {
     const listingNumber = await generateListingNumber(tx)
     const created = await tx.listing.create({
       data: { ...listingData, listingNumber, bidDeadline: parseDate(bidDeadlineStr), sellerId: session.user.id },
@@ -376,6 +378,11 @@ export async function POST(req: NextRequest) {
 
     return created
   })
+  } catch (err) {
+    console.error('[POST /api/listings] transaction error:', err)
+    const message = err instanceof Error ? err.message : 'Database error.'
+    return NextResponse.json({ success: false, error: message }, { status: 500 })
+  }
 
   return NextResponse.json({ success: true, data: listing }, { status: 201 })
 }

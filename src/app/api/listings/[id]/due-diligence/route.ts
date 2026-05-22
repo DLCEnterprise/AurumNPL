@@ -62,13 +62,20 @@ export async function POST(req: NextRequest, { params: paramsPromise }: Params) 
     orderBy: { sortOrder: 'desc' },
   })
 
-  const item = await prisma.dueDiligenceChecklist.create({
-    data: {
-      listingId,
-      label:     parsed.data.label,
-      sortOrder: (last?.sortOrder ?? -1) + 1,
-    },
-  })
+  let item
+  try {
+    item = await prisma.dueDiligenceChecklist.create({
+      data: {
+        listingId,
+        label:     parsed.data.label,
+        sortOrder: (last?.sortOrder ?? -1) + 1,
+      },
+    })
+  } catch (err) {
+    console.error('[POST /api/listings/[id]/due-diligence] db error:', err)
+    const message = err instanceof Error ? err.message : 'Database error.'
+    return NextResponse.json({ success: false, error: message }, { status: 500 })
+  }
 
   return NextResponse.json({ success: true, data: item }, { status: 201 })
 }
@@ -127,10 +134,17 @@ export async function PATCH(req: NextRequest, { params: paramsPromise }: Params)
     updateData.completedAt = parsed.data.completed ? new Date() : null
   }
 
-  const updated = await prisma.dueDiligenceChecklist.update({
-    where: { id: checklistId },
-    data:  updateData,
-  })
+  let updated
+  try {
+    updated = await prisma.dueDiligenceChecklist.update({
+      where: { id: checklistId },
+      data:  updateData,
+    })
+  } catch (err) {
+    console.error('[PATCH /api/listings/[id]/due-diligence] db error:', err)
+    const message = err instanceof Error ? err.message : 'Database error.'
+    return NextResponse.json({ success: false, error: message }, { status: 500 })
+  }
 
   return NextResponse.json({ success: true, data: updated })
 }
@@ -158,7 +172,13 @@ export async function DELETE(req: NextRequest, { params: paramsPromise }: Params
     return NextResponse.json({ success: false, error: 'Item not found.' }, { status: 404 })
   }
 
-  await prisma.dueDiligenceChecklist.delete({ where: { id: checklistId } })
+  try {
+    await prisma.dueDiligenceChecklist.delete({ where: { id: checklistId } })
+  } catch (err) {
+    console.error('[DELETE /api/listings/[id]/due-diligence] db error:', err)
+    const message = err instanceof Error ? err.message : 'Database error.'
+    return NextResponse.json({ success: false, error: message }, { status: 500 })
+  }
 
   return NextResponse.json({ success: true })
 }

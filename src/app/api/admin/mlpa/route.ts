@@ -34,6 +34,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: false, error: 'Validation failed.', fieldErrors: parsed.error.flatten().fieldErrors }, { status: 422 })
   }
 
-  const template = await prisma.mlpaTemplate.create({ data: parsed.data })
+  let template
+  try {
+    template = await prisma.mlpaTemplate.create({ data: parsed.data })
+  } catch (err) {
+    console.error('[POST /api/admin/mlpa] db error:', err)
+    const message = err instanceof Error ? err.message : 'Database error.'
+    return NextResponse.json({ success: false, error: message }, { status: 500 })
+  }
   return NextResponse.json({ success: true, data: template }, { status: 201 })
 }

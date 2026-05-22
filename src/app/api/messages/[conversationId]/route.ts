@@ -28,17 +28,15 @@ export async function GET(req: NextRequest, { params: paramsPromise }: Params) {
     return NextResponse.json({ success: false, error: 'Forbidden.' }, { status: 403 })
   }
 
-  // Mark messages from others as read
-  await prisma.message.updateMany({
+  // Mark messages from others as read (non-blocking — failure is acceptable)
+  prisma.message.updateMany({
     where: { conversationId, senderId: { not: userId }, readAt: null },
     data: { readAt: new Date() },
-  })
-
-  // Update lastReadAt for this participant
-  await prisma.conversationParticipant.update({
+  }).catch(() => {})
+  prisma.conversationParticipant.update({
     where: { userId_conversationId: { userId, conversationId } },
     data: { lastReadAt: new Date() },
-  })
+  }).catch(() => {})
 
   const messages = await prisma.message.findMany({
     where: { conversationId },
@@ -86,21 +84,28 @@ export async function POST(req: NextRequest, { params: paramsPromise }: Params) 
     where: { conversationId, userId: { not: userId } },
   })
 
-  const message = await prisma.message.create({
-    data: {
-      content: parsed.data.content,
-      senderId: userId,
-      receiverId: otherParticipant?.userId ?? null,
-      conversationId,
-    },
-    include: { sender: { select: { id: true, name: true, company: true } } },
-  })
+  let message
+  try {
+    message = await prisma.message.create({
+      data: {
+        content: parsed.data.content,
+        senderId: userId,
+        receiverId: otherParticipant?.userId ?? null,
+        conversationId,
+      },
+      include: { sender: { select: { id: true, name: true, company: true } } },
+    })
+  } catch (err) {
+    console.error('[POST /api/messages/[conversationId]] db error:', err)
+    const msg = err instanceof Error ? err.message : 'Database error.'
+    return NextResponse.json({ success: false, error: msg }, { status: 500 })
+  }
 
-  // Update conversation timestamp for sorting
-  await prisma.conversation.update({
+  // Update conversation timestamp for sorting (non-blocking)
+  prisma.conversation.update({
     where: { id: conversationId },
     data: { updatedAt: new Date() },
-  })
+  }).catch(() => {})
 
   return NextResponse.json({
     success: true,
