@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { syncPipelineStage } from '@/lib/pipeline-sync'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -174,6 +175,10 @@ export async function PUT(req: NextRequest, { params: paramsPromise }: Params) {
     where: { id },
     include: { asset: true },
   })
+
+  if (status !== undefined) {
+    syncPipelineStage(id, status).catch(() => {})
+  }
 
   return NextResponse.json({ success: true, data: updated })
 }

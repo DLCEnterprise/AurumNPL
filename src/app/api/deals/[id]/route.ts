@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { z } from 'zod'
 import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { syncPipelineStage } from '@/lib/pipeline-sync'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -54,12 +55,19 @@ export async function PATCH(req: NextRequest, { params: paramsPromise }: Params)
   })
 
   // Advance listing status based on completed milestones
+  let newListingStatus: string | null = null
   if (updated.closedAt) {
     await prisma.listing.update({ where: { id: updated.listingId }, data: { status: 'SOLD' } })
+    newListingStatus = 'SOLD'
   } else if (updated.wireReceivedAt || updated.mlpaSignedAt) {
     await prisma.listing.update({ where: { id: updated.listingId }, data: { status: 'CLOSING' } })
+    newListingStatus = 'CLOSING'
   } else if (updated.ddCompletedAt) {
     await prisma.listing.update({ where: { id: updated.listingId }, data: { status: 'DUE_DILIGENCE' } })
+    newListingStatus = 'DUE_DILIGENCE'
+  }
+  if (newListingStatus) {
+    syncPipelineStage(updated.listingId, newListingStatus).catch(() => {})
   }
 
   return NextResponse.json({ success: true, data: updated })

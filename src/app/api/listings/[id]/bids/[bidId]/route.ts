@@ -4,6 +4,7 @@ import { auth } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { createNotification } from '@/lib/notifications'
 import { sendBidAcceptedEmail } from '@/lib/email'
+import { syncPipelineStage } from '@/lib/pipeline-sync'
 
 type Params = { params: Promise<{ id: string; bidId: string }> }
 
@@ -103,6 +104,11 @@ export async function PATCH(req: NextRequest, { params: paramsPromise }: Params)
     updated = updatedBid
   } else {
     updated = await prisma.bid.update({ where: { id: bidId }, data: bidData })
+  }
+
+  // Sync pipeline stages when bid is accepted (fire-and-forget)
+  if (status === 'ACCEPTED') {
+    syncPipelineStage(listingId, 'OFFER_ACCEPTED').catch(() => {})
   }
 
   // ── Notifications (fire-and-forget) ─────────────────────────────────────────

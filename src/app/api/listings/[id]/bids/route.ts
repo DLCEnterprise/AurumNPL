@@ -6,6 +6,7 @@ import { generateOfferNumber } from '@/lib/listing-number'
 import { createNotification } from '@/lib/notifications'
 import { sendBidNotificationEmail } from '@/lib/email'
 import { rateLimit, rateLimitResponse } from '@/lib/rate-limit'
+import { moveToBidding } from '@/lib/pipeline-sync'
 
 type Params = { params: Promise<{ id: string }> }
 
@@ -114,6 +115,9 @@ export async function POST(req: NextRequest, { params: paramsPromise }: Params) 
       include: { bidder: { select: { id: true, name: true, company: true, email: true } } },
     })
   })
+
+  // Auto-advance buyer's pipeline entry to BIDDING
+  moveToBidding(listingId, session.user.id).catch(() => {})
 
   // Notify seller (fire and forget)
   createNotification({
