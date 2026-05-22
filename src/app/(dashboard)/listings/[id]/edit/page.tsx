@@ -6,6 +6,16 @@ import Link from 'next/link'
 import { Spinner } from '@/components/ui/Skeleton'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 
+// ── Helpers ────────────────────────────────────────────────────────────────────
+
+function calcDelinquencyMonths(nextDueDate: string | null | undefined): number | null {
+  if (!nextDueDate) return null
+  const due = new Date(nextDueDate)
+  if (isNaN(due.getTime()) || due >= new Date()) return null
+  const now = new Date()
+  return (now.getFullYear() - due.getFullYear()) * 12 + (now.getMonth() - due.getMonth())
+}
+
 // ── Field helpers ──────────────────────────────────────────────────────────────
 
 const US_STATES = [
@@ -250,7 +260,7 @@ export default function EditListingPage() {
       lienPosition: f.lienPosition || null,
       unpaidBalance: num(f.unpaidBalance) ?? undefined,
       loanCount: int(f.loanCount) ?? undefined,
-      avgDelinquency: f.avgDelinquency !== '' ? int(f.avgDelinquency) : null,
+      avgDelinquency: calcDelinquencyMonths(f.firstMtg_nextDueDate ?? f.firstMtg_modNextDueDate),
       status: f.status || undefined,
       description: f.description || null,
       dropboxLink: f.dropboxLink || null,
@@ -400,7 +410,6 @@ export default function EditListingPage() {
         <Row>
           {F({ label: 'UPB (Unpaid Principal Balance)', k: 'unpaidBalance', type: 'number' })}
           {F({ label: 'Number of Loans', k: 'loanCount', type: 'number' })}
-          {F({ label: 'Avg. Delinquency (months)', k: 'avgDelinquency', type: 'number' })}
         </Row>
         <Row>
           {F({ label: 'Description', k: 'description', textarea: true })}

@@ -212,6 +212,13 @@ function parseOptInt(s: string): number | undefined {
 function parseOptDate(s: string): string | undefined {
   return s ? s : undefined
 }
+function calcDelinquencyMonths(nextDueDate: string | null | undefined): number | undefined {
+  if (!nextDueDate) return undefined
+  const due = new Date(nextDueDate)
+  if (isNaN(due.getTime()) || due >= new Date()) return undefined
+  const now = new Date()
+  return (now.getFullYear() - due.getFullYear()) * 12 + (now.getMonth() - due.getMonth())
+}
 
 // ── UI sub-components ──────────────────────────────────────────────────────────
 
@@ -458,6 +465,7 @@ export function CreateListingForm() {
 
     return {
       ...listing,
+      avgDelinquency: calcDelinquencyMonths(f.firstMtg_nextDueDate),
       asset: {
         firstMtg_loanStatus:        f.firstMtg_loanStatus || undefined,
         firstMtg_interestRate:      parseOptFloat(f.firstMtg_interestRate) != null ? parseOptFloat(f.firstMtg_interestRate)! / 100 : undefined,

@@ -57,6 +57,16 @@ export async function POST(req: NextRequest) {
 
   let listing
   try {
+  let avgDelinquency: number | undefined
+  const nextDueRaw = assetFields.firstMtg_nextDueDate as string | undefined
+  if (nextDueRaw) {
+    const due = new Date(nextDueRaw)
+    if (!isNaN(due.getTime()) && due < new Date()) {
+      const now = new Date()
+      avgDelinquency = (now.getFullYear() - due.getFullYear()) * 12 + (now.getMonth() - due.getMonth())
+    }
+  }
+
     listing = await prisma.$transaction(async (tx) => {
       const newListing = await tx.listing.create({
         data: {
@@ -68,6 +78,7 @@ export async function POST(req: NextRequest) {
           location,
           zip: assetFields.propertyZip ?? null,
           region: assetFields.propertyState ?? null,
+          avgDelinquency: avgDelinquency ?? null,
           status: 'DRAFT',
           documents: [],
           sellerId: session.user.id,

@@ -159,6 +159,15 @@ export async function PUT(req: NextRequest, { params: paramsPromise }: Params) {
     if (derived && !listingFields.location) listingFields.location = derived
   }
 
+  // Auto-derive avgDelinquency from nextDueDate if it's being updated
+  if ('firstMtg_nextDueDate' in assetUpdate && !('avgDelinquency' in listingFields)) {
+    const due = assetUpdate.firstMtg_nextDueDate as Date | null
+    if (due && due < new Date()) {
+      const now = new Date()
+      listingFields.avgDelinquency = (now.getFullYear() - due.getFullYear()) * 12 + (now.getMonth() - due.getMonth())
+    }
+  }
+
   // Auto-derive unpaidBalance from first mortgage balance if it's being updated
   const balanceFields = ['firstMtg_currentBalance', 'firstMtg_modCurrentBalance', 'secondMtg_currentBalance'] as const
   const updatingBalance = balanceFields.some((f) => f in assetUpdate && assetUpdate[f] != null)

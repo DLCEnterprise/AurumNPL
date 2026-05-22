@@ -255,6 +255,15 @@ export async function POST(req: NextRequest) {
 
   const { asset: assetData, bidDeadline: bidDeadlineStr, ...listingData } = parsed.data
 
+  // Auto-compute avgDelinquency if not provided and firstMtg_nextDueDate is in the past
+  if (listingData.avgDelinquency == null && assetData?.firstMtg_nextDueDate) {
+    const due = new Date(assetData.firstMtg_nextDueDate)
+    if (!isNaN(due.getTime()) && due < new Date()) {
+      const now = new Date()
+      listingData.avgDelinquency = (now.getFullYear() - due.getFullYear()) * 12 + (now.getMonth() - due.getMonth())
+    }
+  }
+
   let listing
   try {
   listing = await prisma.$transaction(async (tx) => {
