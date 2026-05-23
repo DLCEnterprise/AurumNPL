@@ -133,6 +133,17 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
     return (payment || months) ? { paymentAmount: payment ?? undefined, durationMonths: months ?? undefined } : undefined
   })() : undefined
 
+  // Prefer the asset's mortgage balance over the denormalized listing.unpaidBalance
+  // so the header UPB always matches the First Mortgage Current Balance tile
+  const effectiveUPB = (() => {
+    if (!listing.asset) return listing.unpaidBalance
+    const a = listing.asset as Record<string, unknown>
+    if (listing.lienPosition === 'JUNIOR') {
+      return (a.secondMtg_currentBalance ?? a.secondMtg_modCurrentBalance ?? listing.unpaidBalance) as number
+    }
+    return (a.firstMtg_currentBalance ?? a.firstMtg_modCurrentBalance ?? listing.unpaidBalance) as number
+  })()
+
   const isSaved = !!savedRecord
   const serializedBid = existingBidRaw
     ? {
@@ -232,7 +243,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
           {/* Metrics strip */}
           <div style={{ display: 'flex', marginBottom: '16px', background: 'rgba(255,255,255,0.02)', border: '1px solid var(--border-light)', borderRadius: 'var(--radius-md)', overflow: 'hidden' }}>
             {[
-              { label: 'Unpaid Balance', value: formatCurrency(listing.unpaidBalance) },
+              { label: 'Unpaid Balance', value: formatCurrency(effectiveUPB) },
               ...(((listing as { askingPrice?: number | null }).askingPrice) ? [{ label: 'Asking Price', value: formatCurrency((listing as { askingPrice?: number | null }).askingPrice!) }] : []),
               { label: 'Loan Count', value: listing.loanCount.toLocaleString() },
               ...(listing.lienPosition ? [{ label: 'Lien Position', value: listing.lienPosition === 'SENIOR' ? '1st Mtg' : '2nd Mtg' }] : []),
@@ -400,7 +411,7 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                 Unpaid Balance
               </div>
               <div style={{ fontSize: '2rem', fontFamily: 'var(--font-display)', fontWeight: 600, background: 'var(--gold-gradient)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', lineHeight: 1.1, marginBottom: '4px' }}>
-                {formatCurrency(listing.unpaidBalance)}
+                {formatCurrency(effectiveUPB)}
               </div>
               {(listing as { askingPrice?: number | null }).askingPrice && (
                 <div style={{ fontSize: '0.82rem', display: 'flex', alignItems: 'center', gap: '5px' }}>
