@@ -40,6 +40,18 @@ function fmtVal(v: unknown): string {
   return String(v)
 }
 
+function fmtTimeInDefault(nextDueDateStr: string | null | undefined, lastPmtStr: string | null | undefined): string {
+  const refStr = nextDueDateStr || lastPmtStr
+  if (!refStr) return '—'
+  const ref = new Date(refStr)
+  if (isNaN(ref.getTime())) return '—'
+  const now = new Date()
+  if (nextDueDateStr && ref > now) return 'Current'
+  const days = Math.floor((now.getTime() - ref.getTime()) / (1000 * 60 * 60 * 24))
+  const months = (now.getFullYear() - ref.getFullYear()) * 12 + (now.getMonth() - ref.getMonth())
+  return `${months} mo / ${days.toLocaleString()} days`
+}
+
 // ── Section components ────────────────────────────────────────────────────────
 
 function CollapsibleSection({
@@ -284,17 +296,10 @@ export function AssetDetail({ asset }: { asset: SerializedAsset }) {
           { label: 'Current Balance', value: fmtCurrency(a.firstMtg_currentBalance as number), highlight: true },
           { label: 'Interest Rate', value: fmtPct(a.firstMtg_interestRate as number) },
           { label: 'Monthly P&I', value: fmtCurrency(a.firstMtg_monthlyPI as number) },
-          { label: 'Monthly Escrow', value: fmtCurrency(a.firstMtg_monthlyEscrow as number) },
           { label: 'Total Monthly Pmt', value: fmtCurrency(a.totalMonthlyPayment as number) },
-          { label: 'Loan Term', value: a.firstMtg_loanTermMonths ? `${a.firstMtg_loanTermMonths} months` : '—' },
-          { label: 'Months Paid', value: fmtVal(a.firstMtg_totalMonthsPaid) },
-          { label: 'Months Remaining', value: fmtVal(a.firstMtg_monthsRemaining) },
-          { label: 'Interest Only', value: a.isInterestOnly != null ? (a.isInterestOnly ? 'Yes' : 'No') : '—' },
-          { label: 'Payment Accepted', value: fmtVal(a.paymentAccepted) },
-          { label: 'Legal Status', value: fmtVal(a.legalStatus) },
+          { label: 'Time in Default', value: fmtTimeInDefault(a.firstMtg_nextDueDate as string, a.lastPaymentReceivedDate as string) },
           { label: 'Judicial State', value: a.isJudicialState != null ? (a.isJudicialState ? 'Yes' : 'No') : '—' },
           { label: 'Last Pmt Received', value: fmtDate(a.lastPaymentReceivedDate as string) },
-          // Dates grouped at end: origination → first payment → next due → interest paid to → maturity
           { label: 'Origination Date', value: fmtDate(a.firstMtg_originationDate as string) },
           { label: 'First Payment Date', value: fmtDate(a.firstMtg_firstPaymentDate as string) },
           { label: 'Next Due Date', value: fmtDate(a.firstMtg_nextDueDate as string) },
