@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { auth } from '@/lib/auth'
+import { requireSession } from '@/lib/session-guard'
 import { prisma } from '@/lib/prisma'
 import { formatCurrency, timeAgo } from '@/lib/utils'
 import { EmptyState } from '@/components/ui/EmptyState'
@@ -18,8 +18,8 @@ const STATUS_CLASS: Record<ListingStatus, string> = {
 }
 
 export default async function WatchlistPage() {
-  const session = await auth()
-  const userId  = session!.user.id
+  const session = await requireSession()
+  const userId  = session.user.id
 
   const saved = await prisma.savedListing.findMany({
     where: { userId },

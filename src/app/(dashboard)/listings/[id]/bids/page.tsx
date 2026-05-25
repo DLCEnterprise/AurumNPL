@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { notFound, redirect } from 'next/navigation'
-import { auth } from '@/lib/auth'
+import { requireSession } from '@/lib/session-guard'
 import { prisma } from '@/lib/prisma'
 import { formatCurrency, timeAgo } from '@/lib/utils'
 import { BidActions } from '@/components/listings/BidActions'
@@ -27,9 +27,9 @@ const STATUS_LABEL: Record<string, string> = {
 
 export default async function BidsPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const session = await auth()
-  const userId  = session!.user.id
-  const isAdmin = session!.user.role === 'ADMIN'
+  const session = await requireSession()
+  const userId  = session.user.id
+  const isAdmin = session.user.role === 'ADMIN'
 
   const listing = await prisma.listing.findUnique({
     where: { id },

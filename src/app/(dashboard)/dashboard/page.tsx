@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import { Suspense, lazy } from 'react'
-import { auth } from '@/lib/auth'
+import { requireSession } from '@/lib/session-guard'
 import { prisma } from '@/lib/prisma'
 import Link from 'next/link'
 import { ActionItems } from '@/components/dashboard/ActionItems'
@@ -81,9 +81,9 @@ function ActivitySkeleton() {
 }
 
 export default async function DashboardPage() {
-  const session = await auth()
-  const userId = session!.user.id
-  const role = session!.user.role
+  const session = await requireSession()
+  const userId = session.user.id
+  const role = session.user.role
 
   const isSeller = role === 'SELLER' || role === 'SELLER_BUYER'
   const isBuyer  = role === 'BUYER'  || role === 'SELLER_BUYER'
@@ -110,7 +110,7 @@ export default async function DashboardPage() {
     }),
   ])
 
-  const name = session!.user.name?.split(' ')[0] ?? 'there'
+  const name = session.user.name?.split(' ')[0] ?? 'there'
 
   const hour = new Date().getHours()
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening'
@@ -165,8 +165,8 @@ export default async function DashboardPage() {
             {roleLabel}
           </span>
         </div>
-        {session!.user.company && (
-          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>{session!.user.company}</p>
+        {session.user.company && (
+          <p style={{ color: 'var(--text-muted)', fontSize: '0.9rem', margin: 0 }}>{session.user.company}</p>
         )}
       </div>
 

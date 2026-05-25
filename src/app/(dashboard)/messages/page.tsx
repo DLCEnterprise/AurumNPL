@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { auth } from '@/lib/auth'
+import { requireSession } from '@/lib/session-guard'
 import { MessagingApp } from '@/components/messaging/MessagingApp'
 
 export const metadata: Metadata = { title: 'Messages' }
@@ -10,7 +10,7 @@ export default async function MessagesPage({
   searchParams: Promise<{ convo?: string }>
 }) {
   const searchParams = await searchParamsPromise
-  const session = await auth()
+  const session = await requireSession()
   return (
     <div>
       <div style={{ marginBottom: '24px' }}>
@@ -18,7 +18,7 @@ export default async function MessagesPage({
           Messages
         </h1>
       </div>
-      <MessagingApp userId={session!.user.id} initialConvoId={searchParams.convo} />
+      <MessagingApp userId={session.user.id} initialConvoId={searchParams.convo} />
     </div>
   )
 }

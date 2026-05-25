@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { auth } from '@/lib/auth'
+import { requireSession } from '@/lib/session-guard'
 import { prisma } from '@/lib/prisma'
 import { ProfileForm } from '@/components/profile/ProfileForm'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
@@ -7,9 +7,9 @@ import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 export const metadata: Metadata = { title: 'Profile' }
 
 export default async function ProfilePage() {
-  const session = await auth()
+  const session = await requireSession()
   const user = await prisma.user.findUnique({
-    where: { id: session!.user.id },
+    where: { id: session.user.id },
     select: {
       id: true, name: true, email: true, company: true, phone: true,
       role: true, approvalStatus: true, createdAt: true, pendingRoleRequest: true,

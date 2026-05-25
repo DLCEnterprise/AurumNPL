@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
-import { auth } from '@/lib/auth'
+import { requireSession } from '@/lib/session-guard'
 import { prisma } from '@/lib/prisma'
 import { formatCurrency, timeAgo } from '@/lib/utils'
 import { ContactSellerButton } from '@/components/listings/ContactSellerButton'
@@ -69,8 +69,8 @@ const BID_STATUS_LABEL: Record<string, string> = {
 
 export default async function ListingDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const session = await auth()
-  const userId = session!.user.id
+  const session = await requireSession()
+  const userId = session.user.id
 
   const listing = await prisma.listing.findUnique({
     where: { id },
@@ -83,8 +83,8 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
   if (!listing) notFound()
 
   const isOwner = listing.sellerId === userId
-  const isAdmin = session!.user.role === 'ADMIN'
-  const isBuyer = session!.user.role === 'BUYER' || session!.user.role === 'SELLER_BUYER'
+  const isAdmin = session.user.role === 'ADMIN'
+  const isBuyer = session.user.role === 'BUYER' || session.user.role === 'SELLER_BUYER'
 
   if (!isOwner && !isAdmin && (listing.status === 'DRAFT' || listing.status === 'ARCHIVED')) {
     notFound()

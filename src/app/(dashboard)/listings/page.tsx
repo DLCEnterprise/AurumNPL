@@ -1,6 +1,6 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
-import { auth } from '@/lib/auth'
+import { requireSession } from '@/lib/session-guard'
 import { prisma } from '@/lib/prisma'
 import { formatCurrency, timeAgo } from '@/lib/utils'
 import { ListingsFilters } from '@/components/listings/ListingsFilters'
@@ -34,8 +34,8 @@ export default async function ListingsPage({
   searchParams: Promise<SearchParams>
 }) {
   const searchParams = await searchParamsPromise
-  const session = await auth()
-  const userId = session!.user.id
+  const session = await requireSession()
+  const userId = session.user.id
 
   const page    = Math.max(1, parseInt(searchParams.page ?? '1'))
   const mine    = searchParams.mine === 'true'
@@ -148,7 +148,7 @@ export default async function ListingsPage({
           >
             {mine ? 'All Listings' : 'My Listings'}
           </Link>
-          {(session!.user.role === 'SELLER' || session!.user.role === 'ADMIN') && (
+          {(session.user.role === 'SELLER' || session.user.role === 'ADMIN') && (
             <>
               <ExportButton type="listings" label="Export CSV" />
               <Link href="/listings/import" className="btn btn--ghost btn--sm">

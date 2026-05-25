@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { auth } from '@/lib/auth'
+import { requireSession } from '@/lib/session-guard'
 import { prisma } from '@/lib/prisma'
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs'
 import { DealTimeline } from '@/components/deals/DealTimeline'
@@ -9,9 +9,9 @@ import Link from 'next/link'
 export const metadata: Metadata = { title: 'My Deals' }
 
 export default async function DealsPage() {
-  const session = await auth()
-  const userId  = session!.user.id
-  const role    = session!.user.role
+  const session = await requireSession()
+  const userId  = session.user.id
+  const role    = session.user.role
   const isAdmin = role === 'ADMIN'
   const isSeller = role === 'SELLER' || role === 'SELLER_BUYER' || isAdmin
 
