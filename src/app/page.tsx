@@ -46,6 +46,8 @@ export default async function HomePage() {
     <>
       <LandingNav />
 
+      <main id="main-content">
+
       {/* ═══════════════ HERO ═══════════════ */}
       <section className="hero" id="home">
         <div className="hero__bg">
@@ -367,8 +369,8 @@ export default async function HomePage() {
           {/* Filter bar (static preview) */}
           <div className="filter-bar glass-card">
             <div className="filter-bar__group">
-              <label>Asset Type</label>
-              <select defaultValue="">
+              <label htmlFor="lp-asset-type">Asset Type</label>
+              <select id="lp-asset-type" defaultValue="">
                 <option value="">All Types</option>
                 <option>Residential</option>
                 <option>Commercial</option>
@@ -377,8 +379,8 @@ export default async function HomePage() {
               </select>
             </div>
             <div className="filter-bar__group">
-              <label>UPB Range</label>
-              <select defaultValue="">
+              <label htmlFor="lp-upb-range">UPB Range</label>
+              <select id="lp-upb-range" defaultValue="">
                 <option value="">Any</option>
                 <option>$0 – $5M</option>
                 <option>$5M – $25M</option>
@@ -387,8 +389,8 @@ export default async function HomePage() {
               </select>
             </div>
             <div className="filter-bar__group">
-              <label>Location</label>
-              <select defaultValue="">
+              <label htmlFor="lp-location">Location</label>
+              <select id="lp-location" defaultValue="">
                 <option value="">All Regions</option>
                 <option>Northeast</option>
                 <option>Southeast</option>
@@ -397,8 +399,8 @@ export default async function HomePage() {
               </select>
             </div>
             <div className="filter-bar__group">
-              <label>Status</label>
-              <select defaultValue="">
+              <label htmlFor="lp-status">Status</label>
+              <select id="lp-status" defaultValue="">
                 <option value="">All</option>
                 <option>Active</option>
                 <option>Under Review</option>
@@ -496,6 +498,8 @@ export default async function HomePage() {
         </div>
       </section>
 
+      </main>
+
       {/* ═══════════════ FOOTER ═══════════════ */}
       <footer className="footer">
         <div className="container">
@@ -510,20 +514,20 @@ export default async function HomePage() {
               </p>
             </div>
             <div className="footer__col">
-              <h4>Platform</h4>
+              <h3>Platform</h3>
               <Link href="/listings">Listings</Link>
               <Link href="/dashboard">Dashboard</Link>
               <Link href="/messages">Messaging</Link>
             </div>
             <div className="footer__col">
-              <h4>Company</h4>
+              <h3>Company</h3>
               <Link href="#">About</Link>
               <Link href="#">Careers</Link>
               <Link href="#">Press</Link>
               <Link href="#">Contact</Link>
             </div>
             <div className="footer__col">
-              <h4>Legal</h4>
+              <h3>Legal</h3>
               <Link href="#">Terms of Service</Link>
               <Link href="#">Privacy Policy</Link>
               <Link href="#">Compliance</Link>
