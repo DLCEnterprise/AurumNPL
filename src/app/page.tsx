@@ -3,6 +3,8 @@ import Link from 'next/link'
 import { LandingNav } from '@/components/layout/LandingNav'
 import { MessagingPreview } from '@/components/messaging/MessagingPreview'
 import { StatsBar } from '@/components/landing/StatsBar'
+import { prisma } from '@/lib/prisma'
+import { formatCurrency, timeAgo } from '@/lib/utils'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,7 +12,38 @@ export const metadata: Metadata = {
   title: 'AURUM — Where Distressed Assets Find New Value',
 }
 
-export default function HomePage() {
+const ASSET_TYPE_LABEL: Record<string, { label: string; cls: string }> = {
+  RESIDENTIAL: { label: 'Residential', cls: 'residential' },
+  COMMERCIAL:  { label: 'Commercial',  cls: 'commercial' },
+  CONSUMER:    { label: 'Consumer',    cls: 'consumer' },
+  MIXED:       { label: 'Mixed',       cls: 'mixed' },
+}
+
+function formatDelinquency(days: number | null | undefined): string {
+  if (!days) return '—'
+  if (days < 60) return `${days}d`
+  const months = Math.round(days / 30)
+  if (months < 24) return `${months} months`
+  return `${(months / 12).toFixed(1)} years`
+}
+
+export default async function HomePage() {
+  const previewListings = await prisma.listing.findMany({
+    where: { status: 'ACTIVE' },
+    orderBy: { createdAt: 'desc' },
+    take: 3,
+    select: {
+      id: true,
+      title: true,
+      assetType: true,
+      unpaidBalance: true,
+      loanCount: true,
+      location: true,
+      avgDelinquency: true,
+      createdAt: true,
+    },
+  })
+
   return (
     <>
       <LandingNav />
@@ -55,68 +88,6 @@ export default function HomePage() {
         <div className="hero__scroll-indicator">
           <div className="hero__scroll-line" />
           <span>Scroll</span>
-        </div>
-      </section>
-
-      {/* ═══════════════ TRUSTED BY ═══════════════ */}
-      <section style={{ padding: '0', position: 'relative', zIndex: 1 }}>
-        <div
-          style={{
-            borderTop: '1px solid rgba(255,255,255,0.06)',
-            borderBottom: '1px solid rgba(255,255,255,0.06)',
-            padding: '1.5rem 2rem',
-          }}
-        >
-            <div style={{ textAlign: 'center', marginBottom: '1rem' }}>
-              <span
-                style={{
-                  fontSize: '0.65rem',
-                  letterSpacing: '0.15em',
-                  color: 'rgba(212,168,70,0.55)',
-                  fontWeight: 600,
-                  textTransform: 'uppercase',
-                }}
-              >
-                Trusted By Leading Institutions
-              </span>
-            </div>
-            <div
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                flexWrap: 'wrap',
-                gap: '0',
-              }}
-            >
-              {TRUSTED_COMPANIES.map((company, i) => (
-                <div key={company} style={{ display: 'flex', alignItems: 'center' }}>
-                  <span
-                    style={{
-                      fontSize: '0.7rem',
-                      letterSpacing: '0.2em',
-                      color: 'rgba(255,255,255,0.2)',
-                      fontWeight: 600,
-                      padding: '0 1.5rem',
-                      whiteSpace: 'nowrap',
-                    }}
-                  >
-                    {company}
-                  </span>
-                  {i < TRUSTED_COMPANIES.length - 1 && (
-                    <span
-                      style={{
-                        display: 'inline-block',
-                        width: '1px',
-                        height: '1rem',
-                        background: 'rgba(255,255,255,0.06)',
-                        flexShrink: 0,
-                      }}
-                    />
-                  )}
-                </div>
-              ))}
-            </div>
         </div>
       </section>
 
@@ -442,46 +413,46 @@ export default function HomePage() {
           </div>
 
           <div className="listings__grid">
-            {SAMPLE_LISTINGS.map((listing) => (
-              <div
-                key={listing.id}
-                className="listing-card glass-card"
-              >
-                <div className="listing-card__header">
-                  <span className={`listing-card__type listing-card__type--${listing.typeClass}`}>
-                    {listing.type}
-                  </span>
-                  <span className={`listing-card__status listing-card__status--${listing.statusClass}`}>
-                    {listing.status}
-                  </span>
+            {previewListings.map((listing) => {
+              const t = ASSET_TYPE_LABEL[listing.assetType] ?? { label: listing.assetType, cls: 'residential' }
+              return (
+                <div key={listing.id} className="listing-card glass-card">
+                  <div className="listing-card__header">
+                    <span className={`listing-card__type listing-card__type--${t.cls}`}>
+                      {t.label}
+                    </span>
+                    <span className="listing-card__status listing-card__status--active">
+                      Active
+                    </span>
+                  </div>
+                  <h3 className="listing-card__title">{listing.title}</h3>
+                  <div className="listing-card__meta">
+                    <div className="listing-card__meta-item">
+                      <span className="listing-card__meta-label">UPB</span>
+                      <span className="listing-card__meta-value">{formatCurrency(listing.unpaidBalance)}</span>
+                    </div>
+                    <div className="listing-card__meta-item">
+                      <span className="listing-card__meta-label">Loans</span>
+                      <span className="listing-card__meta-value">{listing.loanCount.toLocaleString()}</span>
+                    </div>
+                    <div className="listing-card__meta-item">
+                      <span className="listing-card__meta-label">Location</span>
+                      <span className="listing-card__meta-value">{listing.location}</span>
+                    </div>
+                    <div className="listing-card__meta-item">
+                      <span className="listing-card__meta-label">Avg. Delinquency</span>
+                      <span className="listing-card__meta-value">{formatDelinquency(listing.avgDelinquency)}</span>
+                    </div>
+                  </div>
+                  <div className="listing-card__footer">
+                    <span className="listing-card__date">Listed {timeAgo(listing.createdAt)}</span>
+                    <Link href="/signup" className="btn btn--gold btn--sm">
+                      View Details
+                    </Link>
+                  </div>
                 </div>
-                <h3 className="listing-card__title">{listing.title}</h3>
-                <div className="listing-card__meta">
-                  <div className="listing-card__meta-item">
-                    <span className="listing-card__meta-label">UPB</span>
-                    <span className="listing-card__meta-value">{listing.upb}</span>
-                  </div>
-                  <div className="listing-card__meta-item">
-                    <span className="listing-card__meta-label">Loans</span>
-                    <span className="listing-card__meta-value">{listing.loans}</span>
-                  </div>
-                  <div className="listing-card__meta-item">
-                    <span className="listing-card__meta-label">Location</span>
-                    <span className="listing-card__meta-value">{listing.location}</span>
-                  </div>
-                  <div className="listing-card__meta-item">
-                    <span className="listing-card__meta-label">Avg. Delinquency</span>
-                    <span className="listing-card__meta-value">{listing.delinquency}</span>
-                  </div>
-                </div>
-                <div className="listing-card__footer">
-                  <span className="listing-card__date">{listing.date}</span>
-                  <Link href="/signup" className="btn btn--gold btn--sm">
-                    View Details
-                  </Link>
-                </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         </div>
       </section>
@@ -572,15 +543,6 @@ export default function HomePage() {
 
 // ─── Static data ─────────────────────────────────────────────────────────────
 
-const TRUSTED_COMPANIES = [
-  'ATLAS CAPITAL',
-  'MERIDIAN FUND',
-  'SUMMIT NPL',
-  'KEYSTONE PARTNERS',
-  'APEX SERVICING',
-  'NORTHSTAR ADVISORS',
-]
-
 const TESTIMONIALS = [
   {
     quote:
@@ -605,59 +567,4 @@ const TESTIMONIALS = [
   },
 ]
 
-// ─── Sample listing data ─────────────────────────────────────────────────────
 
-const SAMPLE_LISTINGS = [
-  {
-    id: '1',
-    type: 'Residential',
-    typeClass: 'residential',
-    status: 'Active',
-    statusClass: 'active',
-    title: 'Southeast Residential NPL Portfolio',
-    upb: '$18.4M',
-    loans: '127',
-    location: 'FL, GA, SC',
-    delinquency: '18 months',
-    date: 'Listed 3 days ago',
-  },
-  {
-    id: '2',
-    type: 'Commercial',
-    typeClass: 'commercial',
-    status: 'Under Review',
-    statusClass: 'review',
-    title: 'Midwest CRE Distressed Notes',
-    upb: '$48.7M',
-    loans: '34',
-    location: 'OH, MI, IN',
-    delinquency: '24 months',
-    date: 'Listed 1 week ago',
-  },
-  {
-    id: '3',
-    type: 'Consumer',
-    typeClass: 'consumer',
-    status: 'Active',
-    statusClass: 'active',
-    title: 'Auto Loan Charge‑Off Pool',
-    upb: '$6.1M',
-    loans: '842',
-    location: 'Nationwide',
-    delinquency: '12 months',
-    date: 'Listed 2 days ago',
-  },
-  {
-    id: '4',
-    type: 'Mixed',
-    typeClass: 'mixed',
-    status: 'Pending',
-    statusClass: 'pending',
-    title: 'Northeast Mixed‑Use NPL Tape',
-    upb: '$92.3M',
-    loans: '215',
-    location: 'NY, NJ, CT',
-    delinquency: '9 months',
-    date: 'Listed 5 days ago',
-  },
-]
