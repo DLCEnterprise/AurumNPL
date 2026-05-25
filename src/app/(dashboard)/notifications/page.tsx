@@ -28,33 +28,27 @@ function timeAgo(dateStr: string): string {
 
 function typeIcon(type: string) {
   switch (type) {
-    case 'BID_RECEIVED':
+    case 'NEW_BID':
     case 'BID_ACCEPTED':
     case 'BID_REJECTED':
-    case 'BID_COUNTERED':
+    case 'COUNTER_OFFER':
       return (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M12 5v14M5 12h14" />
         </svg>
       )
-    case 'MESSAGE':
+    case 'NEW_MESSAGE':
       return (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z" />
         </svg>
       )
-    case 'LISTING_APPROVED':
+    case 'LISTING_SAVED':
     case 'LISTING_PUBLISHED':
       return (
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
           <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
           <polyline points="14 2 14 8 20 8" />
-        </svg>
-      )
-    case 'ACCOUNT_APPROVED':
-      return (
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-          <path d="M20 21v-2a4 4 0 00-4-4H8a4 4 0 00-4 4v2" /><circle cx="12" cy="7" r="4" />
         </svg>
       )
     default:
