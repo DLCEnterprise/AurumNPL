@@ -268,6 +268,8 @@ export function ListingsFilters({
             <option value="">All Types</option>
             <option value="RESIDENTIAL">Residential 1–4 Units</option>
             <option value="COMMERCIAL">Commercial</option>
+            <option value="CONSUMER">Consumer Unsecured</option>
+            <option value="MIXED">Mixed Portfolio</option>
           </select>
         </div>
 
@@ -379,7 +381,15 @@ export function ListingsFilters({
       {(() => {
         const chips: { label: string; onRemove: () => void }[] = []
         if (initialQ) chips.push({ label: `"${initialQ}"`, onRemove: () => { setSearchText(''); push({ q: undefined }) } })
-        if (initialAssetType) chips.push({ label: initialAssetType === 'RESIDENTIAL' ? 'Residential' : 'Commercial', onRemove: () => push({ assetType: undefined }) })
+        if (initialAssetType) {
+          const ASSET_TYPE_CHIP_LABEL: Record<string, string> = {
+            RESIDENTIAL: 'Residential',
+            COMMERCIAL:  'Commercial',
+            CONSUMER:    'Consumer Unsecured',
+            MIXED:       'Mixed Portfolio',
+          }
+          chips.push({ label: ASSET_TYPE_CHIP_LABEL[initialAssetType] ?? initialAssetType, onRemove: () => push({ assetType: undefined }) })
+        }
         if (initialStatus) chips.push({ label: initialStatus.replace(/_/g, ' ').toLowerCase().replace(/\b\w/g, c => c.toUpperCase()), onRemove: () => push({ status: undefined }) })
         if (initialState) chips.push({ label: US_STATES.find(s => s.value === initialState)?.label ?? initialState, onRemove: () => push({ state: undefined }) })
         if (initialUpbMin !== undefined || initialUpbMax !== undefined) {

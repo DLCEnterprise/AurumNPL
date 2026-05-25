@@ -710,6 +710,18 @@ export function CreateListingForm() {
                   selected={form.assetType === 'COMMERCIAL'}
                   onClick={() => pick('assetType', 'COMMERCIAL')}
                 />
+                <CardOption
+                  label="Consumer Unsecured"
+                  sub="Credit card, auto deficiency, personal loan charge-offs"
+                  selected={form.assetType === 'CONSUMER'}
+                  onClick={() => pick('assetType', 'CONSUMER')}
+                />
+                <CardOption
+                  label="Mixed Portfolio"
+                  sub="Multi-asset tape spanning two or more classes"
+                  selected={form.assetType === 'MIXED'}
+                  onClick={() => pick('assetType', 'MIXED')}
+                />
               </CardGroup>
               {errors.assetType && <span className="form-error">{errors.assetType}</span>}
             </div>
