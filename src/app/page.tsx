@@ -19,12 +19,10 @@ const ASSET_TYPE_LABEL: Record<string, { label: string; cls: string }> = {
   MIXED:       { label: 'Mixed',       cls: 'mixed' },
 }
 
-function formatDelinquency(days: number | null | undefined): string {
-  if (!days) return '—'
-  if (days < 60) return `${days}d`
-  const months = Math.round(days / 30)
-  if (months < 24) return `${months} months`
-  return `${(months / 12).toFixed(1)} years`
+function formatDelinquency(months: number | null | undefined): string {
+  if (months == null) return '—'
+  if (months < 24) return `${months} mo.`
+  return `${(months / 12).toFixed(1)} yrs`
 }
 
 export default async function HomePage() {
