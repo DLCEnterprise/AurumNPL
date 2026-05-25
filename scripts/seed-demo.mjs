@@ -205,11 +205,12 @@ async function main() {
 
   // 1) Users ─────────────────────────────────────────────────────────────
   const password = await bcrypt.hash('Demo!2026Aurum', 10)
+  const TERMS_VERSION = '1.0'   // must stay in sync with src/lib/terms.ts
   const userMap = {}
   for (const u of DEMO_USERS) {
     const user = await prisma.user.upsert({
       where: { email: u.email },
-      update: { adminNotes: SEED_TAG, approvalStatus: 'APPROVED' },
+      update: { adminNotes: SEED_TAG, approvalStatus: 'APPROVED', termsVersion: TERMS_VERSION },
       create: {
         email: u.email,
         name: u.name,
@@ -223,11 +224,21 @@ async function main() {
         loanStatusPref: u.loanStatusPref,
         mainObjective: u.mainObjective,
         adminNotes: SEED_TAG,
+        termsVersion: TERMS_VERSION,
       },
     })
+    // Idempotent terms acceptance record
+    const exists = await prisma.termsAcceptance.findFirst({
+      where: { userId: user.id, version: TERMS_VERSION },
+    })
+    if (!exists) {
+      await prisma.termsAcceptance.create({
+        data: { userId: user.id, version: TERMS_VERSION, ipAddress: '127.0.0.1', userAgent: 'seed-script' },
+      })
+    }
     userMap[u.email] = user.id
   }
-  console.log(`  ✓ Users: ${Object.keys(userMap).length} upserted`)
+  console.log(`  ✓ Users: ${Object.keys(userMap).length} upserted (terms ${TERMS_VERSION} accepted)`)
 
   const userIdxToId = DEMO_USERS.map(u => userMap[u.email])
 
