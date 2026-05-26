@@ -39,3 +39,14 @@ Each entry is appended in execution order. Pass-fail summary lives in [pass-fail
 - **Fix:** introduced [`src/lib/session-guard.ts`](src/lib/session-guard.ts) → `requireSession()` (returns a non-null typed session or `redirect('/signin')`). Replaced `const session = await auth(); session!.user.x` with `const session = await requireSession(); session.user.x` across all 8 dashboard route handlers.
 - **Re-verified:** Yes. Re-ran the warmup spec that originally crashed — `npx playwright test _00-warmup.spec.ts` — all 21 routes resolve correctly with zero TypeError entries in the dev server log. Middleware-redirect path works (every authenticated route now resolves to `/signin` cleanly, no page handler crash trailing behind).
 
+### #2 — CSP missing `worker-src`; every page logs blob-worker violations
+
+- **Workflow:** every page (caught by `expectNoCriticalErrors` in nav-public + auth specs)
+- **Category:** Bug (high-end perception: a console-error storm reads as unprofessional when a client opens devtools during the demo)
+- **Severity:** High — visible in console on every authenticated and unauthenticated page
+- **Root cause:** [next.config.ts:47-58](next.config.ts#L47-L58) defines CSP `script-src`/`style-src`/`font-src`/`img-src`/`connect-src` but **no `worker-src`**. Browsers fall back to `script-src` for workers — and `script-src` doesn't allow `blob:`. Sentry's instrumentation creates workers from blob URLs, so every page emits:
+  > Creating a worker from 'blob:…' violates the following Content Security Policy directive: "script-src 'self' 'unsafe-inline' https://maps.googleapis.com https://maps.gstatic.com". Note that 'worker-src' was not explicitly set…
+- **Fix:** add `worker-src 'self' blob:` to the CSP directive list. Allows same-origin workers and dynamic blob workers (Sentry, web worker libs). Doesn't widen any other surface.
+- **Re-verified:** see retest after deploy
+
+

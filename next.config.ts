@@ -47,6 +47,10 @@ const origin = (() => {
 const csp = [
   `default-src 'self'`,
   `script-src 'self' ${isDev ? "'unsafe-eval' 'unsafe-inline'" : "'unsafe-inline'"} https://maps.googleapis.com https://maps.gstatic.com`,
+  // Sentry and other libraries create workers from blob URLs; without an
+  // explicit worker-src, browsers fall back to script-src which blocks blob:
+  // and floods the console with CSP violation errors.
+  `worker-src 'self' blob:`,
   `style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://maps.googleapis.com https://maps.gstatic.com`,
   `font-src 'self' https://fonts.gstatic.com`,
   `img-src 'self' data: blob: https://maps.googleapis.com https://maps.gstatic.com https://*.googleapis.com https://*.ggpht.com`,
