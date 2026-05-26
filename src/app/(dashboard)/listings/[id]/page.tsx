@@ -275,16 +275,17 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
             </div>
           ) : null)}
 
-          {/* Asset detail or simple metrics card */}
+          {/* Asset detail or portfolio-level metrics */}
           {!asset ? (
             <>
+              {/* Headline metrics — the Portfolio Snapshot card */}
               <div className="glass-card" style={{ padding: '28px', marginBottom: '16px' }}>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '24px' }}>
                   {[
                     { label: 'Unpaid Balance (UPB)', value: formatCurrency(listing.unpaidBalance) },
                     { label: 'Number of Loans', value: listing.loanCount.toLocaleString() },
                     { label: 'Location', value: listing.location },
-                    { label: 'Avg. Delinquency', value: listing.avgDelinquency ? `${listing.avgDelinquency} months` : '—' },
+                    { label: 'Avg. Delinquency', value: listing.avgDelinquency != null ? `${listing.avgDelinquency} months` : '—' },
                     { label: 'Lien Position', value: listing.lienPosition === 'SENIOR' ? 'Senior (1st Mortgage)' : listing.lienPosition === 'JUNIOR' ? 'Junior (2nd Mortgage)' : '—' },
                   ].map(({ label, value }) => (
                     <div key={label}>
@@ -294,10 +295,78 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
                   ))}
                 </div>
               </div>
+
+              {/* Portfolio Overview — structured aggregates */}
+              {(listing.originalUpb != null || listing.avgInterestRate != null || listing.avgLTV != null || listing.avgCLTV != null || listing.propertyMix || listing.stateConcentration || listing.pctNonPerforming != null || listing.pctPerforming != null) && (
+                <div className="glass-card" style={{ padding: '28px', marginBottom: '16px' }}>
+                  <h3 style={{ fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.09em', color: 'var(--text-muted)', marginBottom: '18px' }}>Portfolio Overview</h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '20px 28px' }}>
+                    {[
+                      listing.originalUpb     != null && { label: 'Original UPB',          value: formatCurrency(listing.originalUpb) },
+                      listing.unpaidBalance   != null && listing.originalUpb != null && { label: 'Paid-Down Ratio', value: `${(((listing.originalUpb - listing.unpaidBalance) / listing.originalUpb) * 100).toFixed(1)}%` },
+                      listing.avgInterestRate != null && { label: 'Weighted Avg Coupon', value: `${listing.avgInterestRate.toFixed(3)}%` },
+                      listing.avgLTV          != null && { label: 'Avg LTV',              value: `${listing.avgLTV.toFixed(1)}%` },
+                      listing.avgCLTV         != null && { label: 'Avg CLTV',             value: `${listing.avgCLTV.toFixed(1)}%` },
+                      (listing.pctNonPerforming != null || listing.pctPerforming != null) && {
+                        label: 'Performance Mix',
+                        value: [
+                          listing.pctNonPerforming ? `${listing.pctNonPerforming}% NPL` : null,
+                          listing.pctPerforming    ? `${listing.pctPerforming}% Perf.`  : null,
+                        ].filter(Boolean).join(' · ') || '—',
+                      },
+                      listing.askingPrice != null && listing.unpaidBalance > 0 && {
+                        label: 'Asking / UPB',
+                        value: `${((listing.askingPrice / listing.unpaidBalance) * 100).toFixed(1)}¢`,
+                      },
+                      listing.noteType && { label: 'Note Type', value: listing.noteType },
+                    ].filter(Boolean).map((item) => {
+                      const { label, value } = item as { label: string; value: string }
+                      return (
+                        <div key={label}>
+                          <div style={{ fontSize: '0.66rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '6px' }}>{label}</div>
+                          <div style={{ fontFamily: 'var(--font-display)', fontSize: '1.15rem', fontWeight: 500, color: 'var(--text-primary)', fontVariantNumeric: 'tabular-nums' }}>{value}</div>
+                        </div>
+                      )
+                    })}
+                  </div>
+
+                  {(listing.propertyMix || listing.stateConcentration) && (
+                    <div style={{ marginTop: '24px', paddingTop: '20px', borderTop: '1px solid rgba(255,255,255,0.06)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px 28px' }}>
+                      {listing.propertyMix && (
+                        <div>
+                          <div style={{ fontSize: '0.66rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '6px' }}>Property Mix</div>
+                          <div style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', lineHeight: 1.55 }}>{listing.propertyMix}</div>
+                        </div>
+                      )}
+                      {listing.stateConcentration && (
+                        <div>
+                          <div style={{ fontSize: '0.66rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-muted)', marginBottom: '6px' }}>State Concentration</div>
+                          <div style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', lineHeight: 1.55 }}>{listing.stateConcentration}</div>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {listing.description && (
                 <div className="glass-card" style={{ padding: '28px', marginBottom: '16px' }}>
                   <h3 style={{ fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.09em', color: 'var(--text-muted)', marginBottom: '12px' }}>Description</h3>
-                  <p style={{ color: 'var(--text-secondary)', lineHeight: 1.8, fontSize: '0.95rem' }}>{listing.description}</p>
+                  <p style={{ color: 'var(--text-secondary)', lineHeight: 1.8, fontSize: '0.95rem', whiteSpace: 'pre-line' }}>{listing.description}</p>
+                </div>
+              )}
+
+              {/* Available upon NDA — gated deliverables callout */}
+              {listing.ndaRequired && !isOwner && !isAdmin && (
+                <div className="glass-card" style={{ padding: '24px 28px', marginBottom: '16px', border: '1px solid rgba(212,168,70,0.18)', background: 'rgba(212,168,70,0.025)' }}>
+                  <h3 style={{ fontSize: '0.78rem', textTransform: 'uppercase', letterSpacing: '0.09em', color: 'var(--gold-300)', marginBottom: '14px' }}>Available Upon NDA Execution</h3>
+                  <ul style={{ margin: 0, paddingLeft: '18px', color: 'var(--text-secondary)', fontSize: '0.9rem', lineHeight: 1.85 }}>
+                    <li>Loan-level data tape (CSV) with per-asset terms, balances, and payment histories</li>
+                    <li>Collateral files: notes, mortgages, modifications, assignments</li>
+                    <li>BPO reports and property condition summaries per asset</li>
+                    <li>Title and ownership encumbrance reports where ordered</li>
+                    <li>Servicer comments and loss-mitigation timelines</li>
+                  </ul>
                 </div>
               )}
             </>

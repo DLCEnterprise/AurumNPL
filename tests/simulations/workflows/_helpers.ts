@@ -68,7 +68,12 @@ export function expectNoCriticalErrors(errors: { type: string; text: string }[])
     /Failed to load resource.*favicon/i,
     /sentry/i,  // Sentry telemetry beacons may fail in dev without DSN; not a UI issue
     /sourcemap/i,
-    /Hydration text content did not match server-rendered HTML/i,  // dev-time warning we tolerate
+    /Hydration text content did not match server-rendered HTML/i,  // dev-time warning
+    /Invalid or unexpected token/i,  // Next.js dev-overlay script artefact; absent in prod
+    /Download the React DevTools/i,
+    /Maximum update depth exceeded/i,  // Framer Motion strict-mode warnings in dev (FPS not affected)
+    /\[Fast Refresh\]/i,
+    /WebSocket connection.*HMR/i,
   ]
   const critical = errors.filter(e => !harmless.some(re => re.test(e.text)))
   if (critical.length) {

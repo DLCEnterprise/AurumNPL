@@ -84,6 +84,46 @@ const DEMO_LISTINGS = [
   { n: 22, sellerIdx: 0, title: 'Bakersfield CA Single SFR — CLOSED Mar 2026',        assetType: 'RESIDENTIAL', lienPosition: 'SENIOR', loanCount: 1,  unpaidBalance: 198_000,   askingPrice: 132_000,   location: 'Bakersfield, CA', state: 'CA', zip: '93301', avgDelinquency:  7, performanceStatus: 'Non-Performing', ndaRequired: false, status: 'SOLD' },
 ]
 
+// ── Portfolio aggregates per listing ────────────────────────────────────────
+// Realistic NPL economics: WAC slightly above market for distressed paper,
+// originalUpb 105–115% of current UPB (some pay-down before default),
+// avgLTV 70–90% typical for residential SFR, 55–75% for commercial.
+// propertyMix and stateConcentration only populated for portfolio listings.
+const DEMO_AGGREGATES = {
+  // Residential SENIOR portfolios
+  1:  { originalUpb: 2_585_000,  avgInterestRate: 6.875, avgLTV: 82.4, avgCLTV: 84.1, propertyMix: '83% SFR · 17% Condo',                  stateConcentration: 'TX 100% (Dallas-Fort Worth MSA)',         pctNonPerforming: 100, pctPerforming: 0  },
+  2:  { originalUpb: 1_956_000,  avgInterestRate: 7.125, avgLTV: 78.2, avgCLTV: 79.8, propertyMix: '75% SFR · 25% Townhome',               stateConcentration: 'GA 100% (Metro Atlanta)',                pctNonPerforming: 100, pctPerforming: 0  },
+  3:  { originalUpb: 452_000,    avgInterestRate: 6.250, avgLTV: 71.5, avgCLTV: 71.5, propertyMix: 'SFR',                                  stateConcentration: 'AZ 100%',                                 pctNonPerforming: 0,   pctPerforming: 100 },
+  4:  { originalUpb: 1_038_000,  avgInterestRate: 7.500, avgLTV: 85.7, avgCLTV: 87.2, propertyMix: '80% SFR · 20% Condo',                  stateConcentration: 'FL 100% (Duval & Clay Counties)',         pctNonPerforming: 100, pctPerforming: 0  },
+  5:  { originalUpb: 1_345_000,  avgInterestRate: 5.875, avgLTV: 68.4, avgCLTV: 69.1, propertyMix: '90% SFR · 10% 2-4 Unit',               stateConcentration: 'OH 100% (Cuyahoga & Lorain)',             pctNonPerforming: 0,   pctPerforming: 100 },
+  6:  { originalUpb: 1_165_000,  avgInterestRate: 7.250, avgLTV: 88.3, avgCLTV: 91.0, propertyMix: '70% SFR · 25% 2-4 Unit · 5% Condo',    stateConcentration: 'MI 100% (Wayne County)',                  pctNonPerforming: 67,  pctPerforming: 33 },
+  7:  { originalUpb: 402_000,    avgInterestRate: 6.625, avgLTV: 79.8, avgCLTV: 79.8, propertyMix: 'SFR',                                  stateConcentration: 'NC 100%',                                 pctNonPerforming: 100, pctPerforming: 0  },
+  8:  { originalUpb: 928_000,    avgInterestRate: 6.500, avgLTV: 75.6, avgCLTV: 76.4, propertyMix: '100% SFR',                             stateConcentration: 'FL 100% (Hillsborough)',                  pctNonPerforming: 50,  pctPerforming: 50 },
+  9:  { originalUpb: 703_000,    avgInterestRate: 7.375, avgLTV: 84.1, avgCLTV: 85.6, propertyMix: '86% SFR · 14% Condo',                  stateConcentration: 'TN 100% (Shelby County)',                 pctNonPerforming: 100, pctPerforming: 0  },
+  10: { originalUpb: 575_000,    avgInterestRate: 6.875, avgLTV: 81.2, avgCLTV: 81.2, propertyMix: 'SFR',                                  stateConcentration: 'NV 100%',                                 pctNonPerforming: 100, pctPerforming: 0  },
+
+  // Residential JUNIOR (typically thinner LTV stack)
+  11: { originalUpb: 678_000,    avgInterestRate: 8.500, avgLTV: 92.5, avgCLTV: 96.8, propertyMix: '78% SFR · 22% Condo',                  stateConcentration: 'CA 40% · NV 25% · AZ 20% · Other 15%',    pctNonPerforming: 100, pctPerforming: 0  },
+  12: { originalUpb: 322_000,    avgInterestRate: 8.250, avgLTV: 88.9, avgCLTV: 93.4, propertyMix: 'SFR',                                  stateConcentration: 'CA 100% (LA County)',                     pctNonPerforming: 100, pctPerforming: 0  },
+  13: { originalUpb: 425_000,    avgInterestRate: 8.750, avgLTV: 91.2, avgCLTV: 95.8, propertyMix: '67% SFR · 33% Condo',                  stateConcentration: 'TX 100% (Harris County)',                 pctNonPerforming: 100, pctPerforming: 0  },
+  14: { originalUpb: 165_000,    avgInterestRate: 9.250, avgLTV: 94.5, avgCLTV: 98.7, propertyMix: 'SFR (HELOC)',                          stateConcentration: 'NJ 100%',                                 pctNonPerforming: 100, pctPerforming: 0  },
+
+  // Commercial — lower LTV typical, higher rate
+  15: { originalUpb: 4_550_000,  avgInterestRate: 7.875, avgLTV: 62.5, avgCLTV: 64.3, propertyMix: '50% Mixed-Use · 35% Retail · 15% Industrial', stateConcentration: 'IL 100% (Cook County)',           pctNonPerforming: 100, pctPerforming: 0  },
+  16: { originalUpb: 2_050_000,  avgInterestRate: 7.500, avgLTV: 58.7, avgCLTV: 58.7, propertyMix: 'Retail Strip Center',                  stateConcentration: 'TX 100% (Houston)',                       pctNonPerforming: 100, pctPerforming: 0  },
+  17: { originalUpb: 7_350_000,  avgInterestRate: 8.125, avgLTV: 65.4, avgCLTV: 66.8, propertyMix: 'Office (Class B)',                     stateConcentration: 'PA 100% (Philadelphia CBD)',              pctNonPerforming: 100, pctPerforming: 0  },
+
+  // Consumer (unsecured — no LTV meaningful)
+  18: { originalUpb: 22_400_000, avgInterestRate: 18.500, avgLTV: null, avgCLTV: null, propertyMix: 'Credit card charge-offs',             stateConcentration: 'Nationwide (50-state)',                   pctNonPerforming: 100, pctPerforming: 0  },
+  19: { originalUpb: 3_200_000,  avgInterestRate: 14.250, avgLTV: null, avgCLTV: null, propertyMix: 'Auto loan deficiencies',              stateConcentration: 'Nationwide',                              pctNonPerforming: 100, pctPerforming: 0  },
+
+  // Mixed institutional portfolio
+  20: { originalUpb: 13_650_000, avgInterestRate: 7.625, avgLTV: 76.8, avgCLTV: 79.2, propertyMix: '55% SFR · 25% Commercial · 12% Condo · 8% Multi-Family', stateConcentration: 'FL 32% · TX 28% · GA 18% · NC 12% · Other 10%', pctNonPerforming: 100, pctPerforming: 0 },
+
+  21: { originalUpb: 308_000,    avgInterestRate: 6.750, avgLTV: 82.5, avgCLTV: 82.5, propertyMix: 'SFR',                                  stateConcentration: 'FL 100%',                                 pctNonPerforming: 100, pctPerforming: 0  },
+  22: { originalUpb: 215_000,    avgInterestRate: 6.500, avgLTV: 78.0, avgCLTV: 78.0, propertyMix: 'SFR',                                  stateConcentration: 'CA 100%',                                 pctNonPerforming: 100, pctPerforming: 0  },
+}
+
 // ── Bids per listing — multi-bid history on a subset ────────────────────────
 // Indices reference DEMO_LISTINGS array (0-based).
 const DEMO_BIDS = [
@@ -250,16 +290,27 @@ async function main() {
   const listingMap = {}  // n -> id
   for (const l of DEMO_LISTINGS) {
     const sellerId = userIdxToId[l.sellerIdx]
+    const agg = DEMO_AGGREGATES[l.n] ?? {}
+    const aggregateFields = {
+      originalUpb:        agg.originalUpb        ?? null,
+      avgInterestRate:    agg.avgInterestRate    ?? null,
+      avgLTV:             agg.avgLTV             ?? null,
+      avgCLTV:            agg.avgCLTV            ?? null,
+      propertyMix:        agg.propertyMix        ?? null,
+      stateConcentration: agg.stateConcentration ?? null,
+      pctNonPerforming:   agg.pctNonPerforming   ?? null,
+      pctPerforming:      agg.pctPerforming      ?? null,
+    }
     const listing = await prisma.listing.upsert({
       where: { listingNumber: ln(l.n) },
       update: {
-        // Allow re-running to correct seeded field values (e.g. units).
-        // Only overwrites fields we control in the fixture spec.
+        // Allow re-running to correct seeded field values.
         avgDelinquency: l.avgDelinquency,
         unpaidBalance:  l.unpaidBalance,
         askingPrice:    l.askingPrice,
         status:         l.status,
         ndaRequired:    l.ndaRequired,
+        ...aggregateFields,
       },
       create: {
         listingNumber: ln(l.n),
@@ -279,11 +330,12 @@ async function main() {
         status: l.status,
         sellerId,
         createdAt: daysAgo(Math.floor(Math.random() * 45) + 5),
+        ...aggregateFields,
       },
     })
     listingMap[l.n] = listing.id
   }
-  console.log(`  ✓ Listings: ${Object.keys(listingMap).length} upserted`)
+  console.log(`  ✓ Listings: ${Object.keys(listingMap).length} upserted (with portfolio aggregates)`)
 
   // 3) Bids ──────────────────────────────────────────────────────────────
   let bidCount = 0

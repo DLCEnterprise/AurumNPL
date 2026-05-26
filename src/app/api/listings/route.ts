@@ -224,6 +224,15 @@ const CreateSchema = z.object({
   reservePrice:        z.number().positive().optional(),
   preferredClosingDays:z.number().int().optional(),
   ndaRequired:         z.boolean().optional(),
+  // Portfolio aggregates — institutional NPL detail captured at the listing level
+  originalUpb:         z.number().nonnegative().optional(),
+  avgInterestRate:     z.number().min(0).max(30).optional(),
+  avgLTV:              z.number().min(0).max(200).optional(),
+  avgCLTV:             z.number().min(0).max(200).optional(),
+  propertyMix:         z.string().max(200).optional(),
+  stateConcentration:  z.string().max(200).optional(),
+  pctNonPerforming:    z.number().min(0).max(100).optional(),
+  pctPerforming:       z.number().min(0).max(100).optional(),
   asset:               AssetSchema,
 })
 

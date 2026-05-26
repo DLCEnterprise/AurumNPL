@@ -177,6 +177,21 @@ model Listing {
   reservePrice         Float?
   preferredClosingDays Int?
   ndaRequired          Boolean?
+
+  // ── Portfolio aggregates ───────────────────────────────────────────────
+  // Stored as structured columns rather than buried in `description`, so the
+  // detail page can render a proper Portfolio Overview card and so listings
+  // can be filtered / sorted on these later. All optional — older listings
+  // and single-asset notes don't necessarily provide them.
+  originalUpb          Float?    // total UPB at origination across the portfolio
+  avgInterestRate      Float?    // weighted average coupon (e.g. 7.25 = 7.25%)
+  avgLTV               Float?    // weighted average loan-to-value (e.g. 78.5 = 78.5%)
+  avgCLTV              Float?    // weighted average combined LTV
+  propertyMix          String?   // e.g. "70% SFR · 20% Condo · 10% Multi-Family"
+  stateConcentration   String?   // e.g. "FL 35% · GA 25% · SC 22% · Other 18%"
+  pctNonPerforming     Float?    // % of UPB classified non-performing (0–100)
+  pctPerforming        Float?    // % of UPB classified performing (0–100)
+
   createdAt            DateTime      @default(now())
   updatedAt         DateTime      @updatedAt
 

@@ -65,6 +65,15 @@ const UpdateListingSchema = z.object({
   status:         z.enum(['DRAFT', 'ACTIVE', 'UNDER_REVIEW', 'PENDING', 'SOLD', 'ARCHIVED']).optional(),
   dropboxLink:    z.string().optional().nullable(),
   lienPosition:   z.enum(['SENIOR', 'JUNIOR']).optional().nullable(),
+  // Portfolio aggregates
+  originalUpb:        z.number().nonnegative().optional().nullable(),
+  avgInterestRate:    z.number().min(0).max(30).optional().nullable(),
+  avgLTV:             z.number().min(0).max(200).optional().nullable(),
+  avgCLTV:            z.number().min(0).max(200).optional().nullable(),
+  propertyMix:        z.string().max(200).optional().nullable(),
+  stateConcentration: z.string().max(200).optional().nullable(),
+  pctNonPerforming:   z.number().min(0).max(100).optional().nullable(),
+  pctPerforming:      z.number().min(0).max(100).optional().nullable(),
 })
 
 export async function PUT(req: NextRequest, { params: paramsPromise }: Params) {
@@ -88,6 +97,8 @@ export async function PUT(req: NextRequest, { params: paramsPromise }: Params) {
   const {
     title, description, assetType, unpaidBalance, loanCount, location, zip,
     avgDelinquency, status, dropboxLink, lienPosition,
+    originalUpb, avgInterestRate, avgLTV, avgCLTV,
+    propertyMix, stateConcentration, pctNonPerforming, pctPerforming,
     ...rawAssetFields
   } = body
 
@@ -103,6 +114,14 @@ export async function PUT(req: NextRequest, { params: paramsPromise }: Params) {
   if (status !== undefined)        listingFields.status = status
   if (dropboxLink !== undefined)   listingFields.dropboxLink = dropboxLink
   if (lienPosition !== undefined)  listingFields.lienPosition = lienPosition
+  if (originalUpb !== undefined)        listingFields.originalUpb        = originalUpb        !== null ? Number(originalUpb)        : null
+  if (avgInterestRate !== undefined)    listingFields.avgInterestRate    = avgInterestRate    !== null ? Number(avgInterestRate)    : null
+  if (avgLTV !== undefined)             listingFields.avgLTV             = avgLTV             !== null ? Number(avgLTV)             : null
+  if (avgCLTV !== undefined)            listingFields.avgCLTV            = avgCLTV            !== null ? Number(avgCLTV)            : null
+  if (propertyMix !== undefined)        listingFields.propertyMix        = propertyMix
+  if (stateConcentration !== undefined) listingFields.stateConcentration = stateConcentration
+  if (pctNonPerforming !== undefined)   listingFields.pctNonPerforming   = pctNonPerforming   !== null ? Number(pctNonPerforming)   : null
+  if (pctPerforming !== undefined)      listingFields.pctPerforming      = pctPerforming      !== null ? Number(pctPerforming)      : null
 
   // Validate listing fields
   const listingValidation = UpdateListingSchema.safeParse(listingFields)

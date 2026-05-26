@@ -427,17 +427,10 @@ export function CreateListingForm() {
   const buildPayload = (status: 'DRAFT' | 'ACTIVE') => {
     const f = form
 
-    // Pack portfolio stats into description
-    const statsLines = isPortfolio ? [
-      f.avgInterestRate && `Avg Rate: ${f.avgInterestRate}%`,
-      f.avgLTV && `Avg LTV: ${f.avgLTV}%`,
-      f.assetTypeMix && `Asset Mix: ${f.assetTypeMix}`,
-      f.occupancyMix && `Occupancy: ${f.occupancyMix}`,
-      f.pctNPL && `NPL: ${f.pctNPL}%`,
-      f.pctPerforming && `Performing: ${f.pctPerforming}%`,
-    ].filter(Boolean).join(' | ') : ''
-
-    const description = [f.description.trim(), statsLines].filter(Boolean).join('\n\n') || undefined
+    // Free-text description is exactly what the seller typed; portfolio
+    // aggregates live as their own structured fields so the detail page
+    // can render them in a proper Portfolio Overview card.
+    const description = f.description.trim() || undefined
 
     const listing = {
       title:               f.title.trim(),
@@ -459,6 +452,12 @@ export function CreateListingForm() {
       reservePrice:        parseOptFloat(f.reservePrice),
       preferredClosingDays:parseOptInt(f.preferredClosingDays),
       ndaRequired:         f.ndaRequired === 'true',
+      // ── Portfolio aggregates (only meaningful for portfolio listings) ──
+      avgInterestRate:     isPortfolio ? parseOptFloat(f.avgInterestRate) : undefined,
+      avgLTV:              isPortfolio ? parseOptFloat(f.avgLTV) : undefined,
+      propertyMix:         isPortfolio && f.assetTypeMix ? f.assetTypeMix : undefined,
+      pctNonPerforming:    isPortfolio ? parseOptFloat(f.pctNPL) : undefined,
+      pctPerforming:       isPortfolio ? parseOptFloat(f.pctPerforming) : undefined,
     }
 
     if (isPortfolio) return listing
