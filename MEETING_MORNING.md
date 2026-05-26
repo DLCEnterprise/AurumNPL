@@ -134,6 +134,28 @@ Run with `node --env-file=.env scripts/wipe-seed.mjs`. Don't run this before the
 
 ---
 
+## Third sweep — Playwright simulation (this session)
+
+Set up a Playwright simulation suite per the user's brief and ran portions of it. Two additional production bugs caught and fixed beyond the second sweep:
+
+### Bug #1 — `session!.user.id` non-null assertion crashed 8 pages in Next.js 15 dev mode race
+- **Fix:** introduced `src/lib/session-guard.ts` → `requireSession()` and swapped every `session!.user.x` to `session.user.x` after a defensive redirect check.
+- **Commit:** `c661abc` (pushed).
+- **Why it matters:** noise in production Sentry logs even though user-visible behavior was correct.
+
+### Bug #2 — CSP missing `worker-src` → every page logs a Sentry blob-worker violation
+- **Fix:** added `worker-src 'self' blob:` to the CSP directive list in `next.config.ts`.
+- **Commit:** `dd55e5f` (pushed; Vercel was unusually slow to redeploy this — may still be propagating at meeting time).
+- **Why it matters:** any client opening devtools sees a console-error storm. Unprofessional for an institutional demo. Once the deploy lands, the console is clean.
+
+### Simulation suite committed
+- 13 Playwright spec files in `tests/simulations/workflows/` covering ~30 tests across auth, navigation, dashboard, listings browse + detail + cards, create-listing wizard, profile, watchlist, pipeline, and 404 handling.
+- Helpers in `tests/simulations/workflows/_helpers.ts` (signin, dismiss tour, console-error collector, screenshot, error allowlist).
+- Reports in `tests/simulations/reports/sim-report.md` and `pass-fail.md`.
+
+### Known constraint discovered this sweep
+- Signin rate limit is **10 attempts / 15 min** ([src/lib/rate-limit.ts:108](src/lib/rate-limit.ts#L108)). Correct for production but trips automated test runs after ~10 specs. Next step (deferred): Playwright `globalSetup` + `storageState` so the suite signs in once and reuses the session.
+
 ## Second sweep findings (verified visually via screenshots)
 
 Driven by puppeteer-core + Edge, signed in as `r.calloway@northchase-nh.com` against the deployed app. 16 screenshots in `qa-output/screenshots/`.
