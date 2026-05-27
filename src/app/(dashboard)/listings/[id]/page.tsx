@@ -9,7 +9,9 @@ import { ArchiveListingButton } from '@/components/listings/ArchiveListingButton
 import { UnarchiveListingButton } from '@/components/listings/UnarchiveListingButton'
 import { MarkAsSoldButton } from '@/components/listings/MarkAsSoldButton'
 import { PublishListingButton } from '@/components/listings/PublishListingButton'
-import { AssetDetail } from '@/components/listings/AssetDetail'
+import { LoanSpecSheet } from '@/components/listings/LoanSpecSheet'
+import { PropertySidecar } from '@/components/listings/PropertySidecar'
+import { DealTermsCard } from '@/components/listings/DealTermsCard'
 import { ViewTracker } from '@/components/listings/ViewTracker'
 import { ListingAnalyticsCard } from '@/components/listings/ListingAnalyticsCard'
 import { SaveListingButton } from '@/components/listings/SaveListingButton'
@@ -156,8 +158,10 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
       }
     : null
 
+  const mapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY
+
   return (
-    <div style={{ maxWidth: '1100px' }}>
+    <div style={{ maxWidth: '1200px' }}>
       <Breadcrumbs items={[{ label: 'Listings', href: '/listings' }, { label: listing.title }]} />
 
       <div className="listing-detail-layout">
@@ -371,7 +375,47 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               )}
             </>
           ) : (
-            <AssetDetail asset={asset} />
+            <>
+              {/* Seller Comments — narrative description from the seller */}
+              {listing.description && (
+                <div className="glass-card" style={{ padding: '24px 28px', marginBottom: '14px' }}>
+                  <h3 style={{ fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.12em', color: 'var(--gold-400)', textTransform: 'uppercase', marginBottom: '12px' }}>
+                    Seller Comments
+                  </h3>
+                  <p style={{ color: 'var(--text-secondary)', lineHeight: 1.75, fontSize: '0.92rem', whiteSpace: 'pre-line', margin: 0 }}>
+                    {listing.description}
+                  </p>
+                </div>
+              )}
+
+              {/* Loan data spec sheet */}
+              <LoanSpecSheet
+                asset={asset}
+                listing={{
+                  performanceStatus: (listing as { performanceStatus?: string | null }).performanceStatus ?? null,
+                  noteType:          (listing as { noteType?: string | null }).noteType ?? null,
+                  lienPosition:      listing.lienPosition ?? null,
+                  unpaidBalance:     listing.unpaidBalance ?? null,
+                  askingPrice:       (listing as { askingPrice?: number | null }).askingPrice ?? null,
+                }}
+              />
+
+              {/* Available upon NDA — gated deliverables callout */}
+              {listing.ndaRequired && !isOwner && !isAdmin && (
+                <div className="glass-card" style={{ padding: '22px 28px', marginBottom: '14px', border: '1px solid rgba(212,168,70,0.18)', background: 'rgba(212,168,70,0.025)' }}>
+                  <h3 style={{ fontSize: '0.72rem', fontWeight: 600, letterSpacing: '0.12em', color: 'var(--gold-300)', textTransform: 'uppercase', marginBottom: '12px' }}>
+                    Available Upon NDA Execution
+                  </h3>
+                  <ul style={{ margin: 0, paddingLeft: '18px', color: 'var(--text-secondary)', fontSize: '0.88rem', lineHeight: 1.85 }}>
+                    <li>Loan-level data tape (CSV) with per-asset terms, balances, and payment histories</li>
+                    <li>Collateral files: notes, mortgages, modifications, assignments</li>
+                    <li>BPO reports and property condition summaries per asset</li>
+                    <li>Title and ownership encumbrance reports where ordered</li>
+                    <li>Servicer comments and loss-mitigation timelines</li>
+                  </ul>
+                </div>
+              )}
+            </>
           )}
 
           {/* Bid Activity */}
@@ -557,6 +601,23 @@ export default async function ListingDetailPage({ params }: { params: Promise<{ 
               </div>
             </div>
           </div>
+
+          {/* Deal Terms — at-a-glance buyer-facing terms */}
+          <DealTermsCard
+            unpaidBalance={listing.unpaidBalance}
+            askingPrice={(listing as { askingPrice?: number | null }).askingPrice}
+            reservePrice={(listing as { reservePrice?: number | null }).reservePrice}
+            bidDeadline={(listing as { bidDeadline?: Date | null }).bidDeadline}
+            preferredClosingDays={(listing as { preferredClosingDays?: number | null }).preferredClosingDays}
+            listingNumber={(listing as { listingNumber?: string | null }).listingNumber}
+            createdAt={listing.createdAt}
+            showReserve={isOwner || isAdmin}
+          />
+
+          {/* Property — map + property details (single-asset only) */}
+          {asset && (
+            <PropertySidecar asset={asset} apiKey={mapsApiKey} />
+          )}
 
           {/* Analytics card */}
           {(isOwner || isAdmin) && <ListingAnalyticsCard listingId={id} />}
