@@ -2,8 +2,8 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { requireSession } from '@/lib/session-guard'
 import { prisma } from '@/lib/prisma'
-import { formatCurrency, timeAgo } from '@/lib/utils'
 import { ListingsFilters } from '@/components/listings/ListingsFilters'
+import { ListingResults, type ListingForResults } from '@/components/listings/ListingResults'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ExportButton } from '@/components/ui/ExportButton'
 import type { AssetType, ListingStatus, LienPosition } from '@prisma/client'
@@ -111,23 +111,27 @@ export default async function ListingsPage({
 
   const pages = Math.ceil(total / PAGE_SIZE)
 
-  const TYPE_CLASS: Record<AssetType, string> = {
-    RESIDENTIAL: 'residential',
-    COMMERCIAL: 'commercial',
-    CONSUMER: 'consumer',
-    MIXED: 'mixed',
-  }
-  const STATUS_CLASS: Record<ListingStatus, string> = {
-    ACTIVE: 'active',
-    UNDER_REVIEW: 'review',
-    PENDING: 'pending',
-    DRAFT: 'pending',
-    SOLD: 'active',
-    ARCHIVED: 'pending',
-    OFFER_ACCEPTED: 'active',
-    DUE_DILIGENCE: 'review',
-    CLOSING: 'review',
-  }
+  // Serialise for the client renderer (dates → ISO strings)
+  const serializedListings: ListingForResults[] = listings.map((l) => ({
+    id:             l.id,
+    title:          l.title,
+    assetType:      l.assetType,
+    status:         l.status,
+    lienPosition:   l.lienPosition,
+    unpaidBalance:  l.unpaidBalance,
+    loanCount:      l.loanCount,
+    location:       l.location,
+    zip:            l.zip,
+    avgDelinquency: l.avgDelinquency,
+    createdAt:      l.createdAt.toISOString(),
+    seller:         l.seller ? { company: l.seller.company, name: l.seller.name } : null,
+    asset:          l.asset ? {
+      propertyStreet: l.asset.propertyStreet,
+      propertyCity:   l.asset.propertyCity,
+      propertyState:  l.asset.propertyState,
+      propertyZip:    l.asset.propertyZip,
+    } : null,
+  }))
 
   return (
     <div>
@@ -216,118 +220,7 @@ export default async function ListingsPage({
           />
         )
       ) : (
-        <div className="listings__grid" style={{ marginBottom: '32px' }}>
-          {listings.map((listing) => {
-            const a = listing.asset
-            const address = a
-              ? [a.propertyStreet, a.propertyCity, a.propertyState, a.propertyZip].filter(Boolean).join(', ')
-              : ''
-            const streetViewUrl = address && mapsKey
-              ? `https://maps.googleapis.com/maps/api/streetview?size=600x280&location=${encodeURIComponent(address)}&key=${mapsKey}&source=outdoor&fov=80`
-              : ''
-
-            return (
-            <div key={listing.id} className="listing-card glass-card" style={{ padding: 0, overflow: 'hidden' }}>
-
-              {/* Property image or placeholder */}
-              <div style={{ height: '148px', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
-                {streetViewUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={streetViewUrl}
-                    alt="Property street view"
-                    style={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block' }}
-                  />
-                ) : (
-                  <div style={{
-                    width: '100%', height: '100%',
-                    background: listing.assetType === 'RESIDENTIAL'
-                      ? 'linear-gradient(135deg, rgba(212,168,70,0.12) 0%, rgba(212,168,70,0.04) 100%)'
-                      : listing.assetType === 'COMMERCIAL'
-                      ? 'linear-gradient(135deg, rgba(96,165,250,0.12) 0%, rgba(96,165,250,0.04) 100%)'
-                      : listing.assetType === 'CONSUMER'
-                      ? 'linear-gradient(135deg, rgba(52,211,153,0.12) 0%, rgba(52,211,153,0.04) 100%)'
-                      : 'linear-gradient(135deg, rgba(251,191,36,0.12) 0%, rgba(251,191,36,0.04) 100%)',
-                    display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  }}>
-                    <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" style={{ opacity: 0.18 }}>
-                      <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
-                    </svg>
-                  </div>
-                )}
-                {/* Bottom fade into card */}
-                <div style={{
-                  position: 'absolute', bottom: 0, left: 0, right: 0, height: '48px',
-                  background: 'linear-gradient(to bottom, transparent, var(--bg-card))',
-                  pointerEvents: 'none',
-                }} />
-              </div>
-
-              {/* Card body */}
-              <div style={{ padding: '16px 24px 24px' }}>
-                <div className="listing-card__header">
-                  <span className={`listing-card__type listing-card__type--${TYPE_CLASS[listing.assetType]}`}>
-                    {listing.assetType.charAt(0) + listing.assetType.slice(1).toLowerCase()}
-                  </span>
-                  <span className={`listing-card__status listing-card__status--${STATUS_CLASS[listing.status]}`}>
-                    {listing.status.replace('_', ' ')}
-                  </span>
-                  {listing.lienPosition === 'SENIOR' && (
-                    <span style={{ background: 'rgba(96,165,250,0.08)', color: '#60a5fa', padding: '2px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 500, letterSpacing: '0.05em' }}>
-                      Senior
-                    </span>
-                  )}
-                  {listing.lienPosition === 'JUNIOR' && (
-                    <span style={{ background: 'rgba(251,146,60,0.08)', color: '#fb923c', padding: '2px 8px', borderRadius: '4px', fontSize: '0.7rem', fontWeight: 500, letterSpacing: '0.05em' }}>
-                      Junior
-                    </span>
-                  )}
-                </div>
-                <h3 className="listing-card__title">{listing.title}</h3>
-                <div className="listing-card__meta">
-                  <div className="listing-card__meta-item">
-                    <span className="listing-card__meta-label">UPB</span>
-                    <span className="listing-card__upb">{formatCurrency(listing.unpaidBalance)}</span>
-                  </div>
-                  <div className="listing-card__meta-item">
-                    <span className="listing-card__meta-label">Loans</span>
-                    <span className="listing-card__meta-value">{listing.loanCount.toLocaleString()}</span>
-                  </div>
-                  <div className="listing-card__meta-item">
-                    <span className="listing-card__meta-label">Location</span>
-                    <span className="listing-card__meta-value">{listing.location}{listing.zip ? ` ${listing.zip}` : ''}</span>
-                  </div>
-                  {listing.lienPosition != null && (
-                    <div className="listing-card__meta-item">
-                      <span className="listing-card__meta-label">Lien Position</span>
-                      <span className="listing-card__meta-value">{listing.lienPosition === 'SENIOR' ? 'Senior' : 'Junior'}</span>
-                    </div>
-                  )}
-                  {listing.avgDelinquency != null && (
-                    <div className="listing-card__meta-item">
-                      <span className="listing-card__meta-label">Avg. Delinquency</span>
-                      <span className="listing-card__meta-value">{listing.avgDelinquency} months</span>
-                    </div>
-                  )}
-                </div>
-                {listing.seller && (
-                  <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: '12px' }}>
-                    {listing.seller.company ?? listing.seller.name}
-                  </div>
-                )}
-                <div className="listing-card__footer">
-                  <span className="listing-card__date">
-                    {timeAgo(listing.createdAt)}
-                  </span>
-                  <Link href={`/listings/${listing.id}`} className="btn btn--gold btn--sm">
-                    View Details
-                  </Link>
-                </div>
-              </div>
-            </div>
-            )
-          })}
-        </div>
+        <ListingResults listings={serializedListings} mapsKey={mapsKey} />
       )}
 
       {/* Pagination */}
