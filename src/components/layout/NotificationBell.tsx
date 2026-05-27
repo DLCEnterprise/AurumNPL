@@ -25,6 +25,21 @@ function timeAgoShort(dateStr: string): string {
   return `${Math.floor(h / 24)}d ago`
 }
 
+// Where to send the user when a notification has no specific linkUrl
+// (older seeded notifications and any rows that pre-date the per-type links).
+function fallbackLinkForType(type: string): string {
+  switch (type) {
+    case 'NEW_MESSAGE':       return '/messages'
+    case 'NEW_BID':           return '/pipeline'
+    case 'BID_ACCEPTED':      return '/pipeline'
+    case 'BID_REJECTED':      return '/pipeline'
+    case 'COUNTER_OFFER':     return '/pipeline'
+    case 'LISTING_SAVED':     return '/listings?mine=true'
+    case 'LISTING_PUBLISHED': return '/listings?mine=true'
+    default:                  return '/notifications'
+  }
+}
+
 export function NotificationBell() {
   const router = useRouter()
   const [unread, setUnread]           = useState(0)
@@ -87,7 +102,7 @@ export function NotificationBell() {
       setNotifs((prev) => prev.map((x) => x.id === n.id ? { ...x, readAt: new Date().toISOString() } : x))
     }
     setOpen(false)
-    if (n.linkUrl) router.push(n.linkUrl)
+    router.push(n.linkUrl || fallbackLinkForType(n.type))
   }
 
   return (

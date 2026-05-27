@@ -1,9 +1,35 @@
 'use client'
 
 import Link from 'next/link'
+import { AnimatePresence, motion } from 'framer-motion'
+
+const MotionLink = motion.create(Link)
 import { usePreferences } from '@/lib/preferences'
 import { formatCurrency, timeAgo } from '@/lib/utils'
 import type { AssetType, ListingStatus, LienPosition } from '@prisma/client'
+
+// Shared transition tuning — institutional, not bouncy
+const VIEW_EASE = [0.32, 0.72, 0.32, 1] as const
+const containerVariants = {
+  hidden:  { opacity: 0 },
+  visible: {
+    opacity: 1,
+    transition: { staggerChildren: 0.025, delayChildren: 0.04 },
+  },
+  exit: {
+    opacity: 0,
+    transition: { duration: 0.14, ease: VIEW_EASE },
+  },
+}
+const itemVariants = {
+  hidden:  { opacity: 0, y: 10 },
+  visible: {
+    opacity: 1,
+    y: 0,
+    transition: { duration: 0.28, ease: VIEW_EASE },
+  },
+  exit: { opacity: 0, transition: { duration: 0.1, ease: VIEW_EASE } },
+}
 
 export type ListingForResults = {
   id: string
@@ -53,10 +79,22 @@ function buildStreetViewUrl(listing: ListingForResults, mapsKey: string, size = 
 export function ListingResults({ listings, mapsKey }: { listings: ListingForResults[]; mapsKey: string }) {
   const { listingsView } = usePreferences()
 
-  if (listingsView === 'list') {
-    return <ListingsListView listings={listings} mapsKey={mapsKey} />
-  }
-  return <ListingsGridView listings={listings} mapsKey={mapsKey} />
+  return (
+    <AnimatePresence mode="wait" initial={false}>
+      <motion.div
+        key={listingsView}
+        initial="hidden"
+        animate="visible"
+        exit="exit"
+        variants={containerVariants}
+      >
+        {listingsView === 'list'
+          ? <ListingsListView listings={listings} mapsKey={mapsKey} />
+          : <ListingsGridView listings={listings} mapsKey={mapsKey} />
+        }
+      </motion.div>
+    </AnimatePresence>
+  )
 }
 
 // ──────────────────────────────────────────────────────────────────────────────
@@ -65,11 +103,16 @@ export function ListingResults({ listings, mapsKey }: { listings: ListingForResu
 
 function ListingsGridView({ listings, mapsKey }: { listings: ListingForResults[]; mapsKey: string }) {
   return (
-    <div className="listings__grid" style={{ marginBottom: '32px' }}>
+    <motion.div className="listings__grid" style={{ marginBottom: '32px' }} variants={containerVariants}>
       {listings.map((listing) => {
         const streetViewUrl = buildStreetViewUrl(listing, mapsKey, '600x280')
         return (
-          <div key={listing.id} className="listing-card glass-card" style={{ padding: 0, overflow: 'hidden' }}>
+          <motion.div
+            key={listing.id}
+            variants={itemVariants}
+            className="listing-card glass-card"
+            style={{ padding: 0, overflow: 'hidden' }}
+          >
             {/* Property image or placeholder */}
             <div style={{ height: '148px', position: 'relative', overflow: 'hidden', flexShrink: 0 }}>
               {streetViewUrl ? (
@@ -158,10 +201,10 @@ function ListingsGridView({ listings, mapsKey }: { listings: ListingForResults[]
                 <Link href={`/listings/${listing.id}`} className="btn btn--gold btn--sm">View Details</Link>
               </div>
             </div>
-          </div>
+          </motion.div>
         )
       })}
-    </div>
+    </motion.div>
   )
 }
 
@@ -171,7 +214,10 @@ function ListingsGridView({ listings, mapsKey }: { listings: ListingForResults[]
 
 function ListingsListView({ listings, mapsKey }: { listings: ListingForResults[]; mapsKey: string }) {
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '32px' }}>
+    <motion.div
+      style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '32px' }}
+      variants={containerVariants}
+    >
       {/* Header row */}
       <div className="listings-row listings-row--header" aria-hidden="true">
         <div className="listings-row__thumb" />
@@ -187,10 +233,11 @@ function ListingsListView({ listings, mapsKey }: { listings: ListingForResults[]
       {listings.map((listing) => {
         const streetViewUrl = buildStreetViewUrl(listing, mapsKey, '160x160')
         return (
-          <Link
+          <MotionLink
             key={listing.id}
             href={`/listings/${listing.id}`}
             className="listings-row listings-row--data glass-card"
+            variants={itemVariants}
           >
             {/* Thumbnail */}
             <div className="listings-row__thumb">
@@ -260,9 +307,9 @@ function ListingsListView({ listings, mapsKey }: { listings: ListingForResults[]
                 <polyline points="9 18 15 12 9 6" />
               </svg>
             </div>
-          </Link>
+          </MotionLink>
         )
       })}
-    </div>
+    </motion.div>
   )
 }

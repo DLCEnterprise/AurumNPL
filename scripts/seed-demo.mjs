@@ -433,12 +433,24 @@ async function main() {
       where: { userId, title: n.title, body: n.body },
     })
     if (exists) continue
+    // Sensible per-type fallback link so clicking always navigates somewhere
+    const linkForType = (
+      n.type === 'NEW_MESSAGE'       ? '/messages' :
+      n.type === 'NEW_BID'           ? '/pipeline' :
+      n.type === 'BID_ACCEPTED'      ? '/pipeline' :
+      n.type === 'BID_REJECTED'      ? '/pipeline' :
+      n.type === 'COUNTER_OFFER'     ? '/pipeline' :
+      n.type === 'LISTING_SAVED'     ? '/listings?mine=true' :
+      n.type === 'LISTING_PUBLISHED' ? '/listings?mine=true' :
+                                       '/notifications'
+    )
     await prisma.notification.create({
       data: {
         userId,
         type: n.type,
         title: n.title,
         body: n.body,
+        linkUrl: n.linkUrl ?? linkForType,
         createdAt: daysAgo(n.unreadDaysAgo),
       },
     })
