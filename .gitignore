@@ -43,8 +43,10 @@ yarn-error.log*
 _build.log
 
 # Playwright run artifacts (specs + sim-report.md ARE tracked; runtime outputs are not)
+tests/simulations/.auth-state/
 tests/simulations/screenshots/_artifacts/
 tests/simulations/reports/playwright-html/
 tests/simulations/logs/
 playwright-report/
 test-results/
+tests/simulations/_scratch/
